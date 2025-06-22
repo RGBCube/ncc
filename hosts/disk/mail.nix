@@ -7,5 +7,7 @@ in {
 
   mailserver = {
     inherit fqdn;
+
+    stateVersion = 3;
   };
 }
