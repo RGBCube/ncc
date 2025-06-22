@@ -37,7 +37,7 @@
       manipulators = allBasic [
         { # ğ -> [
           from.key_code           = "open_bracket";
-          from.modifiers.optional = [ "control" "option" "command" "fn" ];
+          from.modifiers.optional = [ "control" "command" "fn" ];
 
           to = [{
             key_code  = "8";
@@ -56,7 +56,7 @@
         }
         { # ü -> ]
           from.key_code           = "close_bracket";
-          from.modifiers.optional = [ "control" "option" "command" "fn" ];
+          from.modifiers.optional = [ "control" "command" "fn" ];
 
           to = [{
             key_code  = "9";
