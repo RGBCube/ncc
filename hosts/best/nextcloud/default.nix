@@ -104,7 +104,6 @@ in {
       inherit (packageNextcloud.packages.apps)
         bookmarks calendar contacts deck forms
         impersonate mail notes previewgenerator;
-        # TODO: maps
     };
 
     nginx.recommendedHttpHeaders = true;
