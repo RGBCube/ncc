@@ -135,6 +135,7 @@ in {
         local super_alt = { "cmd", "ctrl", "alt" }
         local super_shift = { "cmd", "ctrl", "shift" }
 
+        -- FOCUS -- SUPER + DIRECTION
         hs.hotkey.bind(super, "left", PaperWM.actions.focus_left)
         hs.hotkey.bind(super, "down", PaperWM.actions.focus_down)
         hs.hotkey.bind(super, "up", PaperWM.actions.focus_up)
@@ -145,6 +146,7 @@ in {
         hs.hotkey.bind(super, "k", PaperWM.actions.focus_up)
         hs.hotkey.bind(super, "l", PaperWM.actions.focus_right)
 
+        -- RESIZE WINDOW -- SUPER + ALT + DIRECTION
         hs.hotkey.bind(super_alt, "left", function() windowResize(-100, 0) end)
         hs.hotkey.bind(super_alt, "down", function() windowResize(0, 100) end)
         hs.hotkey.bind(super_alt, "up", function() windowResize(0, -100) end)
@@ -155,14 +157,22 @@ in {
         hs.hotkey.bind(super_alt, "k", function() windowResize(0, -100) end)
         hs.hotkey.bind(super_alt, "l", function() windowResize(100, 0) end)
 
+        -- RESIZE WINDOW TO FULL WIDTH -- SUPER + ALT + F
+        hs.hotkey.bind(super_alt, "f", PaperWM.actions.full_width)
+
+        -- CYCLE SPACES -- SUPER[ + SHIFT FOR REVERSE] + TAB
         hs.hotkey.bind(super, "tab", function() spaceChange(1) end)
         hs.hotkey.bind(super_shift, "tab", function() spaceChange(-1) end)
 
         for index = 1, 9 do
+          -- GO TO SPACE -- SUPER + NUMBER
           hs.hotkey.bind(super, tostring(index), PaperWM.actions["switch_space_" .. index])
+
+          -- MOVE WINDOW TO SPACE -- SUPER + SHIFT + NUMBER
           hs.hotkey.bind(super_shift, tostring(index), PaperWM.actions["move_window_" .. index])
         end
 
+        -- SWAP WINDOW -- SUPER + SHIFT + DIRECTION
         hs.hotkey.bind(super_shift, "left", PaperWM.actions.swap_left)
         hs.hotkey.bind(super_shift, "down", PaperWM.actions.swap_down)
         hs.hotkey.bind(super_shift, "up", PaperWM.actions.swap_up)
@@ -173,11 +183,16 @@ in {
         hs.hotkey.bind(super_shift, "k", PaperWM.actions.swap_up)
         hs.hotkey.bind(super_shift, "l", PaperWM.actions.swap_right)
 
+        -- SLURP & BARF WINDOW -- SUPER + SHIFT + I/O
+        hs.hotkey.bind(super_shift, "i", PaperWM.actions.slurp_in)
+        hs.hotkey.bind(super_shift, "o", PaperWM.actions.barf_out)
+
+        -- MISC CONTROL
         hs.hotkey.bind(super, "q", windowClose)
         hs.hotkey.bind(super, "c", PaperWM.actions.center_window)
-        hs.hotkey.bind(super_alt, "f", PaperWM.actions.full_width)
         hs.hotkey.bind(super, "f", PaperWM.actions.toggle_floating)
 
+        -- APPLICATIONS
         hs.hotkey.bind(super, "w", function() hs.application.launchOrFocus("Zen") end)
         hs.hotkey.bind(super, "return", function() hs.application.launchOrFocus("Ghostty") end)
         hs.hotkey.bind(super, "t", function() hs.application.launchOrFocus("Finder") end)
