@@ -1,6 +1,3 @@
 {
-  system = {
-    switch.enableNg  = true;
-    rebuild.enableNg = true;
-  };
+  system.rebuild.enableNg = true;
 }
