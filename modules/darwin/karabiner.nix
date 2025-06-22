@@ -37,11 +37,11 @@
       manipulators = allBasic [
         { # ğ -> [
           from.key_code           = "open_bracket";
-          from.modifiers.optional = [ "shift" "control" "option" "command" "fn" ];
+          from.modifiers.optional = [ "control" "option" "command" "fn" ];
 
           to = [{
             key_code  = "8";
-            modifiers = [ "option" ];
+            modifiers = [ "right_option" ];
           }];
         }
         { # Ğ -> {
@@ -51,16 +51,16 @@
 
           to = [{
             key_code  = "7";
-            modifiers = [ "option" ];
+            modifiers = [ "right_option" ];
           }];
         }
         { # ü -> ]
           from.key_code           = "close_bracket";
-          from.modifiers.optional = [ "shift" "control" "option" "command" "fn" ];
+          from.modifiers.optional = [ "control" "option" "command" "fn" ];
 
           to = [{
             key_code  = "9";
-            modifiers = [ "option" ];
+            modifiers = [ "right_option" ];
           }];
         }
         { # Ü -> }
@@ -70,37 +70,37 @@
 
           to = [{
             key_code  = "0";
-            modifiers = [ "option" ];
+            modifiers = [ "right_option" ];
           }];
         }
         { # [ -> ğ
           from.key_code            = "8";
           from.modifiers.mandatory = [ "option" ];
-          from.modifiers.optional  = [ "shift" "control" "command" "fn" ];
+          from.modifiers.optional  = [ "control" "command" "fn" ];
 
           to = [{ key_code = "open_bracket"; }];
         }
         { # { -> Ğ
           from.key_code            = "7";
           from.modifiers.mandatory = [ "option" ];
-          from.modifiers.optional  = [ "shift" "control" "command" "fn" ];
+          from.modifiers.optional  = [ "control" "command" "fn" ];
 
           to = [{
             key_code  = "open_bracket";
             modifiers = [ "shift" ];
           }];
         }
-        { # ] -> ü 
+        { # ] -> ü
           from.key_code            = "9";
           from.modifiers.mandatory = [ "option" ];
-          from.modifiers.optional  = [ "shift" "control" "command" "fn" ];
+          from.modifiers.optional  = [ "control" "command" "fn" ];
 
           to = [{ key_code = "close_bracket"; }];
         }
         { # } -> Ü
           from.key_code            = "0";
           from.modifiers.mandatory = [ "option" ];
-          from.modifiers.optional  = [ "shift" "control" "command" "fn" ];
+          from.modifiers.optional  = [ "control" "command" "fn" ];
 
           to = [{
             key_code  = "close_bracket";
@@ -115,13 +115,13 @@
       manipulators = allBasic [
         { # ı -> i
           from.key_code           = "quote";
-          from.modifiers.optional = [ "shift" "control" "option" "command" "fn" ];
+          from.modifiers.optional = [ "control" "option" "command" "fn" ];
 
           to = [{ key_code = "i"; }];
         }
         { # i -> ı
           from.key_code           = "i";
-          from.modifiers.optional = [ "shift" "control" "option" "command" "fn" ];
+          from.modifiers.optional = [ "control" "option" "command" "fn" ];
 
           to = [{ key_code = "quote"; }];
         }
