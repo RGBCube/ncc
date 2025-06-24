@@ -183,9 +183,9 @@ in {
         hs.hotkey.bind(super_shift, "k", PaperWM.actions.swap_up)
         hs.hotkey.bind(super_shift, "l", PaperWM.actions.swap_right)
 
-        -- SLURP & BARF WINDOW -- SUPER + SHIFT + I/O
-        hs.hotkey.bind(super_shift, "i", PaperWM.actions.slurp_in)
-        hs.hotkey.bind(super_shift, "o", PaperWM.actions.barf_out)
+        -- SLURP & BARF WINDOW -- SUPER + SHIFT + T/G
+        hs.hotkey.bind(super_shift, "t", PaperWM.actions.slurp_in)
+        hs.hotkey.bind(super_shift, "g", PaperWM.actions.barf_out)
 
         -- MISC CONTROL
         hs.hotkey.bind(super, "q", windowClose)
