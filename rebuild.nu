@@ -1,12 +1,16 @@
 #!/usr/bin/env nu
 
 def --wrapped sync [...arguments] {
-  (rsync
-    --rsh "ssh"
+ (rsync
+    --archive
     --compress
+
     --delete --recursive --force
     --delete-excluded
-    --delete-missing-args
+    --delete-missing-arguments
+
+    --human-readable
+    --delay-updates
     ...$arguments)
 }
 
@@ -30,10 +34,6 @@ def main --wrapped [
   }
 
   if $remote {
-    ssh -tt ("root@" + $host) $"
-      rm --recursive --force ncc
-    "
-
     git ls-files
     | sync --files-from - ./ $"root@($host):ncc"
 
