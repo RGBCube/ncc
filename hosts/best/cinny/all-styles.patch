@@ -3,9 +3,9 @@ index f93c6ef10b..b0529d5c97 100644
 --- a/src/app/plugins/react-prism/ReactPrism.tsx
 +++ b/src/app/plugins/react-prism/ReactPrism.tsx
 @@ -2,18 +2,310 @@
- 
+
  import Prism from 'prismjs';
- 
+
 -import 'prismjs/components/prism-json';
 -import 'prismjs/components/prism-javascript';
 -import 'prismjs/components/prism-typescript';
@@ -322,6 +322,6 @@ index f93c6ef10b..b0529d5c97 100644
 +// import 'prismjs/components/prism-racket.js';
 +// import 'prismjs/components/prism-sparql.js';
 +// import 'prismjs/components/prism-t4-cs.js';
- 
+
  import './ReactPrism.css';
  // using classNames .prism-dark .prism-light from ReactPrism.css
