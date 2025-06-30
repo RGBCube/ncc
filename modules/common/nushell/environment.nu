@@ -72,7 +72,7 @@ module dump {
     let dump_prefix = dump-path | path join ...($namespace | split row ".")
 
     let dump_parent_contents = glob ($dump_prefix | path parse | get parent | path join "**" "*.md")
-    let dump_matches = $dump_parent_contents | filter { str starts-with $dump_prefix }
+    let dump_matches = $dump_parent_contents | where { str starts-with $dump_prefix }
 
     ls ...$dump_matches | each {
       merge { path: $in.name }

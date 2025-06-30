@@ -48,7 +48,7 @@ def main --wrapped [
   let args_split = $arguments | prepend "" | split list "--"
   let nh_flags = [
     "--hostname" $host
-  ] | append ($args_split | get 0 | filter { $in != "" })
+  ] | append ($args_split | get 0 | where { $in != "" })
 
   let nix_flags = [
     "--option" "accept-flake-config" "true"
@@ -100,11 +100,11 @@ def darwin-shadow-xcode-popup [] {
 
   let shadoweds = ls /usr/bin
   | flatten
-  | filter {
+  | where {
     # All xcode-select binaries are the same size, so we can narrow down and not run weird stuff.
     $in.size == $original_size
   }
-  | filter {
+  | where {
     ^$in.name e>| str contains "xcode-select: note: No developer tools were found, requesting install."
   }
   | get name
