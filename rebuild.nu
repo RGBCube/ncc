@@ -7,7 +7,7 @@ def --wrapped sync [...arguments] {
 
     --delete --recursive --force
     --delete-excluded
-    --delete-missing-arguments
+    --delete-missing-args
 
     --human-readable
     --delay-updates
