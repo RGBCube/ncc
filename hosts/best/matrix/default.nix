@@ -67,8 +67,8 @@ in {
 
       report_stats = false;
 
-      enable_metrics = true;
-      metrics_flags.known_servers = true;
+      # enable_metrics = true;
+      # metrics_flags.known_servers = true;
 
       allow_public_rooms_without_auth    = true;
       allow_public_rooms_over_federation = true;
