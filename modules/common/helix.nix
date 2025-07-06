@@ -6,20 +6,20 @@ in {
     shellAliases.x   = "hx";
   };
 
-  nixpkgs.overlays = [(self: super: {
-    helix = super.helix.overrideAttrs (old: {
-      src = self.fetchzip {
-        url = "https://github.com/cull-os/helix/releases/download/ci-release-25.01.1/helix-ci-release-25.01.1-source.tar.xz";
-        hash = "sha256-bvlzXRAdPvz8P49KENSw9gupQNaUm/+3eZZ1q7+fTsw=";
-        stripRoot = false;
-      };
+  # nixpkgs.overlays = [(self: super: {
+  #   helix = super.helix.overrideAttrs (old: {
+  #     src = self.fetchzip {
+  #       url = "https://github.com/cull-os/helix/releases/download/ci-release-25.01.1/helix-ci-release-25.01.1-source.tar.xz";
+  #       hash = "sha256-bvlzXRAdPvz8P49KENSw9gupQNaUm/+3eZZ1q7+fTsw=";
+  #       stripRoot = false;
+  #     };
 
-      cargoDeps = self.rustPlatform.fetchCargoVendor {
-        inherit (self.helix) src;
-        hash = "sha256-soOnSRvWO7OzxYENFUBGmgSAk1Oy9Av+wDDLKkcuIbs=";
-      };
-    });
-  })];
+  #     cargoDeps = self.rustPlatform.fetchCargoVendor {
+  #       inherit (self.helix) src;
+  #       hash = "sha256-soOnSRvWO7OzxYENFUBGmgSAk1Oy9Av+wDDLKkcuIbs=";
+  #     };
+  #   });
+  # })];
 
   home-manager.sharedModules = [{
     programs.nushell.configFile.text = mkIf /*(*/config.isDesktop/* && config.isLinux)*/ <| mkAfter /* nu */ ''
