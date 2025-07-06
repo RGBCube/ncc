@@ -35,6 +35,8 @@ in {
     ;
   } // optionalAttrs config.isDesktop {
     inherit (pkgs)
+      claude-code
+
       clang_16
       clang-tools_16
       deno
