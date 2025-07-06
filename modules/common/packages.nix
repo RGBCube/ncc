@@ -1,6 +1,8 @@
 { config, lib, pkgs, ... }: let
   inherit (lib) attrValues optionalAttrs;
 in {
+  unfree.allowedNames = [ "claude-code" ];
+
   environment.systemPackages = attrValues <| {
     inherit (pkgs)
       asciinema
