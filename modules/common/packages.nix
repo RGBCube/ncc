@@ -42,9 +42,7 @@ in {
       deno
       gh
       go
-      jdk
       lld
-      maven
       zig
 
       qbittorrent
