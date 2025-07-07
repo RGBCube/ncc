@@ -103,6 +103,12 @@ in {
       };
     };
 
+    programs.direnv = enabled {
+      nix-direnv = enabled;
+
+      enableNushellIntegration = true;
+    };
+
     programs.nushell = enabled {
       configFile.text = readFile ./config.nu;
       envFile.text    = readFile ./environment.nu;
