@@ -90,8 +90,11 @@ in {
           )
         '';
 
+        templates.git_push_bookmark = /* python */ ''
+          "change-rgbcube-" ++ change_id.short()
+        '';
+
         git.auto-local-bookmark  = true;
-        git.push-bookmark-prefix = "change-rgbcube-";
 
         git.fetch = [ "origin" "upstream" "rad" ];
         git.push  =   "origin";
