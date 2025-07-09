@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) attrValues enabled filter first foldl' getExe last match mkIf nameValuePair optionalAttrs readFile removeAttrs splitString;
+  inherit (lib) attrValues const enabled getExe mapAttrs mkIf optionalAttrs readFile removeAttrs replaceString;
 in {
   environment = optionalAttrs config.isLinux {
     sessionVariables.SHELLS = getExe pkgs.nushell;
@@ -131,7 +131,8 @@ in {
         #     |> map (keyAndValue: nameValuePair (first keyAndValue) (last keyAndValue))
         #     |> foldl' (x: y: x // y) {};
         homeVariablesExtra = {};
-      in environmentVariables // homeVariables // homeVariablesExtra;
+      in environmentVariables // homeVariables // homeVariablesExtra
+        |> mapAttrs (const <| replaceString "$HOME" homeConfig.home.homeDirectory);
 
       shellAliases = removeAttrs config.environment.shellAliases [ "ls" "l" ] // {
         cdtmp = "cd (mktemp --directory)";
