@@ -56,8 +56,6 @@ module dump {
   export def to-dump []: path -> string {
     let path = $in
 
-    print $path (dump-path)
-
     $path
     | path relative-to (dump-path)
     | path split
