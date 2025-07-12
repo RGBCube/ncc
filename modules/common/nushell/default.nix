@@ -31,20 +31,6 @@ in {
   };
 
   nixpkgs.overlays = [(self: super: {
-    zoxide = super.zoxide.overrideAttrs (old: {
-      src = self.fetchFromGitHub {
-        owner  = "Bahex";
-        repo   = "zoxide";
-        rev    = "0450775af9b1430460967ba8fb5aa434f95c4bc4";
-        hash   = "sha256-WhACxJMuhI9HGohcwg+ztZpQCVUZ4uibIQqGfJEEp/Y=";
-      };
-
-      cargoDeps = self.rustPlatform.fetchCargoVendor {
-        inherit (self.zoxide) src;
-        hash = "sha256-v3tcQaEXfGyt1j2fShvxxrA9Xc90AWxEzEUT09cQ+is=";
-      };
-    });
-
     starship = super.starship.overrideAttrs (old: {
       src = self.fetchFromGitHub {
         owner  = "poliorcetics";
