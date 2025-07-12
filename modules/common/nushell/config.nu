@@ -222,7 +222,13 @@ do --env {
       $"(ansi cyan)($pwd)(ansi reset)"
     }
 
-    $"(ansi light_yellow_bold)($left_char)━━━(ansi reset) ($body)(char newline)"
+    let middle = if $env.LAST_EXIT_CODE == 0 {
+      "━"
+    } else {
+      $"┫(ansi light_red_bold)($env.LAST_EXIT_CODE)(ansi light_yellow_bold)┣"
+    }
+
+    $"(ansi light_yellow_bold)($left_char)($middle)━(ansi reset) ($body)(char newline)"
   }
 
   $env.PROMPT_INDICATOR = $"(ansi light_yellow_bold)┃(ansi reset) "
