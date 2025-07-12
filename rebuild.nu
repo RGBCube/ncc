@@ -123,22 +123,16 @@ def darwin-shadow-xcode-popup [] {
 def darwin-set-zshrc [] {
   print "setting zshrc..."
 
-  let nu_command = $"
-    let usr_bin_index = $env.PATH
-    | enumerate
-    | where item == /usr/bin
-    | get 0.index
+  let nu_command = $"let usr_bin_index = $env.PATH
+| enumerate
+| where item == /usr/bin
+| get 0.index;
 
-    $env.PATH = $env.PATH | insert $usr_bin_index ($shadow_path | path expand)
+$env.PATH = $env.PATH | insert $usr_bin_index ($shadow_path | path expand);
 
-    $env.SHELL = which nu | get 0.path
-  "
+$env.SHELL = which nu | get 0.path" | str replace --all "\n" ""
 
-  let zshrc = $"
-    exec nu --execute '
-      ($nu_command)
-    '
-  "
+  let zshrc = $"exec nu --execute '($nu_command)'"
 
   $zshrc | save --force ~/.zshrc
 }
