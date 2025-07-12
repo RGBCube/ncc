@@ -138,12 +138,7 @@ $env.config.hooks.pre_execution = [
   }
 ]
 
-$env.config.hooks.env_change.PWD = [
-  {|_before, after|
-    ls $after
-    | if ($in | length) < 20 { print }
-  }
-]
+$env.config.hooks.env_change = {}
 
 $env.config.hooks.display_output = {||
   tee { table --expand | print }
