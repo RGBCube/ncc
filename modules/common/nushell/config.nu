@@ -128,6 +128,80 @@ $env.config.float_precision = 2
 $env.LS_COLORS = (open ~/.config/nushell/ls_colors.txt)
 $env.config.ls.use_ls_colors = true
 
+$env.config.hooks.pre_prompt = []
+
+$env.config.hooks.pre_execution = [
+  {||
+    commandline
+    | str trim
+    | if ($in | is-not-empty) { print $"(ansi title)($in) — nu(char bel)" }
+  }
+]
+
+$env.config.hooks.env_change.PWD = [
+  {|_before, after|
+    ls $after
+    | if ($in | length) < 20 { print }
+  }
+]
+
+$env.config.hooks.display_output = {||
+  tee { table --expand | print }
+  | if $in != null { $env.last = $in }
+}
+
+$env.config.hooks.command_not_found = []
+
+# Copy the current commandline, add syntax highlighting, wrap it in a
+# markdown code block, copy that to the system clipboard.
+#
+# Perfect for sharing code snippets on discord
+def "nu-keybind commandline-copy" []: nothing -> nothing {
+  commandline
+  | nu-highlight-default
+  | [
+    "```ansi"
+    $in
+    "```"
+  ]
+  | str join (char nl)
+  | clip copy --ansi
+}
+
+$env.config.keybindings ++= [
+  {
+    name: copy_color_commandline
+    modifier: control_alt
+    keycode: char_c
+    mode: [ emacs vi_insert vi_normal ]
+    event: {
+      send: executehostcommand
+      cmd: 'nu-keybind commandline-copy'
+    }
+  }
+]
+
+$env.config.color_config.bool = {||
+  if $in {
+    "light_green_bold"
+  } else {
+    "light_red_bold"
+  }
+}
+
+$env.config.color_config.string = {||
+  if $in =~ "^(#|0x)[a-fA-F0-9]+$" {
+    $in | str replace "0x" "#"
+  } else {
+    "white"
+  }
+}
+
+$env.config.color_config.row_index = "light_yellow_bold"
+$env.config.color_config.header = "light_yellow_bold"
+
+$env.config.color_config.shape_externalarg = "white"
+
 do --env {
   def prompt-header [
     --left-char: string
@@ -206,79 +280,29 @@ do --env {
     prompt-header --left-char "━"
   }
   $env.TRANSIENT_PROMPT_COMMAND_RIGHT = $env.PROMPT_COMMAND_RIGHT
-}
 
-$env.config.hooks.pre_prompt = []
-
-$env.config.hooks.pre_execution = [
-  {||
-    commandline
-    | str trim
-    | if ($in | is-not-empty) { print $"(ansi title)($in) — nu(char bel)" }
-  }
-]
-
-$env.config.hooks.env_change.PWD = [
-  {|_before, after|
-    ls $after
-    | if ($in | length) < 20 { print }
-  }
-]
-
-$env.config.hooks.display_output = {||
-  tee { table --expand | print }
-  | if $in != null { $env.last = $in }
-}
-
-$env.config.hooks.command_not_found = []
-
-# Copy the current commandline, add syntax highlighting, wrap it in a
-# markdown code block, copy that to the system clipboard.
-#
-# Perfect for sharing code snippets on discord
-def "nu-keybind commandline-copy" []: nothing -> nothing {
-  commandline
-  | nu-highlight-default
-  | [
-    "```ansi"
-    $in
-    "```"
-  ]
-  | str join (char nl)
-  | clip copy --ansi
-}
-
-$env.config.keybindings ++= [
-  {
-    name: copy_color_commandline
-    modifier: control_alt
-    keycode: char_c
-    mode: [ emacs vi_insert vi_normal ]
-    event: {
-      send: executehostcommand
-      cmd: 'nu-keybind commandline-copy'
+  let menus = [{
+    name: completion_menu
+    only_buffer_difference: false
+    marker: $env.PROMPT_INDICATOR
+    type: {
+      layout: ide
+      border: false
+      correct_cursor_pos: true
     }
-  }
-]
+    style: {
+      text: white
+      selected_text: white_reverse
+      description_text: yellow
+      match_text: { attr: u }
+      selected_match_text: { attr: ur }
+    }
+  }]
 
-$env.config.color_config.bool = {||
-  if $in {
-    "light_green_bold"
-  } else {
-    "light_red_bold"
-  }
+  $env.config.menus = $env.config.menus
+  | where name not-in ($menus | get name)
+  | append $menus
 }
-
-$env.config.color_config.string = {||
-  if $in =~ "^(#|0x)[a-fA-F0-9]+$" {
-    $in | str replace "0x" "#"
-  } else {
-    "white"
-  }
-}
-
-$env.config.color_config.row_index = "light_yellow_bold"
-$env.config.color_config.header = "light_yellow_bold"
 
 module dump {
   def site-path []: nothing -> path {
