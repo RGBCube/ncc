@@ -200,8 +200,6 @@ $env.config.color_config.string = {||
 $env.config.color_config.row_index = "light_yellow_bold"
 $env.config.color_config.header = "light_yellow_bold"
 
-$env.config.color_config.shape_externalarg = "white"
-
 do --env {
   def prompt-header [
     --left-char: string
