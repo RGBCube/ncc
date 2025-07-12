@@ -43,7 +43,6 @@ $env.config.rm.always_trash = false
 $env.config.recursion_limit = 100
 
 $env.config.edit_mode = "vi"
-$env.config.buffer_editor = "editor"
 
 $env.config.cursor_shape.emacs = "line"
 $env.config.cursor_shape.vi_insert = "line"
