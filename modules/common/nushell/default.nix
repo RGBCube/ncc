@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) attrValues const enabled getExe mapAttrs mkIf optionalAttrs readFile removeAttrs replaceString;
+  inherit (lib) attrValues const disabled enabled getExe mapAttrs mkIf optionalAttrs readFile removeAttrs replaceString;
 in {
   environment = optionalAttrs config.isLinux {
     sessionVariables.SHELLS = getExe pkgs.nushell;
@@ -26,30 +26,7 @@ in {
         zoxide # For completions and better cd.
       ;
     };
-
-    variables.STARSHIP_LOG = "error";
   };
-
-  nixpkgs.overlays = [(self: super: {
-    starship = super.starship.overrideAttrs (old: {
-      src = self.fetchFromGitHub {
-        owner  = "poliorcetics";
-        repo   = "starship";
-        rev    = "92aba18381994599850053ba667c25017566b8ee";
-        hash   = "sha256-FKDvkDcxUPDLcjFQzvqsGXeJUm0Dq8TcA4edf5OkdWo=";
-      };
-
-      cargoDeps = self.rustPlatform.fetchCargoVendor {
-        inherit (self.starship) src;
-        hash = "sha256-nH1iYjKw/GbYKadoymH3onWBbMzuMUaRCSTNWVE+A9E=";
-      };
-
-      nativeBuildInputs = old.nativeBuildInputs ++ [
-        pkgs.cmake
-        pkgs.zlib-ng
-      ];
-    });
-  })];
 
   home-manager.sharedModules = [(homeArgs: let
     homeConfig = homeArgs.config;
@@ -62,31 +39,6 @@ in {
       "nushell/ls_colors.txt".source = pkgs.runCommand "ls_colors.txt" {} ''
         ${getExe pkgs.vivid} generate gruvbox-dark-hard > $out
       '';
-
-      "nushell/starship.nu".source = pkgs.runCommand "starship.nu" {} ''
-        ${getExe pkgs.starship} init nu > $out
-      '';
-    };
-
-    programs.starship = enabled {
-      # No because we are doing it at build time instead of the way
-      # this retarded module does it. Why the hell do you generate
-      # the config every time the shell is launched?
-      enableNushellIntegration = false;
-
-      settings = {
-        vcs.disabled = false;
-
-        command_timeout = 100;
-        scan_timeout    = 20;
-
-        cmd_duration.show_notifications = config.isDesktop;
-
-        package.disabled = config.isServer;
-
-        character.error_symbol   = "";
-        character.success_symbol = "";
-      };
     };
 
     programs.direnv = enabled {
