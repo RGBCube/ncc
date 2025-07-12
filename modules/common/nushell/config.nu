@@ -280,8 +280,10 @@ do --env {
     prompt-header --left-char "━"
   }
   $env.TRANSIENT_PROMPT_COMMAND_RIGHT = $env.PROMPT_COMMAND_RIGHT
+}
 
-  let menus = [{
+let menus = [
+  {
     name: completion_menu
     only_buffer_difference: false
     marker: $env.PROMPT_INDICATOR
@@ -297,12 +299,25 @@ do --env {
       match_text: { attr: u }
       selected_match_text: { attr: ur }
     }
-  }]
+  }
+  {
+    name: history_menu
+    only_buffer_difference: true
+    marker: $env.PROMPT_INDICATOR
+    type: {
+      layout: list
+      page_size: 10
+    }
+    style: {
+      text: white
+      selected_text: white_reverse
+    }
+  }
+]
 
-  $env.config.menus = $env.config.menus
-  | where name not-in ($menus | get name)
-  | append $menus
-}
+$env.config.menus = $env.config.menus
+| where name not-in ($menus | get name)
+| append $menus
 
 module dump {
   def site-path []: nothing -> path {
