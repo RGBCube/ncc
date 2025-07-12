@@ -277,6 +277,9 @@ $env.config.color_config.string = {||
   }
 }
 
+$env.config.color_config.row_index = "light_yellow_bold"
+$env.config.color_config.header = "light_yellow_bold"
+
 module dump {
   def site-path []: nothing -> path {
     $env.HOME | path join "Projects" "site"
