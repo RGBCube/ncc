@@ -222,13 +222,26 @@ do --env {
       $"(ansi cyan)($pwd)(ansi reset)"
     }
 
-    let middle = if $env.LAST_EXIT_CODE == 0 {
-      "━"
+    let command_duration = ($env.CMD_DURATION_MS | into int) * 1ms
+    let command_duration = if $command_duration <= 2sec {
+      ""
     } else {
-      $"┫(ansi light_red_bold)($env.LAST_EXIT_CODE)(ansi light_yellow_bold)┣"
+      $"┫(ansi light_magenta_bold)($command_duration)(ansi light_yellow_bold)┣━"
     }
 
-    $"(ansi light_yellow_bold)($left_char)($middle)━(ansi reset) ($body)(char newline)"
+    let exit_code = if $env.LAST_EXIT_CODE == 0 {
+      ""
+    } else {
+      $"┫(ansi light_red_bold)($env.LAST_EXIT_CODE)(ansi light_yellow_bold)┣━"
+    }
+
+    let middle = if $command_duration == "" and $exit_code == "" {
+      "━"
+    } else {
+      ""
+    }
+
+    $"(ansi light_yellow_bold)($left_char)($exit_code)($middle)($command_duration)(ansi reset) ($body)(char newline)"
   }
 
   $env.PROMPT_INDICATOR = $"(ansi light_yellow_bold)┃(ansi reset) "
