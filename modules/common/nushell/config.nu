@@ -3,7 +3,7 @@ use std null_device
 
 source ~/.config/nushell/zoxide.nu
 
-$env.CARAPACE_BRIDGES = "inshellisense,zsh,fish,bash"
+$env.CARAPACE_BRIDGES = "inshellisense,carapace,zsh,fish,bash"
 source ~/.config/nushell/carapace.nu
 
 # Retrieve the output of the last command.
