@@ -3,6 +3,9 @@ use std null_device
 
 source ~/.config/nushell/zoxide.nu
 
+$env.CARAPACE_BRIDGES = "inshellisense,zsh,fish,bash"
+source ~/.config/nushell/carapace.nu
+
 # Retrieve the output of the last command.
 def _ []: nothing -> any {
   $env.last?
@@ -54,29 +57,6 @@ $env.config.completions.case_sensitive = false
 $env.config.completions.quick = true
 $env.config.completions.partial = true
 $env.config.completions.use_ls_colors = true
-$env.config.completions.external.enable = true
-$env.config.completions.external.max_results = 100
-$env.config.completions.external.completer = {|tokens: list<string>|
-  let expanded = scope aliases
-  | where name == $tokens.0
-  | get --ignore-errors 0.expansion
-
-  mut tokens = if $expanded != null and $tokens.0 != "cd" {
-    $expanded | split row " " | append ($tokens | skip 1)
-  } else {
-    $tokens
-  }
-
-  $tokens.0 = $tokens.0 | str trim --left --char "^"
-
-  let command = $tokens
-  | str join " "
-  | str replace --all (char single_quote) $"\\(char single_quote)"
-
-  fish --command $"complete '--do-complete=($command)'"
-  | $"value(char tab)description(char newline)" + $in
-  | from tsv --flexible --no-infer
-}
 
 $env.config.use_kitty_protocol = true
 
@@ -303,6 +283,7 @@ let menus = [
       layout: ide
       border: false
       correct_cursor_pos: true
+      max_completion_height: 25
     }
     style: {
       text: white

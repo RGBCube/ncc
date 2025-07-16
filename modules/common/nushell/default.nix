@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) attrValues const disabled enabled getExe mapAttrs mkIf optionalAttrs readFile removeAttrs replaceString;
+  inherit (lib) attrValues const enabled getExe mapAttrs mkIf optionalAttrs readFile removeAttrs replaceString;
 in {
   environment = optionalAttrs config.isLinux {
     sessionVariables.SHELLS = getExe pkgs.nushell;
@@ -8,6 +8,7 @@ in {
 
     shellAliases = {
       la  = "ls --all";
+      ll  = "ls --long";
       lla = "ls --long --all";
       sl  = "ls";
 
@@ -22,8 +23,12 @@ in {
 
     systemPackages = attrValues {
       inherit (pkgs)
-        fish   # For completions.
-        zoxide # For completions and better cd.
+        carapace      # For completions.
+        fish          # For completions.
+        zsh           # For completions.
+        inshellisense # For completions.
+
+        zoxide   # For better cd.
       ;
     };
   };
@@ -32,6 +37,10 @@ in {
     homeConfig = homeArgs.config;
   in {
     xdg.configFile = {
+      "nushell/carapace.nu".source = pkgs.runCommand "carapace.nu" {} ''
+        ${getExe pkgs.carapace} _carapace nushell > $out
+      '';
+
       "nushell/zoxide.nu".source = pkgs.runCommand "zoxide.nu" {} ''
         ${getExe pkgs.zoxide} init nushell --cmd cd > $out
       '';
@@ -74,7 +83,6 @@ in {
 
       shellAliases = removeAttrs config.environment.shellAliases [ "ls" "l" ] // {
         cdtmp = "cd (mktemp --directory)";
-        ll    = "ls --long";
       };
     };
   })];
