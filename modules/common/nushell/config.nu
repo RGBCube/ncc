@@ -179,6 +179,8 @@ do --env {
   def prompt-header [
     --left-char: string
   ]: nothing -> string {
+    let code = $env.LAST_EXIT_CODE
+
     let jj_workspace_root = try {
       jj workspace root err> $null_device
     } catch {
@@ -221,10 +223,10 @@ do --env {
       $"┫(ansi light_magenta_bold)($command_duration)(ansi light_yellow_bold)┣━"
     }
 
-    let exit_code = if $env.LAST_EXIT_CODE == 0 {
+    let exit_code = if $code == 0 {
       ""
     } else {
-      $"┫(ansi light_red_bold)($env.LAST_EXIT_CODE)(ansi light_yellow_bold)┣━"
+      $"┫(ansi light_red_bold)($code)(ansi light_yellow_bold)┣━"
     }
 
     let middle = if $command_duration == "" and $exit_code == "" {
