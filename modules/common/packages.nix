@@ -19,6 +19,7 @@ in {
       p7zip
       pstree
       rsync
+      sd
       timg
       tokei
       typos
