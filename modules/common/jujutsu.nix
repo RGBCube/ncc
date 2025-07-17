@@ -4,6 +4,7 @@ in {
   environment.systemPackages = attrValues {
     inherit (pkgs)
       difftastic
+      jjui
       mergiraf
       radicle-node
     ;
