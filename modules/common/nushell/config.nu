@@ -185,13 +185,25 @@ do --env {
       ""
     }
 
+    let hostname = if ($env.SSH_CONNECTION? | is-not-empty) {
+      let hostname = try {
+        hostname
+      } catch {
+        "remote"
+      }
+
+      $"(ansi light_green_bold)@($hostname)(ansi reset) "
+    } else {
+      ""
+    }
+
     let body = if ($jj_workspace_root | is-not-empty) {
       let subpath = pwd | path relative-to $jj_workspace_root
       let subpath = if ($subpath | is-not-empty) {
         $"(ansi magenta_bold) → (ansi reset)(ansi blue)($subpath)"
       }
 
-      $"(ansi light_yellow_bold)($jj_workspace_root | path basename)($subpath)(ansi reset)"
+      $"($hostname)(ansi light_yellow_bold)($jj_workspace_root | path basename)($subpath)(ansi reset)"
     } else {
       let pwd = if (pwd | str starts-with $env.HOME) {
         "~" | path join (pwd | path relative-to $env.HOME)
@@ -199,7 +211,7 @@ do --env {
         pwd
       }
   
-      $"(ansi cyan)($pwd)(ansi reset)"
+      $"($hostname)(ansi cyan)($pwd)(ansi reset)"
     }
 
     let command_duration = ($env.CMD_DURATION_MS | into int) * 1ms
