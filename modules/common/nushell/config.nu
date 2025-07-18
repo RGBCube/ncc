@@ -181,7 +181,8 @@ $env.config.hooks.env_change = {}
 
 $env.config.hooks.display_output = {||
   tee { table --expand | print }
-  | if $in != null { $env.last = $in }
+  # SQLiteDatabase doesn't support equality comparisions
+  | try { if $in != null { $env.last = $in } }
 }
 
 $env.config.hooks.command_not_found = []
