@@ -30,9 +30,9 @@ def --wrapped jc [...arguments]: [any -> table, any -> record, any -> string] {
 
   if $run.exit_code != 0 {
     error make {
-      msg: $run.stderr,
+      msg: $run.stderr
       label: {
-        text: "jc execution failed",
+        text: "jc execution failed"
         span: (metadata $arguments).span
       }
     }
@@ -316,9 +316,18 @@ let menus = [
     marker: $env.PROMPT_INDICATOR
     type: {
       layout: ide
-      border: false
-      correct_cursor_pos: true
+      min_completion_width: 0
+      max_completion_width: 150
       max_completion_height: 25
+      padding: 0
+      border: false
+      cursor_offset: 0
+      description_mode: "prefer_right"
+      min_description_width: 0
+      max_description_width: 50
+      max_description_height: 10
+      description_offset: 1
+      correct_cursor_pos: true
     }
     style: {
       text: white
