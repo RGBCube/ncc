@@ -282,18 +282,23 @@ do --env {
       ""
     }
 
+    # https://github.com/nushell/nushell/issues/16205
+    #
+    # Case insensitive filesystems strike again!
+    let pwd = pwd | path expand
+
     let body = if ($jj_workspace_root | is-not-empty) {
-      let subpath = pwd | path relative-to $jj_workspace_root
+      let subpath = $pwd | path relative-to $jj_workspace_root
       let subpath = if ($subpath | is-not-empty) {
         $"(ansi magenta_bold) → (ansi reset)(ansi blue)($subpath)"
       }
 
       $"($hostname)(ansi light_yellow_bold)($jj_workspace_root | path basename)($subpath)(ansi reset)"
     } else {
-      let pwd = if (pwd | str starts-with $env.HOME) {
-        "~" | path join (pwd | path relative-to $env.HOME)
+      let pwd = if ($pwd | str starts-with $env.HOME) {
+        "~" | path join ($pwd | path relative-to $env.HOME)
       } else {
-        pwd
+        $pwd
       }
   
       $"($hostname)(ansi cyan)($pwd)(ansi reset)"
