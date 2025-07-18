@@ -24,6 +24,27 @@ def --env mcg [path: path]: nothing -> nothing {
   jj git init --colocate
 }
 
+# Run `jc` (JSON Converter).
+def --wrapped jc [...arguments]: [any -> table, any -> record, any -> string] {
+  let run = ^jc ...$arguments | complete
+
+  if $run.exit_code != 0 {
+    error make {
+      msg: $run.stderr,
+      label: {
+        text: "jc execution failed",
+        span: (metadata $arguments).span
+      }
+    }
+  }
+
+  if "--help" in $arguments or "-h" in $arguments {
+    $run.stdout
+  } else {
+    $run.stdout | from json
+  }
+}
+
 # `nu-highlight` with default colors
 #
 # Custom themes can produce a lot more ansi color codes and make the output

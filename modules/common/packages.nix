@@ -14,6 +14,7 @@ in {
       fastfetch
       fd
       hyperfine
+      jc
       moreutils
       openssl
       p7zip
