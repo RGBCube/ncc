@@ -6,20 +6,37 @@ in {
     shellAliases.x   = "hx";
   };
 
-  # nixpkgs.overlays = [(self: super: {
-  #   helix = super.helix.overrideAttrs (old: {
-  #     src = self.fetchzip {
-  #       url = "https://github.com/cull-os/helix/releases/download/ci-release-25.01.1/helix-ci-release-25.01.1-source.tar.xz";
-  #       hash = "sha256-bvlzXRAdPvz8P49KENSw9gupQNaUm/+3eZZ1q7+fTsw=";
-  #       stripRoot = false;
-  #     };
+  nixpkgs.overlays = [(self: super: {
+    # CullOS Helix with Cab support:
+    # helix = super.helix.overrideAttrs (old: {
+    #   src = self.fetchzip {
+    #     url = "https://github.com/cull-os/helix/releases/download/ci-release-25.01.1/helix-ci-release-25.01.1-source.tar.xz";
+    #     hash = "sha256-bvlzXRAdPvz8P49KENSw9gupQNaUm/+3eZZ1q7+fTsw=";
+    #     stripRoot = false;
+    #   };
 
-  #     cargoDeps = self.rustPlatform.fetchCargoVendor {
-  #       inherit (self.helix) src;
-  #       hash = "sha256-soOnSRvWO7OzxYENFUBGmgSAk1Oy9Av+wDDLKkcuIbs=";
-  #     };
-  #   });
-  # })];
+    #   cargoDeps = self.rustPlatform.fetchCargoVendor {
+    #     inherit (self.helix) src;
+    #     hash = "sha256-soOnSRvWO7OzxYENFUBGmgSAk1Oy9Av+wDDLKkcuIbs=";
+    #   };
+    # });
+
+    helix = super.helix.overrideAttrs (finalAttrs: _previousAttrs: {
+        version = "25.07.2";
+        src = self.fetchzip {
+          url = "https://github.com/bloxx12/helix/releases/download/${finalAttrs.version}/helix-${finalAttrs.version}-source.tar.xz";
+          hash = "sha256-ZNsQwFfPXe6oewajx1tl68W60kVo7q2SuvTgy/o1HKk=";
+          stripRoot = false;
+        };
+
+        doInstallCheck = false;
+
+        cargoDeps = self.rustPlatform.fetchCargoVendor {
+          inherit (self.helix) src;
+          hash = "sha256-3poZSvIrkx8lguxxDeNfngW6+4hH8TV/LHcZx5W5aXg=";
+        };
+      });
+  })];
 
   home-manager.sharedModules = [{
     programs.nushell.configFile.text = mkIf /*(*/config.isDesktop/* && config.isLinux)*/ <| mkAfter /* nu */ ''
