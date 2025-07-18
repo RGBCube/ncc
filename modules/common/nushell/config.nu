@@ -30,13 +30,16 @@ def --env "nu-complete jc" [] {
   }
 
   let options = try {
-    let options = jc --help
-    | parse "{_}Options:\n{inherent}\n\nSlice:{_}"
+    let options = ^jc --help
+    | collect
+    | parse "{_}Parsers:\n{_}\n\nOptions:\n{inherent}\n\nSlice:{_}"
     | get 0
 
-    let parsers = jc --about
+    let parsers = ^jc --about
     | from json
-    | get parsers.argument
+    | get parsers
+    | select argument description
+    | rename value description
 
     let inherent = $options.inherent
     | lines
@@ -51,7 +54,7 @@ def --env "nu-complete jc" [] {
 
     $parsers ++ $inherent
   } catch {
-    null
+    []
   }
 
   $env.__NU_COMPLETE_JC = $options
