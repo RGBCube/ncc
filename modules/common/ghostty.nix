@@ -24,6 +24,8 @@ in merge <| mkIf config.isDesktop {
         window-padding-x = padding;
         window-padding-y = padding;
 
+        scrollback-limit = 10000;
+
         mouse-hide-while-typing = true;
 
         confirm-close-surface         = false;
