@@ -24,42 +24,65 @@ def --env mcg [path: path]: nothing -> nothing {
   jj git init --colocate
 }
 
-def --env "nu-complete jc" [] {
-  if $env.__NU_COMPLETE_JC? != null {
-    return $env.__NU_COMPLETE_JC
+def --env "nu-complete jc" [commandline: string] {
+  let stor = stor open
+
+  if $stor.jc_completions? == null {
+    stor create --table-name jc_completions --columns { value: str, description: str, is_flag: bool }
   }
 
-  let options = try {
-    let options = ^jc --help
-    | collect
-    | parse "{_}Parsers:\n{_}\n\nOptions:\n{inherent}\n\nSlice:{_}"
-    | get 0
+  if $stor.jc_completions_ran? == null {
+    stor create --table-name jc_completions_ran --columns { _: bool }
+  }
 
-    let parsers = ^jc --about
+  if $stor.jc_completions_ran == [] { try {
+    let about = ^jc --about
     | from json
+
+    let magic = $about
+    | get parsers
+    | each { { value: $in.magic_commands?, description: $in.description } }
+    | where value != null
+    | flatten
+
+    let options = $about
     | get parsers
     | select argument description
     | rename value description
 
-    let inherent = $options.inherent
+    let inherent = ^jc --help
     | lines
-    | parse "    {short},  {long} {description}"
+    | split list "" # Group with empty lines as boundary.
+    | where { $in.0? == "Options:" } | get 0 # Get the first section that starts with "Options:"
+    | skip 1 # Remove header
+    | each { str trim }
+    | parse "{short},  {long} {description}"
     | update description { str trim }
     | each {|record|
       [[value, description];
         [$record.short, $record.description],
-        [$record.long, $record.description]]
+        [$record.long, $record.description],
+      ]
     }
     | flatten
 
-    $parsers ++ $inherent
-  } catch {
-    []
-  }
+    for entry in $magic {
+      stor insert --table-name jc_completions --data-record ($entry | insert is_flag false)
+    }
 
-  $env.__NU_COMPLETE_JC = $options
+    for entry in ($options ++ $inherent) {
+      stor insert --table-name jc_completions --data-record ($entry | insert is_flag true)
+    }
 
-  $options
+    stor insert --table-name jc_completions_ran --data-record { _: true }
+  } }
+
+  if ($commandline | str contains "-") {
+    $stor.jc_completions
+  } else {
+    $stor.jc_completions
+    | where is_flag == 0
+  } | select value description
 }
 
 # Run `jc` (JSON Converter).
