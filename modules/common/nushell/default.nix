@@ -85,6 +85,10 @@ in {
 
         homeVariablesExtra = pkgs.runCommand "home-variables-extra.env" {} ''
             bash -ic '
+              ${variablesMap
+              |> mapAttrsToList (name: value: "export ${name}='${value}'")
+              |> concatStringsSep "\n"}
+
               alias export=echo
               source ${config'.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh
             ' > $out
