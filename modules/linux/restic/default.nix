@@ -1,6 +1,6 @@
 { config, lib, ... }: let
   inherit (lib) genAttrs mkConst mkIf remove;
-in{
+in {
   options.services.restic.hosts = mkConst <| remove config.networking.hostName [ "nine" "best" ];
 
   config.secrets.resticPassword.file = mkIf config.isServer ./password.age;

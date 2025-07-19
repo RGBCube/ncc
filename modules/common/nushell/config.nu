@@ -196,7 +196,7 @@ do --env {
       } else {
         $pwd
       }
-  
+
       $"($hostname)(ansi cyan)($pwd)(ansi reset)"
     }
 

@@ -1,62 +1,20 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) attrNames attrValues concatStringsSep const enabled filter flatten foldl' getExe head last listToAttrs mapAttrs mapAttrsToList match mkIf nameValuePair optionalAttrs readFile removeAttrs replaceStrings splitString;
+  inherit (lib) attrNames attrValues concatStringsSep const enabled filter flatten foldl' head last listToAttrs mapAttrs mapAttrsToList match nameValuePair readFile removeAttrs replaceStrings splitString;
+
+  package = pkgs.nushell;
 in {
-  environment = optionalAttrs config.isLinux {
-    sessionVariables.SHELLS = getExe pkgs.nushell;
-  } // {
-    shells = mkIf config.isDarwin [ pkgs.nushell ];
-
-    shellAliases = {
-      la  = "ls --all";
-      ll  = "ls --long";
-      lla = "ls --long --all";
-      sl  = "ls";
-
-      cp = "cp --recursive --verbose --progress";
-      mk = "mkdir";
-      mv = "mv --verbose";
-      rm = "rm --recursive --verbose";
-
-      pstree = "pstree -g 3";
-      tree   = "eza --tree --git-ignore --group-directories-first";
-    };
-
-    systemPackages = attrValues {
-      inherit (pkgs)
-        carapace      # For completions.
-        fish          # For completions.
-        zsh           # For completions.
-        inshellisense # For completions.
-      ;
-    };
-  };
+  shells."0" = package;
 
   home-manager.sharedModules = [(homeArgs: let
     config' = homeArgs.config;
   in {
-    programs.carapace = enabled {
-      enableNushellIntegration = true;
-    };
-
-    programs.direnv = enabled {
-      enableNushellIntegration = true;
-
-      nix-direnv = enabled;
-    };
-
-    programs.zoxide = enabled {
-      enableNushellIntegration = true;
-
-      options = [ "--cmd cd" ];
-    };
-
     programs.nushell = enabled {
+      inherit package;
+
       configFile.text = readFile ./config.nu;
 
-      extraConfig = ''
-        $env.LS_COLORS = open ${pkgs.runCommand "ls_colors.txt" {} ''
-          ${getExe pkgs.vivid} generate gruvbox-dark-hard > $out
-        ''}
+      extraConfig = /* nu */ ''
+        $env.LS_COLORS = open ${config.environment.ls-colors}
       '';
 
       environmentVariables = let
