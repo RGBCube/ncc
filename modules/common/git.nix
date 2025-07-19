@@ -77,7 +77,7 @@ in {
 
   home-manager.sharedModules = [
     (homeArgs: let
-      homeConfig = homeArgs.config;
+      config' = homeArgs.config;
 
       gitUrl    = self.best.services.forgejo.settings.server.ROOT_URL;
       gitDomain = head <| match "https://(.*)/" gitUrl;
@@ -96,8 +96,8 @@ in {
       '';
 
       programs.git = enabled {
-        userName  = homeConfig.programs.jujutsu.settings.user.name;
-        userEmail = homeConfig.programs.jujutsu.settings.user.email;
+        userName  = config'.programs.jujutsu.settings.user.name;
+        userEmail = config'.programs.jujutsu.settings.user.email;
 
         lfs = enabled;
 

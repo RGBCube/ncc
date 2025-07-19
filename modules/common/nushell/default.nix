@@ -27,48 +27,47 @@ in {
         fish          # For completions.
         zsh           # For completions.
         inshellisense # For completions.
-
-        zoxide   # For better cd.
       ;
     };
   };
 
   home-manager.sharedModules = [(homeArgs: let
-    homeConfig = homeArgs.config;
+    config' = homeArgs.config;
   in {
-    xdg.configFile = {
-      "nushell/carapace.nu".source = pkgs.runCommand "carapace.nu" {} ''
-        ${getExe pkgs.carapace} _carapace nushell > $out
-      '';
-
-      "nushell/zoxide.nu".source = pkgs.runCommand "zoxide.nu" {} ''
-        ${getExe pkgs.zoxide} init nushell --cmd cd > $out
-      '';
-
-      "nushell/ls_colors.txt".source = pkgs.runCommand "ls_colors.txt" {} ''
-        ${getExe pkgs.vivid} generate gruvbox-dark-hard > $out
-      '';
+    programs.carapace = enabled {
+      enableNushellIntegration = true;
     };
 
     programs.direnv = enabled {
-      nix-direnv = enabled;
-
       enableNushellIntegration = true;
+
+      nix-direnv = enabled;
+    };
+
+    programs.zoxide = enabled {
+      enableNushellIntegration = true;
+
+      options = [ "--cmd cd" ];
     };
 
     programs.nushell = enabled {
       configFile.text = readFile ./config.nu;
-      envFile.text    = readFile ./environment.nu;
+
+      extraConfig = ''
+        $env.LS_COLORS = open ${pkgs.runCommand "ls_colors.txt" {} ''
+          ${getExe pkgs.vivid} generate gruvbox-dark-hard > $out
+        ''}
+      '';
 
       environmentVariables = let
         environmentVariables = config.environment.variables;
 
-        homeVariables      = homeConfig.home.sessionVariables;
+        homeVariables      = config'.home.sessionVariables;
         # homeVariablesExtra = pkgs.runCommand "home-variables-extra.env" {} ''
         #     alias export=echo
         #     # echo foo > $out
         #     # FIXME
-        #     eval $(cat ${homeConfig.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh) > $out
+        #     eval $(cat ${config'.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh) > $out
         #   ''
         #     # |> (aaa: (_: break _) aaa)
         #     |> readFile
@@ -79,7 +78,7 @@ in {
         #     |> foldl' (x: y: x // y) {};
         homeVariablesExtra = {};
       in environmentVariables // homeVariables // homeVariablesExtra
-        |> mapAttrs (const <| replaceString "$HOME" homeConfig.home.homeDirectory);
+        |> mapAttrs (const <| replaceString "$HOME" config'.home.homeDirectory);
 
       shellAliases = removeAttrs config.environment.shellAliases [ "ls" "l" ] // {
         cdtmp = "cd (mktemp --directory)";
