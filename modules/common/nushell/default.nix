@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) attrNames attrValues concatStringsSep const enabled flatten getExe listToAttrs mapAttrs mapAttrsToList mkIf optionalAttrs readFile removeAttrs replaceStrings;
+  inherit (lib) attrNames attrValues concatStringsSep const enabled filter flatten foldl' getExe head last listToAttrs mapAttrs mapAttrsToList match mkIf nameValuePair optionalAttrs readFile removeAttrs replaceStrings splitString;
 in {
   environment = optionalAttrs config.isLinux {
     sessionVariables.SHELLS = getExe pkgs.nushell;
@@ -83,20 +83,18 @@ in {
         homeSearchVariables = config'.home.sessionSearchVariables
           |> mapAttrs (const <| concatStringsSep ":");
 
-        # homeVariablesExtra = pkgs.runCommand "home-variables-extra.env" {} ''
-        #     alias export=echo
-        #     # echo foo > $out
-        #     # FIXME
-        #     eval $(cat ${config'.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh) > $out
-        #   ''
-        #     # |> (aaa: (_: break _) aaa)
-        #     |> readFile
-        #     |> splitString "\n"
-        #     |> filter (s: s != "")
-        #     |> map (match "([^=]+)=(.*)")
-        #     |> map (keyAndValue: nameValuePair (first keyAndValue) (last keyAndValue))
-        #     |> foldl' (x: y: x // y) {};
-        homeVariablesExtra = {};
+        homeVariablesExtra = pkgs.runCommand "home-variables-extra.env" {} ''
+            bash -ic '
+              alias export=echo
+              source ${config'.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh
+            ' > $out
+          ''
+          |> readFile
+          |> splitString "\n"
+          |> filter (s: s != "")
+          |> map (match "([^=]+)=(.*)")
+          |> map (keyAndValue: nameValuePair (head keyAndValue) (last keyAndValue))
+          |> foldl' (x: y: x // y) {};
       in environmentVariables
       // homeVariables
       // homeSearchVariables
