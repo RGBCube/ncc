@@ -74,7 +74,6 @@ $env.config.render_right_prompt_on_last_line = false
 
 $env.config.float_precision = 2
 
-$env.LS_COLORS = (open ~/.config/nushell/ls_colors.txt)
 $env.config.ls.use_ls_colors = true
 
 $env.config.hooks.pre_prompt = []
