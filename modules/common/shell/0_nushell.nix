@@ -58,10 +58,10 @@ in {
     programs.nushell = enabled {
       inherit package;
 
-      configFile.text = readFile ./config.nu;
-
       inherit (config.environment) shellAliases;
       inherit environmentVariables;
+
+      configFile.text = readFile ./0_nushell.nu;
     };
   })];
 }
