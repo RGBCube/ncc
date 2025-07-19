@@ -1,14 +1,7 @@
 { config, lib, pkgs, ... }: let
   inherit (lib) enabled;
 in {
-  environment.variables = {
-    MANPAGER = "bat --plain";
-    PAGER    = "bat --plain";
-  };
-  environment.shellAliases = {
-    cat  = "bat";
-    less = "bat --plain";
-  };
+  environment.shellAliases.cat  = "bat";
 
   home-manager.sharedModules = [{
     programs.bat = enabled {
