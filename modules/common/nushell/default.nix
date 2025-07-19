@@ -13,10 +13,6 @@ in {
 
       configFile.text = readFile ./config.nu;
 
-      extraConfig = /* nu */ ''
-        $env.LS_COLORS = open ${config.environment.ls-colors}
-      '';
-
       environmentVariables = let
         variablesMap = {
           HOME = config'.home.homeDirectory;

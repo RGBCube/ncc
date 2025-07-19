@@ -1,9 +1,9 @@
 { lib, pkgs, ... }: let
-  inherit (lib) getExe mkConst;
-
-  lsColors = pkgs.runCommand "ls_colors.txt" {} ''
-    ${getExe pkgs.vivid} generate gruvbox-dark-hard > $out
-  '';
+  inherit (lib) getExe readFile;
 in {
-  options.environment.ls-colors = mkConst lsColors;
+  # Yes, IFD. Deal with it.
+  environment.variables.LS_COLORS = readFile <|
+    pkgs.runCommand "ls_colors.txt" {} ''
+      ${getExe pkgs.vivid} generate gruvbox-dark-hard > $out
+    '';
 }
