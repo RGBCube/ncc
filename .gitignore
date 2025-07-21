@@ -2,8 +2,6 @@
 
 !.gitignore
 
-!docs/
-
 !hosts/
 !hosts/**/
 

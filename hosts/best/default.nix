@@ -1,7 +1,8 @@
 lib: lib.nixosSystem' ({ config, keys, lib, ... }: let
   inherit (lib) collectNix remove;
 in {
-  imports = collectNix ./. |> remove ./default.nix;
+  imports = collectNix ./.
+    |> remove ./default.nix;
 
   secrets.id.file           = ./id.age;
   services.openssh.hostKeys = [{

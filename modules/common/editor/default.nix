@@ -154,7 +154,7 @@ in {
 
         # NIX
         nixfmt-rfc-style
-        nil
+        nixd
 
         # PYTHON
         basedpyright

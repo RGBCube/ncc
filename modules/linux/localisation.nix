@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }: let
   inherit (lib) const genAttrs merge mkIf;
 in merge {
-  console.keyMap = pkgs.writeText "trq-swapped-i.map" ''
+  console.keyMap = pkgs.writeText "trq-swapped-i.map" /* hs */ ''
     include "${pkgs.kbd}/share/keymaps/i386/qwerty/trq.map"
 
     keycode 23 = i
@@ -10,6 +10,20 @@ in merge {
 
     keycode 40 = +dotlessi +Idotabove
   '';
+
+  home-manager.sharedModules = [{
+    xdg.configFile."xkb/symbols/tr-swapped-i".text = /* rs */ ''
+      default partial
+      xkb_symbols "basic" {
+        include "tr(basic)"
+
+        name[Group1]="Turkish (i and ı swapped)";
+
+        key <AC11>  { type[group1] = "FOUR_LEVEL_SEMIALPHABETIC", [ idotless, Iabovedot,  paragraph , none      ]};
+        key <AD08>  { type[group1] = "FOUR_LEVEL_SEMIALPHABETIC", [ i       , I        ,  apostrophe, dead_caron ]};
+      };
+    '';
+  }];
 
   i18n.defaultLocale = "C.UTF-8";
 } <| mkIf config.isDesktop {

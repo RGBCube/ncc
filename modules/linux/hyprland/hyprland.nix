@@ -35,18 +35,6 @@ in merge <| mkIf config.isDesktop {
   };
 
   home-manager.sharedModules = [{
-    xdg.configFile."xkb/symbols/tr-swapped-i".text = ''
-      default partial
-      xkb_symbols "basic" {
-        include "tr(basic)"
-
-        name[Group1]="Turkish (i and ı swapped)";
-
-        key <AC11>  { type[group1] = "FOUR_LEVEL_SEMIALPHABETIC", [ idotless, Iabovedot,  paragraph , none      ]};
-        key <AD08>  { type[group1] = "FOUR_LEVEL_SEMIALPHABETIC", [ i       , I        ,  apostrophe, dead_caron ]};
-      };
-    '';
-
     wayland.windowManager.hyprland = enabled {
       systemd = enabled {
         enableXdgAutostart = true;

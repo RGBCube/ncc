@@ -1,7 +1,8 @@
-lib: lib.darwinSystem' ({ lib, ... }: let
+lib: lib.darwinSystem' ({ config, lib, ... }: let
   inherit (lib) collectNix remove;
 in {
-  imports = collectNix ./. |> remove ./default.nix;
+  imports = collectNix ./.
+    |> remove ./default.nix;
 
   type = "desktop";
 
@@ -14,8 +15,8 @@ in {
 
   home-manager.users.pala.home = {
     stateVersion  = "25.05";
-    homeDirectory = "/Users/pala";
+    homeDirectory = config.users.users.pala.home;
   };
 
-  system.stateVersion  = 5;
+  system.stateVersion = 5;
 })
