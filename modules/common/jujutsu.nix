@@ -1,14 +1,12 @@
 { self, config, lib, pkgs, ... }: let
-  inherit (lib) attrValues enabled head mkIf;
+  inherit (lib) enabled head mkIf;
 in {
-  environment.systemPackages = attrValues {
-    inherit (pkgs)
-      difftastic
-      jjui
-      mergiraf
-      radicle-node
-    ;
-  };
+  environment.systemPackages = [
+    pkgs.difftastic
+    pkgs.jjui
+    pkgs.mergiraf
+    pkgs.radicle-node
+  ];
 
   home-manager.sharedModules = [{
     programs.jujutsu = enabled {

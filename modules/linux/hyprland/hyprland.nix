@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) attrValues enabled merge mkIf flatten range;
+  inherit (lib) enabled merge mkIf flatten range;
 in merge <| mkIf config.isDesktop {
   hardware.graphics = enabled;
 
@@ -19,20 +19,18 @@ in merge <| mkIf config.isDesktop {
 
   programs.xwayland = enabled;
 
-  environment.systemPackages = attrValues {
-    inherit (pkgs)
-      brightnessctl
-      grim
-      hyprpicker
-      slurp
-      swappy
-      swaybg
-      wl-clipboard
-      wtype
-      xdg-utils
-      xwaylandvideobridge
-    ;
-  };
+  environment.systemPackages = [
+    pkgs.brightnessctl
+    pkgs.grim
+    pkgs.hyprpicker
+    pkgs.slurp
+    pkgs.swappy
+    pkgs.swaybg
+    pkgs.wl-clipboard
+    pkgs.wtype
+    pkgs.xdg-utils
+    pkgs.xwaylandvideobridge
+  ];
 
   home-manager.sharedModules = [{
     wayland.windowManager.hyprland = enabled {

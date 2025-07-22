@@ -1,5 +1,5 @@
 { self, config, inputs, lib, pkgs, ... }: let
-  inherit (lib) attrValues attrsToList concatStringsSep const disabled filter filterAttrs flip id isType mapAttrs mapAttrsToList match merge mkAfter optionalAttrs optionals;
+  inherit (lib) attrsToList concatStringsSep const disabled filter filterAttrs flip id isType mapAttrs mapAttrsToList merge mkAfter optionalAttrs optionals;
   inherit (lib.strings) toJSON;
 
   registryMap = inputs
@@ -53,13 +53,11 @@ in {
 
   nix.optimise.automatic = true;
 
-  environment.systemPackages = attrValues {
-    inherit (pkgs)
-      nh
-      nix-index
-      nix-output-monitor
-    ;
-  };
+  environment.systemPackages = [
+    pkgs.nh
+    pkgs.nix-index
+    pkgs.nix-output-monitor
+  ];
 
   home-manager.sharedModules = [{
     programs.nushell.configFile.text = mkAfter /* nu */ ''

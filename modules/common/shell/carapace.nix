@@ -1,14 +1,12 @@
 { lib, pkgs, ... }: let
-  inherit (lib) attrValues enabled;
+  inherit (lib) enabled;
 in {
-  environment.systemPackages = attrValues {
-    inherit (pkgs)
-      carapace
-      fish
-      zsh
-      inshellisense
-    ;
-  };
+  environment.systemPackages = [
+    pkgs.carapace
+    pkgs.fish
+    pkgs.zsh
+    pkgs.inshellisense
+  ];
 
   home-manager.sharedModules = [{
     programs.carapace = enabled;

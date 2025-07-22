@@ -129,49 +129,47 @@ in {
     shellAliases.e   = config.editor.defaultAlias;
     variables.EDITOR = config.editor.defaultAlias;
 
-    systemPackages = mkIf config.isDesktop <| attrValues {
-      inherit (pkgs)
-        # CMAKE
-        cmake-language-server
+    systemPackages = mkIf config.isDesktop [
+      # CMAKE
+      pkgs.cmake-language-server
 
-        # GO
-        gopls
+      # GO
+      pkgs.gopls
 
-        # HTML
-        vscode-langservers-extracted
+      # HTML
+      pkgs.vscode-langservers-extracted
 
-        # KOTLIN
-        kotlin-language-server
+      # KOTLIN
+      pkgs.kotlin-language-server
 
-        # LATEX
-        texlab
+      # LATEX
+      pkgs.texlab
 
-        # LUA
-        lua-language-server
+      # LUA
+      pkgs.lua-language-server
 
-        # MARKDOWN
-        markdown-oxide
+      # MARKDOWN
+      pkgs.markdown-oxide
 
-        # NIX
-        nixfmt-rfc-style
-        nixd
+      # NIX
+      pkgs.nixfmt-rfc-style
+      pkgs.nixd
 
-        # PYTHON
-        basedpyright
+      # PYTHON
+      pkgs.basedpyright
 
-        # RUST
-        rust-analyzer-nightly
-        lldb
+      # RUST
+      pkgs.rust-analyzer-nightly
+      pkgs.lldb
 
-        # TYPESCRIPT & OTHERS
-        deno
+      # TYPESCRIPT & OTHERS
+      pkgs.deno
 
-        # YAML
-        yaml-language-server
+      # YAML
+      pkgs.yaml-language-server
 
-        # ZIG
-        zls
-      ;
-    };
+      # ZIG
+      pkgs.zls
+    ];
   };
 }
