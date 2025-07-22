@@ -66,10 +66,10 @@ in {
 
         args.program      = "{0}";
         args.initCommands = let
-          primer = pkgs.runCommand "primer" {} (/* py */ ''
-            mkdir $out
-            echo '
+          # Why? Helix injections.
+          writeText = pkgs.writeText;
 
+          primer = writeText "primer.py" ''
             import subprocess
             import pathlib
             import lldb
@@ -82,9 +82,7 @@ in {
             # Load lldb_lookup.py and execute lldb_commands with the correct path
             lldb.debugger.HandleCommand(f"""command script import "{rustlib_etc / 'lldb_lookup.py'}" """)
             lldb.debugger.HandleCommand(f"""command source -s 0 "{rustlib_etc / 'lldb_commands'}" """)
-
-            ' > $out/primer.py
-          '');
+          '';
         in [ "command script import ${primer}/primer.py" ];
       }];
     }
