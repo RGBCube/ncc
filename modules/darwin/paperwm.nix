@@ -106,7 +106,7 @@ in {
         window:close()
       end
 
-      local spaceChange = function(offset)
+      local currentSpaceIndex = function()
         local current_space = hs.spaces.activeSpaceOnScreen()
         local spaces = hs.spaces.allSpaces()[hs.screen.mainScreen():getUUID()]
 
@@ -118,6 +118,13 @@ in {
           end
         end
 
+        return current_index
+      end
+
+      local changeSpaceBy = function(offset)
+        local current_index = currentSpaceIndex()
+        local spaces = hs.spaces.allSpaces()[hs.screen.mainScreen():getUUID()]
+
         local next_index = current_index + offset
         if next_index > #spaces then
           next_index = 1
@@ -125,9 +132,20 @@ in {
           next_index = #spaces
         end
 
+        if next_index == current_index then
+          return
+        end
+
         local next_space = spaces[next_index]
 
         hs.spaces.gotoSpace(next_space)
+      end
+
+      local gotoSpace = function(index)
+        local current_index = currentSpaceIndex()
+        local change_by = index - current_index
+
+        changeSpaceBy(change_by)
       end
 
       do -- HOTKEYS
@@ -161,12 +179,12 @@ in {
         hs.hotkey.bind(super_alt, "f", PaperWM.actions.full_width)
 
         -- CYCLE SPACES -- SUPER[ + SHIFT FOR REVERSE] + TAB
-        hs.hotkey.bind(super, "tab", function() spaceChange(1) end)
-        hs.hotkey.bind(super_shift, "tab", function() spaceChange(-1) end)
+        hs.hotkey.bind(super, "tab", function() changeSpaceBy(1) end)
+        hs.hotkey.bind(super_shift, "tab", function() changeSpaceBy(-1) end)
 
         for index = 1, 9 do
           -- GO TO SPACE -- SUPER + NUMBER
-          hs.hotkey.bind(super, tostring(index), PaperWM.actions["switch_space_" .. index])
+          hs.hotkey.bind(super, tostring(index), function() gotoSpace(index) end)
 
           -- MOVE WINDOW TO SPACE -- SUPER + SHIFT + NUMBER
           hs.hotkey.bind(super_shift, tostring(index), PaperWM.actions["move_window_" .. index])
@@ -217,9 +235,9 @@ in {
             threshold = math.huge -- only trigger once per swipe
 
             if direction == "up" then
-              spaceChange(1)
+              changeSpaceBy(1)
             elseif direction == "down" then
-              spaceChange(-1)
+              changeSpaceBy(-1)
             end
           end
         end)
@@ -249,7 +267,7 @@ in {
             local button = hs.menubar.new()
             button:setTitle(hs.styledtext.new(title, attributes))
             button:setClickCallback(function()
-              hs.spaces.gotoSpace(space)
+              gotoSpace(space)
             end)
 
             table.insert(space_buttons, button)
