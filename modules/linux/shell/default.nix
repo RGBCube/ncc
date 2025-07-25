@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) concatStringsSep const flatten getAttr mapAttrsToList unique;
+  inherit (lib) concatStringsSep const flatten getAttr mapAttrsToList mkForce unique;
 in {
   users.defaultUserShell = pkgs.crash;
 
@@ -12,4 +12,9 @@ in {
   |> map (drv: "${drv}${drv.shellPath}")
   |> unique
   |> concatStringsSep ":";
+
+  environment.shellAliases = {
+    ls = mkForce null;
+    l  = mkForce null;
+  };
 }

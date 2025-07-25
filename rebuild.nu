@@ -17,7 +17,7 @@ def --wrapped sync [...arguments] {
 # Rebuild a NixOS / Darwin config.
 def main --wrapped [
   host: string = "" # The host to build.
-  --remote (-r)     # Whether if this is a remote host. The config will be built on this host if it is.
+  --remote          # Whether if this is a remote host. The config will be built on this host if it is.
   ...arguments      # The arguments to pass to `nh {os,darwin} switch` and `nix` (separated by --).
 ]: nothing -> nothing {
   let host = if ($host | is-not-empty) {
@@ -34,6 +34,10 @@ def main --wrapped [
   }
 
   if $remote {
+    ssh -tt ("root@" + $host) "
+      rm --recursive --force ncc
+    "
+
     git ls-files
     | sync --files-from - ./ $"root@($host):ncc"
 

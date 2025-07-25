@@ -15,8 +15,10 @@ in {
     programs.nushell = enabled {
       inherit package;
 
-      inherit (config.environment) shellAliases;
       inherit environmentVariables;
+
+      shellAliases = config.environment.shellAliases
+        |> filterAttrs (_: value: value != null);
 
       configFile.text = readFile ./0_nushell.nu;
     };
