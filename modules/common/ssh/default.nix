@@ -24,12 +24,14 @@ in {
     mode = "444";
   };
 
-  home-manager.sharedModules = [{
-    home.activation.createControlPath = {
-      after  = [ "writeBoundary" ];
-      before = [];
-      data   = "mkdir --parents ${controlPath}";
-    };
+  home-manager.sharedModules = [(homeArgs: let
+    lib' = homeArgs.lib;
+
+    inherit (lib'.hm.dag) entryAfter;
+  in {
+    home.activation.createControlPath = entryAfter [ "writeBoundary" ] /* bash */ ''
+      mkdir --parents ${controlPath}
+    '';
 
     programs.ssh = enabled {
       controlMaster       = "auto";
@@ -49,7 +51,7 @@ in {
         };
       };
     };
-  }];
+  })];
 
   environment.systemPackages = mkIf config.isDesktop [
     pkgs.mosh
