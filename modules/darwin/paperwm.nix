@@ -1,8 +1,10 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) mkAfter mkIf;
+  inherit (lib) mkAfter;
 in {
   system.defaults.NSGlobalDomain = {
-    AppleInterfaceStyle = mkIf (lib.isDark config.theme) "Dark";
+    _HIHideMenuBar = true; # Automatically hide/show the menu bar.
+
+    AppleInterfaceStyle = if lib.isDark config.theme then "Dark" else null;
 
     AppleScrollerPagingBehavior = true; # Jump to the spot that was pressed in the scrollbar.
     AppleShowScrollBars         = "WhenScrolling";
@@ -12,16 +14,16 @@ in {
     AppleEnableSwipeNavigateWithScrolls      = false;
 
     AppleWindowTabbingMode = "always"; # Always prefer tabs for new windows.
-    AppleKeyboardUIMode      = 3; # Full keyboard access.
-    ApplePressAndHoldEnabled = false; # No ligatures when you press and hold a key, just repeat it.
+    AppleKeyboardUIMode      = 3;      # Full keyboard access.
+    ApplePressAndHoldEnabled = false;  # No ligatures when you press and hold a key, just repeat it.
 
     NSScrollAnimationEnabled = true;
-    NSWindowResizeTime       = 0.001;
+    NSWindowResizeTime       = 0.003;
 
     "com.apple.keyboard.fnState" = false; # Don't invert Fn.
-    "com.apple.trackpad.scaling" = 1.5;  # Faster mouse speed.
+    "com.apple.trackpad.scaling" = 1.5;   # Faster mouse speed.
 
-    InitialKeyRepeat = 15;
+    InitialKeyRepeat = 12;
     KeyRepeat        = 1;
 
     NSAutomaticCapitalizationEnabled     = false;
@@ -29,7 +31,14 @@ in {
     NSAutomaticInlinePredictionEnabled   = false;
     NSAutomaticPeriodSubstitutionEnabled = false;
     NSAutomaticQuoteSubstitutionEnabled  = false;
+
+    NSNavPanelExpandedStateForSaveMode = true; # Expand save panel by default.
+    PMPrintingExpandedStateForPrint = true;    # Expand print panel by default.
+
+    AppleSpacesSwitchOnActivate = false; # Do not switch workspaces implicitly.
   };
+
+  system.defaults.CustomSystemPreferences."com.apple.dock".workspaces-auto-swoosh = false; # Read `AppleSpacesSwitchOnActivate`.
 
   system.defaults.CustomSystemPreferences."com.apple.AppleMultitouchTrackpad" = {
     TrackpadThreeFingerVertSwipeGesture = 0; # Four finger swipe up for mission control.
