@@ -60,7 +60,7 @@ in {
   };
 
   home-manager.sharedModules = [{
-    home.file.".hammerspoon/Spoons/PaperWM.spoon" = {
+    xdg.configFile."hammerspoon/Spoons/PaperWM.spoon" = {
       recursive = true;
 
       source = pkgs.fetchFromGitHub {
@@ -71,7 +71,7 @@ in {
       };
     };
 
-    home.file.".hammerspoon/Spoons/Swipe.spoon" = {
+    xdg.configFile."hammerspoon/Spoons/Swipe.spoon" = {
       recursive = true;
 
       source = pkgs.fetchFromGitHub {
@@ -82,7 +82,7 @@ in {
       };
     };
 
-    home.file.".hammerspoon/init.lua".text = mkAfter /* lua */ ''
+    xdg.configFile."hammerspoon/init.lua".text = mkAfter /* lua */ ''
       ---@type table
       _G.hs = _G.hs
 
