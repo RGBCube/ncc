@@ -276,7 +276,7 @@ in {
             local button = hs.menubar.new()
             button:setTitle(hs.styledtext.new(title, attributes))
             button:setClickCallback(function()
-              gotoSpace(space)
+              gotoSpace(index)
             end)
 
             table.insert(space_buttons, button)
