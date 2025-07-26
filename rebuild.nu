@@ -60,8 +60,8 @@ def main --wrapped [
   ] | append ($args_split | get --ignore-errors 1 | default [])
 
   if (uname | get kernel-name) == "Darwin" {
-    NH_BYPASS_ROOT_CHECK=true NH_NO_CHECKS=true nh darwin switch . ...$nh_flags -- ...$nix_flags
+    NH_BYPASS_ROOT_CHECK=true NH_NO_CHECKS=true sudo nh darwin switch . ...$nh_flags -- ...$nix_flags
   } else {
-    NH_BYPASS_ROOT_CHECK=true NH_NO_CHECKS=true nh os switch . ...$nh_flags -- ...$nix_flags
+    NH_BYPASS_ROOT_CHECK=true NH_NO_CHECKS=true sudo nh os switch . ...$nh_flags -- ...$nix_flags
   }
 }
