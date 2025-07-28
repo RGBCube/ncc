@@ -88,13 +88,13 @@
     inherit (builtins) readDir;
     inherit (nixpkgs.lib) attrsToList const groupBy listToAttrs mapAttrs nameValuePair;
 
-    lib' = nixpkgs.lib.extend (_: _: nix-darwin.lib);
+    lib' = nixpkgs.lib.extend (const <| const <| nix-darwin.lib);
     lib  = lib'.extend <| import ./lib inputs;
 
     hostsByType = readDir ./hosts
       |> mapAttrs (name: const <| import ./hosts/${name} lib)
       |> attrsToList
-      |> groupBy ({ name, value }:
+      |> groupBy ({ value, ... }:
         if value ? class && value.class == "nixos" then
           "nixosConfigurations"
         else
