@@ -1,0 +1,6 @@
+{
+  homebrew.casks = [
+    "vlc"
+    "krita"
+  ];
+}
