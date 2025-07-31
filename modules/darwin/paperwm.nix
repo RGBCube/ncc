@@ -2,7 +2,7 @@
   inherit (lib) mkAfter;
 in {
   system.defaults.NSGlobalDomain = {
-    _HIHideMenuBar = true; # Automatically hide/show the menu bar.
+    _HIHideMenuBar = false; # Only hide menubar on fullscreen.
 
     AppleInterfaceStyle = if lib.isDark config.theme then "Dark" else null;
 
