@@ -129,21 +129,7 @@
     }
   ];
 in {
-  # TODO: Install using Nix. Currently I'm doing it manually.
-
-  # nixpkgs.overlays = [(self: super: {
-  #   karabiner-elements = super.karabiner-elements.overrideAttrs (old: {
-  #     version = "14.13.0";
-
-  #     src = super.fetchurl {
-  #       inherit (old.src) url;
-
-  #       hash = "sha256-gmJwoht/Tfm5qMecmq1N6PSAIfWOqsvuHU8VDJY8bLw=";
-  #     };
-  #   });
-  # })];
-
-  # services.karabiner-elements = enabled;
+  homebrew.casks = [ "karabiner-elements" ];
 
   home-manager.sharedModules = [{
     xdg.configFile."karabiner/karabiner.json".text = toJSON {
