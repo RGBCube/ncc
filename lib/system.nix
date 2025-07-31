@@ -11,7 +11,7 @@ inputs: self: super: let
     |> filter (hasAttrByPath path)
     |> map (getAttrFromPath path);
 
-  inputHomeModules   = collectInputs [ "homeModules"  "default" ];
+  inputHomeModules   = collectInputs [ "homeModules"   "default" ];
   inputModulesLinux  = collectInputs [ "nixosModules"  "default" ];
   inputModulesDarwin = collectInputs [ "darwinModules" "default" ];
 

@@ -35,9 +35,9 @@ in merge <| mkIf config.isDesktop {
         "hyprland/window" = {
           separate-outputs = true;
 
-          rewrite."(.*) - Discord"   = "󰙯 $1";
+          rewrite."(.*) - Discord" = "󰙯 $1";
           rewrite."(.*) — Zen" = "󰖟 $1";
-          rewrite."(.*) — nu"        = " $1";
+          rewrite."(.*) — nu"      = " $1";
         };
 
         modules-right = [ "tray" "pulseaudio" "backlight" "cpu" "memory" "network" "battery" "clock" ];

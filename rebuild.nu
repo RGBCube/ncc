@@ -55,9 +55,8 @@ def main --wrapped [
   ] | append ($args_split | get 0 | where { $in != "" })
 
   let nix_flags = [
-    "--option" "accept-flake-config"         "true"
-    # "--option" "eval-cache"                  "false"
-    "--option" "extra-experimental-features" "pipe-operators"
+    "--accept-flake-config"
+    "--extra-experimental-features" "pipe-operators"
   ] | append ($args_split | get --ignore-errors 1 | default [])
 
   if (uname | get kernel-name) == "Darwin" {
