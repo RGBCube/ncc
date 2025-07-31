@@ -15,7 +15,7 @@
     };
   });
 
-  package = pkgs.helix.overrideAttrs (finalAttrs: _previousAttrs: {
+  _package = pkgs.helix.overrideAttrs (finalAttrs: _previousAttrs: {
     version = "25.07.2";
     src = pkgs.fetchzip {
       url = "https://github.com/bloxx12/helix/releases/download/${finalAttrs.version}/helix-${finalAttrs.version}-source.tar.xz";
@@ -27,9 +27,11 @@
 
     cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
       inherit (pkgs.helix) src;
-      hash = "sha256-3poZSvIrkx8lguxxDeNfngW6+4hH8TV/LHcZx5W5aXg=";
+      hash = "sha256-JZwURUMUnwc3tzAsN7NJCE8106c/4VgZtHHA3e/BsXs=";
     };
   });
+
+  package = pkgs.helix;
 in {
   editor.defaultAlias = "hx";
 

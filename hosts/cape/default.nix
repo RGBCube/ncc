@@ -15,7 +15,7 @@ in {
   networking.hostName = "cape";
 
   users.users.said = {
-    name = "Said";
+    name = "said";
     home = "/Users/said";
   };
 

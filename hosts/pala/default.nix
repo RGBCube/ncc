@@ -19,7 +19,7 @@ in {
   networking.hostName = "pala";
 
   users.users.pala = {
-    name = "Pala";
+    name = "pala";
     home = "/Users/pala";
   };
 

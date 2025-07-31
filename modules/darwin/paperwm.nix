@@ -40,6 +40,11 @@ in {
 
   system.defaults.CustomSystemPreferences."com.apple.dock".workspaces-auto-swoosh = false; # Read `AppleSpacesSwitchOnActivate`.
 
+  system.defaults.CustomSystemPreferences."com.apple.CoreBrightness" = {
+    "Keyboard Dim Time" = 60;
+    KeyboardBacklight.KeyboardBacklightIdleDimTime = 60;
+  };
+
   system.defaults.CustomSystemPreferences."com.apple.AppleMultitouchTrackpad" = {
     TrackpadThreeFingerVertSwipeGesture = 0; # Four finger swipe up for mission control.
 
