@@ -1,4 +1,4 @@
-{
+{ config, ... }: {
   system.defaults.dock = {
     autohide   = true;
     showhidden = true; # Translucent.
@@ -14,7 +14,8 @@
     enable-spring-load-actions-on-all-items = true;
 
     persistent-apps = [
-      { app = "/Applications/Zen.app"; }
+      { app = "${config.home-manager.users.${config.system.primaryUser}
+          .programs.zen-browser.package}/Applications/Zen Browser (Beta).app"; }
       { app = "/Applications/Ghostty.app"; }
     ];
   };

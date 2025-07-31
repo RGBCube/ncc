@@ -11,6 +11,7 @@ inputs: self: super: let
     |> filter (hasAttrByPath path)
     |> map (getAttrFromPath path);
 
+  inputHomeModules   = collectInputs [ "homeModules"  "default" ];
   inputModulesLinux  = collectInputs [ "nixosModules"  "default" ];
   inputModulesDarwin = collectInputs [ "darwinModules" "default" ];
 
@@ -30,6 +31,10 @@ in {
     modules = [
       module
       overlayModule
+
+      {
+        home-manager.sharedModules = inputHomeModules;
+      }
     ] ++ modulesCommon
       ++ modulesLinux
       ++ inputModulesLinux;
@@ -41,6 +46,10 @@ in {
     modules = [
       module
       overlayModule
+
+      {
+        home-manager.sharedModules = inputHomeModules;
+      }
     ] ++ modulesCommon
       ++ modulesDarwin
       ++ inputModulesDarwin;

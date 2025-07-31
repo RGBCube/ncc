@@ -62,6 +62,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+
+      inputs.nixpkgs.follows      = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     agenix = {
       url = "github:ryantm/agenix";
 
@@ -118,7 +125,7 @@
       |> map ({ name, value }: nameValuePair name value.config)
       |> listToAttrs;
   in hostsByType // hostConfigs // {
-    inherit lib;
+    inherit inputs lib;
 
     herculesCI = { ... }: {
       ciSystems = [ "aarch64-linux" "x86_64-linux" ];
