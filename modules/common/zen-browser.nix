@@ -1,5 +1,5 @@
 { lib, ... }: let
-  inherit (lib) enabled;
+  inherit (lib) disabled;
 
   lockedAs = Value: attrs: attrs // {
     inherit Value;
@@ -93,7 +93,7 @@
   };
 in {
   home-manager.sharedModules = [{
-    programs.zen-browser = enabled {
+    programs.zen-browser = disabled {
       inherit policies;
     };
   }];
