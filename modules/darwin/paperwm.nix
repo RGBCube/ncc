@@ -23,8 +23,8 @@ in {
     "com.apple.keyboard.fnState" = false; # Don't invert Fn.
     "com.apple.trackpad.scaling" = 1.5;   # Faster mouse speed.
 
-    InitialKeyRepeat = 12;
-    KeyRepeat        = 1;
+    InitialKeyRepeat = 10; # N * 15ms to start repeating, so about 150ms to start repeating.
+    KeyRepeat        = 1;  # N * 15ms, so 15ms between each keypress, about 66 presses per second. Very slow but it doesn't go faster than this.
 
     NSAutomaticCapitalizationEnabled     = false;
     NSAutomaticDashSubstitutionEnabled   = false;
