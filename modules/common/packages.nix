@@ -45,6 +45,8 @@ in {
 
     pkgs.qbittorrent
   ] ++ optionals (config.isLinux && config.isDesktop) [
+    pkgs.haruna
+
     pkgs.thunderbird
 
     pkgs.whatsapp-for-linux
@@ -61,5 +63,7 @@ in {
 
     pkgs.en_US
     pkgs.en_GB-ize
+  ] ++ optionals (config.isDarwin && config.isDesktop) [
+    pkgs.iina
   ];
 }
