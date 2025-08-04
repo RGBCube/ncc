@@ -89,7 +89,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    fenix.url = "github:nix-community/fenix";
+    fenix = {
+      url = "github:nix-community/fenix";
+
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     nix.url = "github:DeterminateSystems/nix-src";
     nil.url = "github:oxalica/nil";

@@ -225,7 +225,7 @@ in {
         hs.hotkey.bind(super, "f", PaperWM.actions.toggle_floating)
 
         -- APPLICATIONS
-        hs.hotkey.bind(super, "w", function() hs.application.launchOrFocus("Zen Browser (Beta)") end)
+        hs.hotkey.bind(super, "w", function() hs.application.launchOrFocus("Zen") end)
         hs.hotkey.bind(super, "return", function() hs.application.launchOrFocus("Ghostty") end)
         hs.hotkey.bind(super, "t", function() hs.application.launchOrFocus("Finder") end)
 
