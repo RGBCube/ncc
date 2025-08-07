@@ -64,11 +64,14 @@ in {
     // homeSessionVariablesExtra
     // homeSessionSearchVariables;
   in {
-    home.file.".zshrc".text = mkIf config.isDarwin /* zsh */ ''
+    home.file.".zshrc".text = /* zsh */ ''
       ${homeSessionVariables
       |> mapAttrsToList (name: value: "export ${name}='${value}'")
       |> concatStringsSep "\n"}
-      SHELL='${getExe <| head config'.shellsByPriority}' exec "$SHELL"
+
+      if [ -z "$INTELLIJ_ENVIRONMENT_READER" ]; then
+        SHELL='${getExe <| head config'.shellsByPriority}' exec "$SHELL"
+      fi
     '';
   }))
 
