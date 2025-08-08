@@ -53,7 +53,8 @@ in {
     };
   })];
 
-  environment.systemPackages = mkIf config.isDesktop [
-    pkgs.mosh
-  ];
+  environment = mkIf config.isDesktop {
+    systemPackages    = [ pkgs.mosh ];
+    shellAliases.mosh = "mosh --no-init";
+  };
 }
