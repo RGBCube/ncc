@@ -35,6 +35,8 @@ in merge <| mkIf config.isDesktop {
         window-decoration    = config.isDarwin;
         macos-titlebar-style = "tabs";
 
+        macos-option-as-alt = "left";
+
         config-file = toString <| pkgs.writeText "base16-config" ghosttyConfig;
 
         keybind = mapAttrsToList (name: value: "ctrl+shift+${name}=${value}") {
