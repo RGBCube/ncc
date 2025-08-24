@@ -4,6 +4,20 @@
 
   allBasic = map (x: x // { type = "basic"; });
 
+  isBuiltIn = {
+    type        = "device_if";
+    identifiers = [{
+      is_built_in_keyboard = true;
+    }];
+  };
+
+  isTurkish = {
+    type          = "input_source_if";
+    input_sources = [{
+      language = "tr";
+    }];
+  };
+
   simple_modifications = [
     {
       from.key_code = "caps_lock";
@@ -28,6 +42,8 @@
           from.modifiers.optional  = [ "shift" "control" "command" "fn" ];
 
           to = [{ key_code = "spacebar"; }];
+
+          conditions = [ isBuiltIn ];
         }
       ];
     }
@@ -43,6 +59,8 @@
             key_code  = "8";
             modifiers = [ "right_option" ];
           }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
         { # Ğ -> {
           from.key_code            = "open_bracket";
@@ -53,6 +71,8 @@
             key_code  = "7";
             modifiers = [ "right_option" ];
           }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
         { # ü -> ]
           from.key_code           = "close_bracket";
@@ -62,6 +82,8 @@
             key_code  = "9";
             modifiers = [ "right_option" ];
           }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
         { # Ü -> }
           from.key_code            = "close_bracket";
@@ -72,6 +94,8 @@
             key_code  = "0";
             modifiers = [ "right_option" ];
           }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
         { # [ -> ğ
           from.key_code            = "8";
@@ -79,6 +103,8 @@
           from.modifiers.optional  = [ "control" "command" "fn" ];
 
           to = [{ key_code = "open_bracket"; }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
         { # { -> Ğ
           from.key_code            = "7";
@@ -89,6 +115,8 @@
             key_code  = "open_bracket";
             modifiers = [ "shift" ];
           }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
         { # ] -> ü
           from.key_code            = "9";
@@ -96,6 +124,8 @@
           from.modifiers.optional  = [ "control" "command" "fn" ];
 
           to = [{ key_code = "close_bracket"; }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
         { # } -> Ü
           from.key_code            = "0";
@@ -106,6 +136,8 @@
             key_code  = "close_bracket";
             modifiers = [ "shift" ];
           }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
       ];
     }
@@ -118,12 +150,16 @@
           from.modifiers.optional = [ "control" "option" "command" "fn" ];
 
           to = [{ key_code = "i"; }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
         { # i -> ı
           from.key_code           = "i";
           from.modifiers.optional = [ "control" "option" "command" "fn" ];
 
           to = [{ key_code = "quote"; }];
+
+          conditions = [ isBuiltIn isTurkish ];
         }
       ];
     }
