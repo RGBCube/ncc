@@ -392,7 +392,7 @@ module dump {
       print $"(ansi red)thought dump was emptied(ansi reset)"
       delete $namespace --existed-before ($old_dump_size != null)
     } else if $old_dump_hash == (open $dump_path | hash sha256) {
-      print $"(ansi yellow)thought dump was not modifier, doing nothing(ansi reset)"
+      print $"(ansi yellow)thought dump was not modified, doing nothing(ansi reset)"
     } else {
       print $"(ansi magenta)thought dump was edited(ansi reset)"
 
