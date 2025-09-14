@@ -52,7 +52,7 @@ in {
 
     recommendedBrotliSettings = true;
     recommendedGzipSettings   = true;
-    recommendedZstdSettings   = true;
+    # recommendedZstdSettings   = true; # Unmaintained.
 
     recommendedOptimisation   = true;
     recommendedProxySettings  = true;
