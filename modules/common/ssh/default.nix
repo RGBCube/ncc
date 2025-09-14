@@ -15,8 +15,7 @@
         |> head;
 
       hostname = value.config.networking.ipv4.address;
-
-      port = head value.config.services.openssh.ports;
+      port     = head value.config.services.openssh.ports;
     });
 in {
   secrets.sshConfig = {
@@ -34,16 +33,16 @@ in {
     '';
 
     programs.ssh = enabled {
-      controlMaster       = "auto";
-      controlPath         = "${controlPath}/%r@%n:%p";
-      controlPersist      = "60m";
-      serverAliveCountMax = 2;
-      serverAliveInterval = 60;
-
       includes = [ config.secrets.sshConfig.path ];
 
       matchBlocks = hosts // {
         "*" = {
+          controlMaster       = "auto";
+          controlPath         = "${controlPath}/%r@%n:%p";
+          controlPersist      = "60m";
+          serverAliveCountMax = 2;
+          serverAliveInterval = 60;
+
           setEnv.COLORTERM = "truecolor";
           setEnv.TERM      = "xterm-256color";
 
