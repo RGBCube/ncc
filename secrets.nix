@@ -45,7 +45,8 @@ in {
   "modules/common/ssh/config.age".publicKeys     = all;
   "modules/linux/restic/password.age".publicKeys = all;
 
-  "modules/acme/environment.age".publicKeys    = all;
-  "modules/mail/password.hash.age".publicKeys  = all;
-  "modules/mail/password.plain.age".publicKeys = all;
+  "modules/acme/environment.age".publicKeys              = all;
+  "modules/mail/password.hash.age".publicKeys            = all;
+  "modules/mail/password.plain.age".publicKeys           = all;
+  "modules/mail/password-supercell.hash.age".publicKeys  = all;
 }

@@ -5,6 +5,7 @@ in {
   imports = [(self + /modules/acme)];
 
   secrets.mailPassword.file = ./password.hash.age;
+  secrets.mailSupercellPassword.file = ./password-supercell.hash.age;
 
   services.prometheus.exporters.postfix = enabled {
     listenAddress = "[::]";
@@ -46,6 +47,10 @@ in {
       aliases = [ "@${head config.mailserver.domains}" ];
 
       hashedPasswordFile = config.secrets.mailPassword.path;
+    };
+
+    loginAccounts."supercell@${head config.mailserver.domains}" = {
+      hashedPasswordFile = config.secrets.mailSupercellPassword.path;
     };
   };
 }
