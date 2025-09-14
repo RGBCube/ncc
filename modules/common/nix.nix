@@ -54,11 +54,7 @@ in {
   nix.optimise.automatic = true;
 
   environment.systemPackages = [
-    (pkgs.nh.overrideAttrs (old: {
-      patches = old.patches or [] ++ [
-        ./nh.patch
-      ];
-    }))
+    pkgs.nh
     pkgs.nix-index
     pkgs.nix-output-monitor
   ];
