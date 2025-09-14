@@ -3,7 +3,7 @@
 in {
   services.resolved = enabled {
     dnssec     = "true";
-    dnsovertls = "true";
+    # dnsovertls = "true"; # FIXME TODO After 257.8 -> 257.9
 
     extraConfig = config.dns.servers
       |> map (server: "DNS=${server}")
