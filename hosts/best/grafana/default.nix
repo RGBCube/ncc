@@ -67,7 +67,8 @@ in {
       ehlo_identity = "metrics@${domain}";
       from_address  = "metrics@${domain}";
       from_name     = "Metrics";
-      host          = "${self.disk.mailserver.fqdn}:${toString self.disk.services.postfix.relayPort}";
+      # host          = "${self.disk.mailserver.fqdn}:${toString self.disk.services.postfix.relayPort}";
+      host          = "${self.disk.mailserver.fqdn}:25"; # FIXME TODO
     };
   };
 
