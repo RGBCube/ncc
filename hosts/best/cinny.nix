@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) flip merge;
+  inherit (lib) merge;
   inherit (lib.strings) toJSON;
 
   fqdn = "cinny.rgbcu.be";
@@ -38,14 +38,6 @@
     };
   };
 in {
-  nixpkgs.overlays = [(self: super: {
-    cinny-unwrapped = super.cinny-unwrapped.overrideAttrs (old: {
-      patches = old.patches or [] ++ [
-        ./all-styles.patch
-      ];
-    });
-  })];
-
   services.nginx.virtualHosts.${fqdn} = merge config.services.nginx.sslTemplate {
     inherit root;
 
