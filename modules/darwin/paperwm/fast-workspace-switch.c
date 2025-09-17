@@ -66,18 +66,33 @@ void workingSpaceSwitch(int direction) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    fprintf(stderr, "Usage: %s <left|right>\n", argv[0]);
+  if (argc != 3) {
+    fprintf(stderr, "Usage: %s <left|right> <count>\n", argv[0]);
     return 1;
   }
 
+  int direction;
   if (strcmp(argv[1], "right") == 0) {
-    workingSpaceSwitch(1);
+    direction = 1;
   } else if (strcmp(argv[1], "left") == 0) {
-    workingSpaceSwitch(0);
+    direction = 0;
   } else {
-    fprintf(stderr, "Invalid argument: %s (use 'left' or 'right')\n", argv[1]);
+    fprintf(stderr, "Invalid direction: %s. Use 'left' or 'right'.\n", argv[1]);
     return 1;
+  }
+
+  int count = atoi(argv[2]);
+  if (count <= 0) {
+    fprintf(stderr, "Invalid count: %s. Must be a positive integer.\n", argv[2]);
+    return 1;
+  }
+
+  for (int i = 0; i < count; i++) {
+    if (i > 0) {
+      usleep(50000); // 50ms
+    }
+
+    workingSpaceSwitch(direction);
   }
 
   return 0;
