@@ -1,4 +1,5 @@
-use std clip null_device
+use std-rfc clip
+use std null_device
 
 $env.config.history.file_format = "sqlite"
 $env.config.history.isolation = false
