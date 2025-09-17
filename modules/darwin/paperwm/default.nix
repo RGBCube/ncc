@@ -157,11 +157,7 @@ in {
       end
 
       local changeSpaceBy = function(offset)
-        local command = "${lib.getExe pkgs.fast-workspace-switch} " .. (offset > 0 and "right" or "left")
-
-        for n = 1, math.abs(offset) do
-          os.execute(command)
-        end
+        os.execute("${lib.getExe pkgs.fast-workspace-switch}" .. " " .. (offset > 0 and "right" or "left") .. " ".. math.abs(offset))
       end
 
       local gotoSpace = function(index)
