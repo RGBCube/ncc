@@ -57,11 +57,11 @@ def main --wrapped [
   let nix_flags = [
     "--accept-flake-config"
     "--extra-experimental-features" "pipe-operators"
-  ] | append ($args_split | get --ignore-errors 1 | default [])
+  ] | append ($args_split | get --optional 1 | default [])
 
   if (uname | get kernel-name) == "Darwin" {
-    sudo NH_BYPASS_ROOT_CHECK=true NH_NO_CHECKS=true nh darwin switch . ...$nh_flags -- ...$nix_flags
+    nh darwin switch . ...$nh_flags -- ...$nix_flags
   } else {
-    NH_BYPASS_ROOT_CHECK=true NH_NO_CHECKS=true nh os switch . ...$nh_flags -- ...$nix_flags
+    nh os switch . ...$nh_flags -- ...$nix_flags
   }
 }
