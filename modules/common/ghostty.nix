@@ -67,19 +67,19 @@ in merge <| mkIf config.isDesktop {
           t = "new_tab";
           q = "close_surface";
 
-          "physical:one"   = "goto_tab:1";
-          "physical:two"   = "goto_tab:2";
-          "physical:three" = "goto_tab:3";
-          "physical:four"  = "goto_tab:4";
-          "physical:five"  = "goto_tab:5";
-          "physical:six"   = "goto_tab:6";
-          "physical:seven" = "goto_tab:7";
-          "physical:eight" = "goto_tab:8";
-          "physical:nine"  = "goto_tab:9";
-          "physical:zero"  = "goto_tab:10";
+          "one"   = "goto_tab:1";
+          "two"   = "goto_tab:2";
+          "three" = "goto_tab:3";
+          "four"  = "goto_tab:4";
+          "five"  = "goto_tab:5";
+          "six"   = "goto_tab:6";
+          "seven" = "goto_tab:7";
+          "eight" = "goto_tab:8";
+          "nine"  = "goto_tab:9";
+          "zero"  = "goto_tab:10";
         } ++ mapAttrsToList (name: value: "ctrl+${name}=${value}") {
-          "physical:tab"       = "next_tab";
-          "shift+physical:tab" = "previous_tab";
+          "tab"       = "next_tab";
+          "shift+tab" = "previous_tab";
         };
       };
     };
