@@ -9,6 +9,7 @@
 
 !modules/
 !modules/**/
+!modules/darwin/paperwm/*.c
 
 !flake.lock
 

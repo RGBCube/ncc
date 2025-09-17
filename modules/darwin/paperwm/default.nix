@@ -64,6 +64,7 @@ in {
     AppWindowGroupingBehavior = false; # Show them one at a a time.
   };
 
+
   home-manager.sharedModules = [{
     xdg.configFile."hammerspoon/Spoons/PaperWM.spoon" = {
       recursive = true;
@@ -135,7 +136,7 @@ in {
         return current_index
       end
 
-      local changeSpaceBy = function(offset)
+      local __changeSpaceByHorriblySlowly = function(offset)
         local current_index = currentSpaceIndex()
         local spaces = hs.spaces.allSpaces()[hs.screen.mainScreen():getUUID()]
 
@@ -153,6 +154,14 @@ in {
         local next_space = spaces[next_index]
 
         hs.spaces.gotoSpace(next_space)
+      end
+
+      local changeSpaceBy = function(offset)
+        local command = "${lib.getExe pkgs.fast-workspace-switch} " .. (offset > 0 and "right" or "left")
+
+        for n = 1, math.abs(offset) do
+          os.execute(command)
+        end
       end
 
       local gotoSpace = function(index)
