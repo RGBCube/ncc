@@ -35,6 +35,8 @@ in {
     programs.ssh = enabled {
       includes = [ config.secrets.sshConfig.path ];
 
+      enableDefaultConfig = false; # Deprecated.
+
       matchBlocks = hosts // {
         "*" = {
           controlMaster       = "auto";
