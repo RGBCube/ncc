@@ -96,7 +96,6 @@
     };
 
     nix.url = "github:DeterminateSystems/nix-src";
-    nil.url = "github:oxalica/nil";
 
     crash = {
       url = "github:RGBCube/crash";
