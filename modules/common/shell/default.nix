@@ -1,5 +1,5 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) attrsToList catAttrs concatStringsSep const filter flatten foldl' getAttr getExe head last listToAttrs mapAttrs mapAttrsToList match mkConst mkIf mkValue nameValuePair readFile sortOn splitString toInt unique;
+  inherit (lib) attrsToList catAttrs concatStringsSep const filter flatten foldl' getAttr getExe head last mapAttrs mapAttrsToList match mkConst mkIf mkValue nameValuePair readFile sortOn splitString toInt unique;
 in {
   environment.shells = config.home-manager.users
   |> mapAttrsToList (const <| getAttr "shellsByPriority")
@@ -18,7 +18,7 @@ in {
       |> sortOn ({ name, ... }: toInt name)
       |> catAttrs "value");
 
-    options.variablesMap = mkConst ({
+    options.variablesMap = mkConst {
       HOME = config'.home.homeDirectory;
       USER = config'.home.username;
 
@@ -26,13 +26,7 @@ in {
       XDG_CONFIG_HOME = config'.xdg.configHome;
       XDG_DATA_HOME   = config'.xdg.dataHome;
       XDG_STATE_HOME  = config'.xdg.stateHome;
-    }
-    |> mapAttrsToList (name: value: [
-      { name = "\$${name}"; inherit value; }
-      { name = "\${${name}}"; inherit value; }
-    ])
-    |> flatten
-    |> listToAttrs);
+    };
   })
 
   (mkIf config.isDarwin (homeArgs: let
