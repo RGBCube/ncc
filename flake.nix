@@ -77,12 +77,6 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    github2forgejo = {
-      url = "github:RGBCube/GitHub2Forgejo";
-
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nixos-mailserver = {
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver/master";
 
@@ -96,6 +90,12 @@
     };
 
     nix.url = "github:DeterminateSystems/nix-src";
+
+    github2forgejo = {
+      url = "github:RGBCube/GitHub2Forgejo";
+
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     crash = {
       url = "github:RGBCube/crash";
