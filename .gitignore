@@ -2,21 +2,9 @@
 
 !.gitignore
 
-!hosts/
-!hosts/**/
-
-!lib/
-
 !modules/
-!modules/**/
-!modules/darwin/paperwm/*.c
 
+!flake.nix
 !flake.lock
 
-!*.age
-!*.gif
-!*.md
 !*.nix
-!*.nu
-!*.patch
-!*.txt

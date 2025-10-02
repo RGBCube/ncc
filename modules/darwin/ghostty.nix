@@ -1,3 +1,0 @@
-{
-  homebrew.casks = [ "ghostty" ];
-}
