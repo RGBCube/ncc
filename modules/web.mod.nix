@@ -3,11 +3,17 @@ let
     { lib, pkgs, ... }:
     let
       inherit (lib.meta) getExe;
+
+      package = pkgs.w3m;
     in
     {
+      environment.systemPackages = [
+        package
+      ];
+
       environment.shellAliases = {
-        ddg = "${getExe pkgs.w3m} lite.duckduckgo.com";
-        web = "${getExe pkgs.w3m}";
+        ddg = "${getExe package} lite.duckduckgo.com";
+        web = "${getExe package}";
       };
     };
 in
