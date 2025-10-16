@@ -1,5 +1,5 @@
-let
-  commonModule =
+{
+  homeModules.secrets-manager =
     {
       config,
       lib,
@@ -13,14 +13,11 @@ let
       package = pkgs.ragenix;
     in
     {
-      environment.systemPackages = [
+      programs.nushell.aliases = # sh
+        ''${getExe package} --identity ${head config.age.identityPaths}'';
+
+      packages = [
         package
       ];
-
-      environment.shellAliases.ragenix = "${getExe package} --identity ${head config.age.identityPaths}";
     };
-in
-{
-  nixosModules.secrets-manager = commonModule;
-  darwinModules.secrets-manager = commonModule;
 }

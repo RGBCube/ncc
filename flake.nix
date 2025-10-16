@@ -15,6 +15,14 @@
     inputs.nixpkgs.follows = "os";
     inputs.darwin.follows = "os-darwin";
     inputs.smfh.follows = "";
+    inputs.ndg.follows = "";
+  };
+  inputs.home-modules = {
+    url = "github:snugnug/hjem-rum";
+    inputs.nixpkgs.follows = "os";
+    inputs.hjem.follows = "home";
+    inputs.ndg.follows = "";
+    inputs.treefmt-nix.follows = "";
   };
 
   inputs.parts = {

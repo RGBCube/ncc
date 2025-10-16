@@ -1,5 +1,5 @@
-let
-  commonModule =
+{
+  homeModules.discord =
     {
       config,
       lib,
@@ -10,15 +10,12 @@ let
       inherit (lib.lists) singleton;
     in
     {
-      home.extraModules = singleton {
-        xdg.config.files."Vencord/settings/quickCss.css".text = config.theme.discordCss;
-      };
-
-      environment.systemPackages = singleton (
-        (pkgs.discord.override {
-          withOpenASAR = true;
-          withVencord = true;
-        }).overrideAttrs
+      packages =
+        singleton
+          (pkgs.discord.override {
+            withOpenASAR = true;
+            withVencord = true;
+          }).overrideAttrs
           (old: {
             nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.makeWrapper ];
 
@@ -27,11 +24,8 @@ let
                 --set ELECTRON_OZONE_PLATFORM_HINT "auto" \
                 --add-flags "--enable-features=UseOzonePlatform --ozone-platform=wayland"
             '';
-          })
-      );
+          });
+
+      xdg.config.files."Vencord/settings/quickCss.css".text = config.theme.discordCss;
     };
-in
-{
-  nixosModules.discord = commonModule;
-  darwinModules.discord = commonModule;
 }

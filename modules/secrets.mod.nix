@@ -4,7 +4,11 @@ let
     let
       inherit (lib.modules) mkAliasOptionModule;
     in
-    mkAliasOptionModule [ "secrets" ] [ "age" "secrets" ];
+    {
+      imports = [ (mkAliasOptionModule [ "secrets" ] [ "age" "secrets" ]) ];
+
+      age.identityPaths = [ "/etc/age/id" ];
+    };
 in
 {
   nixosModules.secrets =
@@ -15,8 +19,6 @@ in
 
         commonModule
       ];
-
-      age.identityPaths = [ "/etc/age/id" ];
     };
 
   darwinModules.secrets =
@@ -27,7 +29,5 @@ in
 
         commonModule
       ];
-
-      age.identityPaths = [ "/etc/age/id" ];
     };
 }

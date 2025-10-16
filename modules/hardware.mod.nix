@@ -1,4 +1,3 @@
-# Abstraction module for hardware configuration.
 {
   nixosModules.hardware-report =
     { inputs, lib, ... }:

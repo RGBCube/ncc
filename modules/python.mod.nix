@@ -1,22 +1,18 @@
-let
-  commonModule =
+{
+  homeModules.python =
     { pkgs, ... }:
     let
       package = pkgs.python314;
     in
     {
-      environment.variables = {
+      environment.sessionVariables = {
         UV_PYTHON_PREFERENCE = "system";
         UV_PYTHON = "${package}";
       };
 
-      environment.systemPackages = [
+      packages = [
         package
         pkgs.uv
       ];
     };
-in
-{
-  nixosModules.python = commonModule;
-  darwinModules.python = commonModule;
 }

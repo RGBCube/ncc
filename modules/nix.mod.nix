@@ -9,25 +9,20 @@ let
       ...
     }:
     let
-      inherit (lib)
+      inherit (lib.attrsets)
         attrsToList
-        concatStringsSep
-        const
         filterAttrs
-        flip
-        id
-        isType
         mapAttrs
         mapAttrsToList
-        mkAfter
         optionalAttrs
-        optionals
         ;
+      inherit (lib.lists) filter optionals singleton;
+      inherit (lib.modules) mkMerge;
+      inherit (lib.strings) concatStringsSep toJSON;
+      inherit (lib.trivial) const flip id;
+      inherit (lib.types) isType;
 
-      inherit (lib.lists) filter singleton;
-      inherit (lib.strings) toJSON;
-
-      registryMap = inputs |> filterAttrs (const <| isType "flake");
+      registryMap = filterAttrs (const <| isType "flake") inputs;
     in
     {
       environment.systemPackages = [
@@ -38,6 +33,7 @@ let
 
       # We don't want inputs to be garbage collected away because if
       # that happens rebuilds need to re-fetch everything.
+      # TODO: Don't do this on servers.
       environment.etc.".system-inputs.json".text = toJSON registryMap;
 
       nix.distributedBuilds = true;
@@ -70,7 +66,7 @@ let
           options = "--delete-older-than 3d";
         }
 
-        (optionalAttrs config.isLinux {
+        (optionalAttrs config.nixpkgs.system.isLinux {
           dates = "weekly";
           persistent = true;
         })
@@ -79,37 +75,38 @@ let
       nix.nixPath =
         registryMap
         |> mapAttrsToList (name: value: "${name}=${value}")
-        |> (if config.isDarwin then concatStringsSep ":" else id);
+        |> (if config.nixpkgs.system.isDarwin then concatStringsSep ":" else id);
 
       nix.registry =
         registryMap // { default = inputs.nixpkgs; } |> mapAttrs (_: flake: { inherit flake; });
 
       nix.settings =
         (import <| self + /flake.nix).nixConfig
-        |> flip removeAttrs (optionals config.isDarwin [ "use-cgroups" ]);
+        |> flip removeAttrs (optionals config.nixpkgs.system.isDarwin [ "use-cgroups" ]);
 
       nix.optimise.automatic = true;
 
       home.extraModules = singleton {
-        xdg.config.file."nushell/config.nu".text = mkAfter ''
-          def --wrapped * [program: string = "", ...arguments] {
-            if ($program | str contains "#") or ($program | str contains ":") {
-              nix run $program -- ...$arguments
-            } else {
-              nix run ("default#" + $program) -- ...$arguments
-            }
-          }
-
-          def --wrapped > [...programs] {
-            nix shell ...($programs | each {
-              if ($in | str contains "#") or ($in | str contains ":") {
-                $in
+        programs.nushell.extraConfig = # nu
+          ''
+            def --wrapped * [program: string = "", ...arguments] {
+              if ($program | str contains "#") or ($program | str contains ":") {
+                nix run $program -- ...$arguments
               } else {
-                "default#" + $in
+                nix run ("default#" + $program) -- ...$arguments
               }
-            })
-          }
-        '';
+            }
+
+            def --wrapped > [...programs] {
+              nix shell ...($programs | each {
+                if ($in | str contains "#") or ($in | str contains ":") {
+                  $in
+                } else {
+                  "default#" + $in
+                }
+              })
+            }
+          '';
       };
     };
 in

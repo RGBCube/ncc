@@ -1,27 +1,23 @@
-let
-  commonModule =
+{
+  homeModules.ripgrep =
     { lib, pkgs, ... }:
     let
-      inherit (lib.lists) singleton;
+      inherit (lib.meta) getExe;
       inherit (lib.strings) concatLines;
+
+      package = pkgs.ripgrep;
     in
     {
-      environment.systemPackages = [
-        pkgs.ripgrep
+      package = [
+        package
       ];
 
-      environment.shellAliases.todo = # sh
-        ''rg "todo|fixme" --colors match:fg:yellow --colors match:style:bold'';
+      programs.nushell.aliases.todo = # sh
+        ''${getExe package} "todo|fixme" --colors match:fg:yellow --colors match:style:bold'';
 
-      home.sharedModules = singleton {
-        xdg.config."ripgrep/ripgreprc".text = concatLines [
-          "--line-number"
-          "--smart-case"
-        ];
-      };
+      xdg.config."ripgrep/ripgreprc".text = concatLines [
+        "--line-number"
+        "--smart-case"
+      ];
     };
-in
-{
-  nixosModules.ripgrep = commonModule;
-  darwinModules.ripgrep = commonModule;
 }

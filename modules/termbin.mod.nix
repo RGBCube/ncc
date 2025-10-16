@@ -1,5 +1,5 @@
-let
-  commonModule =
+{
+  homeModules.termbin =
     { lib, pkgs, ... }:
     let
       inherit (lib.attrsets) genAttrs;
@@ -7,15 +7,14 @@ let
       inherit (lib.trivial) const;
     in
     {
-      environment.shellAliases =
+      programs.nushell.aliases =
         genAttrs [
           "termbin"
           "tb"
         ]
-        <| const "${getExe pkgs.netcat} termbin.com 9999";
+        <|
+          const
+            # sh
+            ''${getExe pkgs.netcat} termbin.com 9999'';
     };
-in
-{
-  nixosModules.termbin = commonModule;
-  darwinModules.termbin = commonModule;
 }
