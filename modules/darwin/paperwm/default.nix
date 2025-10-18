@@ -297,6 +297,10 @@ in {
 
         updateSpaceButtons()
       end
+
+      do -- NO ANIMATIONS
+        hs.window.animationDuration = 0
+      end
     '';
   }];
 }
