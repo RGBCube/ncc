@@ -69,6 +69,7 @@ in
       inherit (lib.lists) head singleton;
     in
     {
+      # FIXME: No hickory module for nix-darwin.
       imports = [ hickoryModule ];
 
       networking.dns = singleton <| head config.services.hickory-dns.settings.listen_addrs_ipv6;

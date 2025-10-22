@@ -13,11 +13,11 @@
     in
     {
       environment.sessionVariables = {
-        TERMINAL = mkIf config.nixpkgs.system.isLinux "ghostty";
-        TERM_PROGRAM = mkIf config.nixpkgs.system.isDarwin "ghostty";
+        TERMINAL = mkIf config.nixpkgs.hostPlatform.isLinux "ghostty";
+        TERM_PROGRAM = mkIf config.nixpkgs.hostPlatform.isDarwin "ghostty";
       };
 
-      packages = mkIf config.nixpkgs.system.isLinux [
+      packages = mkIf config.nixpkgs.hostPlatform.isLinux [
         pkgs.ghostty
       ];
 
@@ -37,10 +37,10 @@
         confirm-close-surface = false;
         quit-after-last-window-closed = true;
 
-        window-decoration = config.nixpkgs.system.isDarwin;
-        macos-titlebar-style = mkIf config.nixpkgs.system.isDarwin "tabs";
+        window-decoration = config.nixpkgs.hostPlatform.isDarwin;
+        macos-titlebar-style = mkIf config.nixpkgs.hostPlatform.isDarwin "tabs";
 
-        macos-option-as-alt = mkIf config.nixpkgs.system.isDarwin "left";
+        macos-option-as-alt = mkIf config.nixpkgs.hostPlatform.isDarwin "left";
 
         config-file = pkgs.writeText "base16-config" config.theme.ghosttyConfig;
 

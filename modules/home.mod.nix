@@ -1,4 +1,4 @@
-{ self, ... }:
+{ self, inputs, ... }:
 {
   homeModules.home =
     {
@@ -47,8 +47,9 @@
     };
 
   nixosModules.home =
-    { inputs, lib, ... }:
+    { lib, ... }:
     let
+      inherit (lib.lists) singleton;
       inherit (lib.modules) mkAliasOptionModule;
     in
     {
@@ -56,13 +57,14 @@
         inputs.home.nixosModules.hjem
         (mkAliasOptionModule [ "home" ] [ "hjem" ])
 
-        { home.extraModules = [ self.homeModules.home ]; }
+        { home.extraModules = singleton self.homeModules.home; }
       ];
     };
 
   darwinModules.home =
-    { inputs, lib, ... }:
+    { lib, ... }:
     let
+      inherit (lib.lists) singleton;
       inherit (lib.modules) mkAliasOptionModule;
     in
     {
@@ -70,7 +72,7 @@
         inputs.home.darwinModules.hjem
         (mkAliasOptionModule [ "home" ] [ "hjem" ])
 
-        { home.extraModules = [ self.homeModules.home ]; }
+        { home.extraModules = singleton self.homeModules.home; }
       ];
     };
 }

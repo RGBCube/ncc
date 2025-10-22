@@ -1,10 +1,15 @@
 { self, ... }:
 let
-  commonModule = {
-    nixpkgs.config.allowedUnfreePackageNames = [ "claude-code" ];
+  commonModule =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      nixpkgs.config.allowedUnfreePackageNames = [ "claude-code" ];
 
-    home.extraModules = [ self.homeModules.claude-code ];
-  };
+      home.extraModules = singleton self.homeModules.claude-code;
+    };
 in
 {
   homeModules.claude-code =

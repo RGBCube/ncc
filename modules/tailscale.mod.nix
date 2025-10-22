@@ -1,34 +1,42 @@
 {
-  homeModules.tailscale-linux =
-    { lib, pkgs, ... }:
-    let
-      inherit (lib.meta) getExe;
-
-      package = getExe pkgs.tailscale;
-    in
+  nixosModules.tailscale =
+    { config, ... }:
     {
-      programs.nushell.aliases = {
-        ts = "sudo ${package}";
+      # TODO: Add search domain warthog-major.ts.net.
+      services.hickory-dns.settings = { };
+
+      services.tailscale = {
+        enable = true;
+
+        interfaceName = "ts0";
+        useRoutingFeatures = "both";
       };
 
-      packages = [
-        package
-      ];
+      networking.firewall.trustedInterfaces = [ config.services.tailscale.interfaceName ];
     };
 
-  homeModules.tailscale-darwin =
-    { lib, pkgs, ... }:
+  darwinModules.tailscale = {
+    homebrew.casks = [ "tailscale" ];
+  };
+
+  homeModules.tailscale =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       inherit (lib.meta) getExe;
+      inherit (lib.modules) mkIf;
 
-      package = getExe pkgs.tailscale;
+      package = pkgs.tailscale;
     in
     {
-      programs.nushell.aliases = {
-        ts = package;
-      };
+      programs.nushell.aliases.ts =
+        if config.nixpkgs.hostPlatform.isLinux then getExe pkgs.tailscale else "tailscale";
 
-      packages = [
+      packages = mkIf config.nixpkgs.hostPlatform.isLinux [
         package
       ];
     };

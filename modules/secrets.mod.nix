@@ -10,24 +10,21 @@ let
       age.identityPaths = [ "/etc/age/id" ];
     };
 in
+{ inputs, ... }:
 {
-  nixosModules.secrets =
-    { inputs, ... }:
-    {
-      imports = [
-        inputs.age.nixosModules.age
+  nixosModules.secrets = {
+    imports = [
+      inputs.age.nixosModules.age
 
-        commonModule
-      ];
-    };
+      commonModule
+    ];
+  };
 
-  darwinModules.secrets =
-    { inputs, ... }:
-    {
-      imports = [
-        inputs.age.darwinModules.age
+  darwinModules.secrets = {
+    imports = [
+      inputs.age.darwinModules.age
 
-        commonModule
-      ];
-    };
+      commonModule
+    ];
+  };
 }

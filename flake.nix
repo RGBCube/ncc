@@ -6,12 +6,12 @@
     url = "github:nix-community/nixos-facter-modules";
   };
   inputs.os-darwin = {
-    url = "github:LnL7/nix-darwin/master";
+    url = "github:LnL7/nix-darwin";
     inputs.nixpkgs.follows = "os";
   };
 
   inputs.home = {
-    url = "github:SquirrelModeller/hjem/main";
+    url = "github:SquirrelModeller/hjem";
     inputs.nixpkgs.follows = "os";
     inputs.darwin.follows = "os-darwin";
     inputs.smfh.follows = "";
@@ -26,7 +26,7 @@
   };
 
   inputs.parts = {
-    url = "github:hercules-ci/flake-parts/main";
+    url = "github:hercules-ci/flake-parts";
     inputs.nixpkgs-lib.follows = "os";
   };
 
@@ -47,6 +47,13 @@
   inputs.homebrew-cask = {
     url = "github:homebrew/homebrew-cask";
     flake = false;
+  };
+
+  inputs.sudo-run0-shim = {
+    url = "github:LordGrimmauld/run0-sudo-shim";
+    inputs.nixpkgs.follows = "os";
+    inputs.nix-github-actions.follows = "";
+    inputs.treefmt-nix.follows = "";
   };
 
   outputs =

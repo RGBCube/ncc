@@ -14,10 +14,10 @@
 
       packages = [
       ]
-      ++ optionals config.nixpkgs.system.isLinux [
+      ++ optionals config.nixpkgs.hostPlatform.isLinux [
         pkgs.haruna
       ]
-      ++ optionals config.nixpkgs.system.isDarwin [
+      ++ optionals config.nixpkgs.hostPlatform.isDarwin [
         pkgs.iina
       ];
     };

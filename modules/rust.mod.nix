@@ -14,7 +14,7 @@
       environment.sessionVariables = {
         CARGO_NET_GIT_FETCH_WITH_CLI = "true";
 
-        LIBRARY_PATH = mkIf config.nixpkgs.system.isDarwin <| makeLibraryPath [ pkgs.libiconv ];
+        LIBRARY_PATH = mkIf config.nixpkgs.hostPlatform.isDarwin <| makeLibraryPath [ pkgs.libiconv ];
       };
 
       packages = [

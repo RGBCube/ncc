@@ -1,6 +1,6 @@
-{
+{ inputs, ... }: {
   nixosModules.hardware-report =
-    { inputs, lib, ... }:
+    { lib, ... }:
     let
       inherit (lib.modules) mkAliasOptionModule;
     in

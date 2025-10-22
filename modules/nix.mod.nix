@@ -1,9 +1,9 @@
 let
   commonModule =
+    inputs:
     {
       self,
       config,
-      inputs,
       lib,
       pkgs,
       ...
@@ -66,7 +66,7 @@ let
           options = "--delete-older-than 3d";
         }
 
-        (optionalAttrs config.nixpkgs.system.isLinux {
+        (optionalAttrs config.nixpkgs.hostPlatform.isLinux {
           dates = "weekly";
           persistent = true;
         })
@@ -75,14 +75,14 @@ let
       nix.nixPath =
         registryMap
         |> mapAttrsToList (name: value: "${name}=${value}")
-        |> (if config.nixpkgs.system.isDarwin then concatStringsSep ":" else id);
+        |> (if config.nixpkgs.hostPlatform.isDarwin then concatStringsSep ":" else id);
 
       nix.registry =
         registryMap // { default = inputs.nixpkgs; } |> mapAttrs (_: flake: { inherit flake; });
 
       nix.settings =
         (import <| self + /flake.nix).nixConfig
-        |> flip removeAttrs (optionals config.nixpkgs.system.isDarwin [ "use-cgroups" ]);
+        |> flip removeAttrs (optionals config.nixpkgs.hostPlatform.isDarwin [ "use-cgroups" ]);
 
       nix.optimise.automatic = true;
 
@@ -110,7 +110,8 @@ let
       };
     };
 in
+{ inputs, ... }:
 {
-  nixosModules.nix = commonModule;
-  darwinModules.nix = commonModule;
+  nixosModules.nix = commonModule inputs;
+  darwinModules.nix = commonModule inputs;
 }
