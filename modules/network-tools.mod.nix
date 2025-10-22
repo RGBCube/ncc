@@ -5,9 +5,9 @@
       packages = [
         (pkgs.curl.override {
           gnutlsSupport = false;
-          opensslSupport = false;
+          opensslSupport = true; # OpenSSL supports QUIC.
           wolfsslSupport = false;
-          rustlsSupport = true;
+          rustlsSupport = false;
 
           brotliSupport = true;
           zlibSupport = true;

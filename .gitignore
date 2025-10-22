@@ -8,3 +8,4 @@
 !flake.lock
 
 !*.nix
+!*.png
