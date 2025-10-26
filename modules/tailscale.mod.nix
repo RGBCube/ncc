@@ -8,9 +8,6 @@ in
       inherit (lib.modules) mkAfter;
     in
     {
-      # TODO: Add search domain warthog-major.ts.net.
-      services.hickory-dns.settings = { };
-
       services.tailscale = {
         enable = true;
 
