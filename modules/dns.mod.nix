@@ -32,11 +32,11 @@ let
                   protocol.type = "https";
                 }
                 {
-                  protocol.server_name = "dns.nextdns.io";
+                  protocol.server_name = "7f2bf8.dns.nextdns.io";
                   protocol.type = "quic";
                 }
                 {
-                  protocol.server_name = "dns.nextdns.io";
+                  protocol.server_name = "7f2bf8.dns.nextdns.io";
                   protocol.type = "tls";
                 }
               ];

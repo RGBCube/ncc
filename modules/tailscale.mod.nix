@@ -1,6 +1,12 @@
+let
+  domain = "warthog-major.ts.net";
+in
 {
   nixosModules.tailscale =
-    { config, ... }:
+    { config, lib, ... }:
+    let
+      inherit (lib.modules) mkAfter;
+    in
     {
       # TODO: Add search domain warthog-major.ts.net.
       services.hickory-dns.settings = { };
@@ -13,11 +19,22 @@
       };
 
       networking.firewall.trustedInterfaces = [ config.services.tailscale.interfaceName ];
+
+      etc."resolf.conf".text = mkAfter ''
+        search ${domain}
+      '';
     };
 
-  darwinModules.tailscale = {
-    homebrew.casks = [ "tailscale" ];
-  };
+  darwinModules.tailscale =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = [ "tailscale" ];
+
+      networking.search = singleton domain;
+    };
 
   homeModules.tailscale =
     {
