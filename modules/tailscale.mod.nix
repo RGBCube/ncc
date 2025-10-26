@@ -1,5 +1,5 @@
 let
-  domain = "warthog-major.ts.net";
+  domain = "warthog-major.ts.net.";
 in
 {
   nixosModules.tailscale =
