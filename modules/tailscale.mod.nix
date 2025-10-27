@@ -48,7 +48,7 @@ in
     in
     {
       programs.nushell.aliases.ts =
-        if config.nixpkgs.hostPlatform.isLinux then getExe pkgs.tailscale else "tailscale";
+        if config.nixpkgs.hostPlatform.isDarwin then "tailscale" else getExe pkgs.tailscale;
 
       packages = mkIf config.nixpkgs.hostPlatform.isLinux [
         package
