@@ -68,6 +68,8 @@
     {
       networking.useNetworkd = true;
 
+      networking.nftables.enable = true;
+
       networking.networkmanager.enable = true;
 
       users.extraGroups.networkmanager.members =

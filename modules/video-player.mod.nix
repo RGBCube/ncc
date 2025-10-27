@@ -7,18 +7,18 @@
       ...
     }:
     let
-      inherit (lib.modules) optionals;
+      inherit (lib.lists) singleton;
     in
     {
       # TODO: xdg-mime
 
-      packages = [
-      ]
-      ++ optionals config.nixpkgs.hostPlatform.isLinux [
-        pkgs.haruna
-      ]
-      ++ optionals config.nixpkgs.hostPlatform.isDarwin [
-        pkgs.iina
-      ];
+      packages = singleton (
+        if config.nixpkgs.hostPlatform.isLinux then
+          pkgs.haruna
+        else if config.nixpkgs.hostPlatform.isDarwin then
+          pkgs.iina
+        else
+          throw "Unsupported OS"
+      );
     };
 }
