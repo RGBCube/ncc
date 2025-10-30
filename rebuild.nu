@@ -62,6 +62,6 @@ def main --wrapped [
   if (uname | get kernel-name) == "Darwin" {
     nh darwin switch . ...$nh_flags -- ...$nix_flags
   } else {
-    nh os switch . ...$nh_flags -- ...$nix_flags
+    NH_BYPASS_ROOT_CHECK=true nh os switch . ...$nh_flags -- ...$nix_flags
   }
 }
