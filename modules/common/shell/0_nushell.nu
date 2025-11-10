@@ -160,12 +160,6 @@ do --env {
   ]: nothing -> string {
     let code = $env.LAST_EXIT_CODE
 
-    let jj_workspace_root = try {
-      jj workspace root err> $null_device
-    } catch {
-      ""
-    }
-
     let hostname = if ($env.SSH_CONNECTION? | is-not-empty) {
       let hostname = try {
         hostname
@@ -175,6 +169,12 @@ do --env {
 
       $"(ansi light_green_bold)@($hostname)(ansi reset) "
     } else {
+      ""
+    }
+
+    let jj_workspace_root = try {
+      jj workspace root err> $null_device
+    } catch {
       ""
     }
 
@@ -200,26 +200,40 @@ do --env {
       $"($hostname)(ansi cyan)($pwd)(ansi reset)"
     }
 
-    let command_duration = ($env.CMD_DURATION_MS | into int) * 1ms
-    let command_duration = if $command_duration <= 2sec {
-      ""
-    } else {
-      $"┫(ansi light_magenta_bold)($command_duration)(ansi light_yellow_bold)┣━"
+    let prefix = {
+      let exit_code = if $code == 0 {
+        ""
+      } else {
+        $"┫(ansi light_red_bold)($code)(ansi light_yellow_bold)┣━"
+      }
+
+      let command_duration = ($env.CMD_DURATION_MS | into int) * 1ms
+      let command_duration = if $command_duration <= 2sec {
+        ""
+      } else {
+        $"┫(ansi light_magenta_bold)($command_duration)(ansi light_yellow_bold)┣━"
+      }
+
+      let middle = if $command_duration == "" and $exit_code == "" {
+        "━"
+      } else {
+        ""
+      }
+
+      $"(ansi light_yellow_bold)($left_char)($exit_code)($middle)($command_duration)(ansi reset)"
     }
 
-    let exit_code = if $code == 0 {
-      ""
-    } else {
-      $"┫(ansi light_red_bold)($code)(ansi light_yellow_bold)┣━"
+    let suffix = {
+      let nix_shell = if ($env.IN_NIX_SHELL? | is-not-empty) {
+        $"(ansi light_yellow_bold) | (ansi light_blue_bold)nix(ansi reset)"
+      } else {
+        ""
+      }
+
+      $nix_shell
     }
 
-    let middle = if $command_duration == "" and $exit_code == "" {
-      "━"
-    } else {
-      ""
-    }
-
-    $"(ansi light_yellow_bold)($left_char)($exit_code)($middle)($command_duration)(ansi reset) ($body)(char newline)"
+    $"($prefix) ($body)($suffix)(char newline)"
   }
 
   $env.PROMPT_INDICATOR = $"(ansi light_yellow_bold)┃(ansi reset) "
