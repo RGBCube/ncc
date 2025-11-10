@@ -228,7 +228,7 @@ do --env {
         $suffix ++= [ $"(ansi light_blue_bold)nix" ]
       }
 
-      $suffix | each { $'(ansi light_yellow_bold)┃(ansi reset) ($in)(ansi reset)' } | str join " "
+      $suffix | each { $'(ansi light_yellow_bold)•(ansi reset) ($in)(ansi reset)' } | str join " "
     }
 
     ([ $prefix, $body, $suffix ] | str join " ") + (char newline)
