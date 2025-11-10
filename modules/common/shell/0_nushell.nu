@@ -209,7 +209,7 @@ do --env {
       mut prefix = []
 
       # EXIT CODE
-      if $code == 0 {
+      if $code != 0 {
         $prefix ++= [ $"(ansi light_red_bold)($code)" ]
       }
 
