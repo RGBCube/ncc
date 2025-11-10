@@ -160,80 +160,80 @@ do --env {
   ]: nothing -> string {
     let code = $env.LAST_EXIT_CODE
 
-    let hostname = if ($env.SSH_CONNECTION? | is-not-empty) {
-      let hostname = try {
-        hostname
+    let body = do {
+      mut body = []
+
+      # SSH INDICATOR `@hostname`
+      if ($env.SSH_CONNECTION? | is-not-empty) {
+        let hostname = try {
+          hostname
+        } catch {
+          "remote"
+        }
+
+        $body ++= [ $"(ansi light_green_bold)@($hostname)" ]
+      }
+
+      # PATH OR JJ PROJECT `~/Downloads` or `ncc -> modules`
+      # Case insensitive filesystems strike again!
+      # https://github.com/nushell/nushell/issues/16205
+      let pwd = pwd | path expand
+
+      let jj_workspace_root = try {
+        jj workspace root err> $null_device
       } catch {
-        "remote"
-      }
-
-      $"(ansi light_green_bold)@($hostname)(ansi reset) "
-    } else {
-      ""
-    }
-
-    let jj_workspace_root = try {
-      jj workspace root err> $null_device
-    } catch {
-      ""
-    }
-
-    # https://github.com/nushell/nushell/issues/16205
-    #
-    # Case insensitive filesystems strike again!
-    let pwd = pwd | path expand
-
-    let body = if ($jj_workspace_root | is-not-empty) {
-      let subpath = $pwd | path relative-to $jj_workspace_root
-      let subpath = if ($subpath | is-not-empty) {
-        $"(ansi magenta_bold) → (ansi reset)(ansi blue)($subpath)"
-      }
-
-      $"($hostname)(ansi light_yellow_bold)($jj_workspace_root | path basename)($subpath)(ansi reset)"
-    } else {
-      let pwd = if ($pwd | str starts-with $env.HOME) {
-        "~" | path join ($pwd | path relative-to $env.HOME)
-      } else {
-        $pwd
-      }
-
-      $"($hostname)(ansi cyan)($pwd)(ansi reset)"
-    }
-
-    let prefix = {
-      let exit_code = if $code == 0 {
         ""
-      } else {
-        $"┫(ansi light_red_bold)($code)(ansi light_yellow_bold)┣━"
       }
 
+      $body ++= [ (if ($jj_workspace_root | is-not-empty) {
+        let subpath = $pwd | path relative-to $jj_workspace_root
+        let subpath = if ($subpath | is-not-empty) {
+          $" (ansi magenta_bold)→(ansi reset) (ansi blue)($subpath)"
+        }
+
+        $"(ansi light_yellow_bold)($jj_workspace_root | path basename)($subpath)"
+      } else {
+        let pwd = if ($pwd | str starts-with $env.HOME) {
+          "~" | path join ($pwd | path relative-to $env.HOME)
+        } else {
+          $pwd
+        }
+
+        $"(ansi cyan)($pwd)"
+      }) ]
+
+      $body | str join $"(ansi reset) "
+    }
+
+    let prefix = do {
+      mut prefix = []
+
+      # EXIT CODE
+      if $code == 0 {
+        $prefix ++= [ $"(ansi light_red_bold)($code)" ]
+      }
+
+      # COMMAND DURATION
       let command_duration = ($env.CMD_DURATION_MS | into int) * 1ms
-      let command_duration = if $command_duration <= 2sec {
-        ""
-      } else {
-        $"┫(ansi light_magenta_bold)($command_duration)(ansi light_yellow_bold)┣━"
+      if $command_duration > 2sec {
+        $prefix ++= [ $"(ansi light_magenta_bold)($command_duration)" ]
       }
 
-      let middle = if $command_duration == "" and $exit_code == "" {
-        "━"
-      } else {
-        ""
-      }
-
-      $"(ansi light_yellow_bold)($left_char)($exit_code)($middle)($command_duration)(ansi reset)"
+      $"(ansi light_yellow_bold)($left_char)($prefix | each { $'┫($in)(ansi light_yellow_bold)┣' } | str join '━')━(ansi reset)"
     }
 
-    let suffix = {
-      let nix_shell = if ($env.IN_NIX_SHELL? | is-not-empty) {
-        $"(ansi light_yellow_bold) | (ansi light_blue_bold)nix(ansi reset)"
-      } else {
-        ""
+    let suffix = do {
+      mut suffix = []
+
+      # NIX SHELL
+      if ($env.IN_NIX_SHELL? | is-not-empty) {
+        $suffix ++= [ $"(ansi light_blue_bold)nix" ]
       }
 
-      $nix_shell
+      $suffix | each { $'(ansi light_yellow_bold)┃(ansi reset) ($in)(ansi reset)' } | str join " "
     }
 
-    $"($prefix) ($body)($suffix)(char newline)"
+    ([ $prefix, $body, $suffix ] | str join " ") + (char newline)
   }
 
   $env.PROMPT_INDICATOR = $"(ansi light_yellow_bold)┃(ansi reset) "
