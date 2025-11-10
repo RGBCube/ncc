@@ -181,11 +181,9 @@ do --env {
 
       let jj_workspace_root = try {
         jj workspace root err> $null_device
-      } catch {
-        ""
       }
 
-      $body ++= [ (if ($jj_workspace_root | is-not-empty) {
+      $body ++= [ (if $jj_workspace_root != null {
         let subpath = $pwd | path relative-to $jj_workspace_root
         let subpath = if ($subpath | is-not-empty) {
           $" (ansi magenta_bold)→(ansi reset) (ansi blue)($subpath)"
