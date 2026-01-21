@@ -6,7 +6,7 @@ in {
   environment.systemPackages = [
     pkgs.asciinema
     pkgs.cowsay
-    pkgs.curlHTTP3
+    pkgs.curl
     pkgs.dig
     pkgs.doggo
     pkgs.eza
