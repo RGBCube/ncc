@@ -1,5 +1,5 @@
 let
-  inherit (import ./keys.nix) admins all best cape disk nine pala;
+  inherit (import ./keys.nix) admins all best cape disk nine;
 in {
   # best
   "hosts/best/id.age".publicKeys            = [ best ] ++ admins;
@@ -37,9 +37,9 @@ in {
   "hosts/nine/github2forgejo/environment.age".publicKeys = [ nine ] ++ admins;
 
   # pala
-  "hosts/pala/id.age".publicKeys      = [ pala ] ++ admins;
-  "hosts/pala/id-cull.age".publicKeys = [ pala ] ++ admins;
-  "hosts/pala/id-no.age".publicKeys   = [ pala ] ++ admins;
+  "hosts/pala/id.age".publicKeys      = admins;
+  "hosts/pala/id-cull.age".publicKeys = admins;
+  "hosts/pala/id-no.age".publicKeys   = admins;
 
   # shared
   "modules/common/ssh/config.age".publicKeys     = all;
