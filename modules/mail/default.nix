@@ -19,7 +19,7 @@ in {
 
   mailserver = enabled {
     domains           = mkDefault [ domain ];
-    certificateScheme = "acme";
+    x509.useACMEHost = head config.mailserver.domains;
 
     # We use systemd-resolved instead of Knot Resolver.
     localDnsResolver = false;
