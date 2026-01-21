@@ -46,8 +46,6 @@ in {
   config.security.acme.users = [ "nginx" ];
 
   config.services.nginx = enabled {
-    package = pkgs.nginxQuic;
-
     statusPage = true;
 
     recommendedBrotliSettings = true;
