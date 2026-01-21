@@ -1,6 +1,6 @@
 { self, config, lib, ... }: let
   inherit (config.networking) domain;
-  inherit (lib) const enabled genAttrs head merge mkForce;
+  inherit (lib) const enabled genAttrs head merge;
 
   fqdn = "git.${domain}";
   port = 8001;
@@ -22,7 +22,7 @@ in {
     exclude = [ "/var/lib/forgejo/data/repo-archive"];
   };
 
-  services.openssh.settings.AcceptEnv = mkForce "SHELLS COLOTERM GIT_PROTOCOL";
+  services.openssh.settings.AcceptEnv = [ "GIT_PROTOCOL" ];
 
   services.forgejo = enabled {
     lfs = enabled;
