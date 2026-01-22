@@ -150,7 +150,7 @@ in {
       pkgs.markdown-oxide
 
       # NIX
-      pkgs.nixfmt-rfc-style
+      pkgs.nixfmt
       pkgs.nixd
 
       # PYTHON

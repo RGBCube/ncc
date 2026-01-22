@@ -35,8 +35,8 @@ in {
   ] ++ optionals config.isDesktop [
     pkgs.claude-code
 
-    pkgs.clang_16
-    pkgs.clang-tools_16
+    pkgs.clang
+    pkgs.clang-tools
     pkgs.deno
     pkgs.gh
     pkgs.go
