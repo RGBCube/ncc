@@ -1,5 +1,5 @@
-{ config, lib, ... }: let
-  inherit (lib) enabled mkIf;
+{ config, lib, pkgs, ... }: let
+  inherit (lib) enabled mkIf getExe;
 
   # Shorter is better for networking interfaces IMO.
   interface = "ts0";
@@ -21,4 +21,13 @@ in {
 
   systemd.network.wait-online.enable = false; 
   boot.initrd.systemd.network.wait-online.enable = false;
+
+  services.networkd-dispatcher = enabled {
+    rules."50-tailscale-optimizations" = {
+      onState = [ "routable" ];
+      script = /* sh */ ''
+        ${getExe pkgs.ethtool} --features ${config.networking.defaultGateway.interface} rx-udp-gro-forwarding on rx-gro-list off
+      '';
+    };
+  };
 }
