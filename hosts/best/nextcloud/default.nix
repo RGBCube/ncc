@@ -101,7 +101,7 @@ in {
 
     extraAppsEnable = true;
     extraApps       = {
-      inherit (packageNextcloud.packages.apps)
+      inherit (package.packages.apps)
         bookmarks calendar contacts deck forms
         impersonate mail notes previewgenerator;
     };
