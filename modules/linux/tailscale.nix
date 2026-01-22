@@ -1,5 +1,5 @@
-{ lib, ... }: let
-  inherit (lib) enabled;
+{ config, lib, ... }: let
+  inherit (lib) enabled mkIf;
 
   # Shorter is better for networking interfaces IMO.
   interface = "ts0";
@@ -14,4 +14,11 @@ in {
   };
 
   networking.firewall.trustedInterfaces = [ interface ];
+
+  systemd.services.tailscaled.serviceConfig.Environment = mkIf config.networking.nftables.enable [
+    "TS_DEBUG_FIREWALL_MODE=nftables" 
+  ];
+
+  systemd.network.wait-online.enable = false; 
+  boot.initrd.systemd.network.wait-online.enable = false;
 }
