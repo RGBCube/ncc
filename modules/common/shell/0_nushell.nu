@@ -465,7 +465,7 @@ def --env mc [path: path]: nothing -> nothing {
 def --env mcg [path: path]: nothing -> nothing {
   mkdir $path
   cd $path
-  jj git init --colocate
+  jj git init
 }
 
 def --env "nu-complete jc" [commandline: string] {

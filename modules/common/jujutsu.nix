@@ -25,11 +25,11 @@ in {
         aliases.push = [ "git" "push" ];
         aliases.p    = [ "git" "push" ];
 
-        aliases.clone = [ "git" "clone" "--colocate" ];
-        aliases.cl    = [ "git" "clone" "--colocate" ];
+        aliases.clone = [ "git" "clone" ];
+        aliases.cl    = [ "git" "clone" ];
 
-        aliases.init = [ "git" "init" "--colocate" ];
-        aliases.i    = [ "git" "init" "--colocate" ];
+        aliases.init = [ "git" "init" ];
+        aliases.i    = [ "git" "init" ];
 
         aliases.a  = [ "abandon" ];
 
