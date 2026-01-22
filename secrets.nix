@@ -1,5 +1,5 @@
 let
-  inherit (import ./keys.nix) admins all best cape disk nine;
+  inherit (import ./keys.nix) admins all best disk nine;
 in {
   # best
   "hosts/best/id.age".publicKeys            = [ best ] ++ admins;
@@ -22,9 +22,6 @@ in {
   "hosts/best/nextcloud/password.age".publicKeys = [ best ] ++ admins;
 
   "hosts/best/plausible/key.age".publicKeys = [ best ] ++ admins;
-
-  # cape
-  "hosts/cape/id.age".publicKeys = [ cape ] ++ admins;
 
   # disk
   "hosts/disk/id.age".publicKeys              = [ disk ] ++ admins;
