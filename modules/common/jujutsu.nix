@@ -96,9 +96,6 @@ in {
         git.fetch = [ "origin" "upstream" "rad" ];
         git.push  =   "origin";
 
-        remotes.origin.auto-track-bookmarks = "*";
-        remotes.rad.auto-track-bookmarks    = "*";
-
         signing.backend  = mkIf config.isDesktop "ssh";
         signing.behavior = mkIf config.isDesktop "own";
         signing.key      = mkIf config.isDesktop "~/.ssh/id";
