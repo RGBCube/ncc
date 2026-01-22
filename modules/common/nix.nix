@@ -41,6 +41,8 @@ in {
 
   nix.optimise.automatic = true;
 
+  nix.package = pkgs.nixVersions.latest;
+
   environment.systemPackages = [
     pkgs.nh
     pkgs.nix-index
