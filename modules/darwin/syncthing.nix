@@ -1,3 +1,3 @@
 {
-  homebrew.casks = [ "syncthing" ];
+  homebrew.casks = [ "syncthing-app" ];
 }
