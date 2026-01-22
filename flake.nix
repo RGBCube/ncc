@@ -3,7 +3,6 @@
 
   nixConfig = {
     extra-substituters = [
-      "https://cache.rgbcu.be/"
       "https://cache.garnix.io/"
       "https://cache.privatevoid.net"
       "https://hyprland.cachix.org/"
@@ -11,7 +10,6 @@
     ];
 
     extra-trusted-public-keys = [
-      "cache.rgbcu.be:nBN/5Qg5E8GIYwaoslm9DYo2zeqlBiCVNCPf17djr+w="
       "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       "cache.privatevoid.net:SErQ8bvNWANeAvtsOESUwVYr2VJynfuc9JRwlzTTkVg="
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
