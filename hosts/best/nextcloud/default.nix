@@ -4,7 +4,7 @@
 
   fqdn = "cloud.${domain}";
 
-  package = pkgs.nextcloud31;
+  package = pkgs.nextcloud32;
 in {
   imports = [
     (self + /modules/nginx.nix)
