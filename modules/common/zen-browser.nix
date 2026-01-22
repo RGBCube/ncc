@@ -1,6 +1,4 @@
 { lib, ... }: let
-  inherit (lib) disabled;
-
   lockedAs = Value: attrs: attrs // {
     inherit Value;
     Locked = true;
@@ -8,7 +6,7 @@
 
   locked = attrs: attrs // { Locked = true; };
 
-  policies = {
+  _policies = {
     AutofillAddressEnabled    = false;
     AutofillCreditCardEnabled = false;
 
@@ -92,9 +90,4 @@
     };
   };
 in {
-  home-manager.sharedModules = [{
-    programs.zen-browser = disabled {
-      inherit policies;
-    };
-  }];
 }

@@ -437,8 +437,7 @@
         "nix-homebrew": "nix-homebrew",
         "nixos-mailserver": "nixos-mailserver",
         "nixpkgs": "nixpkgs_2",
-        "themes": "themes",
-        "zen-browser": "zen-browser"
+        "themes": "themes"
       }
     },
     "rust-analyzer-src": {
@@ -500,29 +499,6 @@
       "original": {
         "owner": "RGBCube",
         "repo": "ThemeNix",
-        "type": "github"
-      }
-    },
-    "zen-browser": {
-      "inputs": {
-        "home-manager": [
-          "home-manager"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1768999995,
-        "narHash": "sha256-7OXxa5rG+GeUL0iYkAbpVKFW/QPcThmlZMJufYOiwdc=",
-        "owner": "0xc000022070",
-        "repo": "zen-browser-flake",
-        "rev": "13f0273a63b054c4e6de04f0fc838e18f1bf28e7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "0xc000022070",
-        "repo": "zen-browser-flake",
         "type": "github"
       }
     }
