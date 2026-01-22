@@ -1,6 +1,8 @@
 { self, config, lib, ... }: let
   inherit (config.networking) domain;
   inherit (lib) const enabled genAttrs head mkDefault;
+
+  fqdn = "mail1.${domain}";
 in {
   imports = [(self + /modules/acme)];
 
@@ -18,6 +20,8 @@ in {
   security.acme.users = [ "mail" ];
 
   mailserver = enabled {
+    inherit fqdn;
+
     domains           = mkDefault [ domain ];
     x509.useACMEHost = head config.mailserver.domains;
 
@@ -52,5 +56,7 @@ in {
     loginAccounts."supercell@${head config.mailserver.domains}" = {
       hashedPasswordFile = config.secrets.mailSupercellPassword.path;
     };
+
+    stateVersion = 3;
   };
 }

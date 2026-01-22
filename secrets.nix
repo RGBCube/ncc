@@ -2,7 +2,7 @@ let
   inherit (import ./keys.nix) admins all best disk nine;
 in {
   # best
-  "hosts/best/id.age".publicKeys            = [ best ] ++ admins;
+  "hosts/best/id.age".publicKeys        = [ best ] ++ admins;
   "hosts/best/password.age".publicKeys  = [ best ] ++ admins;
 
   "hosts/best/grafana/password.age".publicKeys = [ best ] ++ admins;
@@ -15,8 +15,11 @@ in {
   "hosts/best/plausible/key.age".publicKeys = [ best ] ++ admins;
 
   # disk
-  "hosts/disk/id.age".publicKeys              = [ disk ] ++ admins;
+  "hosts/disk/id.age".publicKeys       = [ disk ] ++ admins;
   "hosts/disk/password.age".publicKeys = [ disk ] ++ admins;
+
+  "hosts/disk/mail/password.hash.age".publicKeys           = [ disk ] ++ admins;
+  "hosts/disk/mail/password-supercell.hash.age".publicKeys = [ disk ] ++ admins;
 
   # nine
   "hosts/nine/id.age".publicKeys       = [ nine ] ++ admins;
@@ -31,7 +34,5 @@ in {
   "modules/common/ssh/config.age".publicKeys     = all;
   "modules/linux/restic/password.age".publicKeys = all;
 
-  "modules/acme/environment.age".publicKeys              = all;
-  "modules/mail/password.hash.age".publicKeys            = all;
-  "modules/mail/password-supercell.hash.age".publicKeys  = all;
+  "modules/acme/environment.age".publicKeys = all;
 }
