@@ -2,14 +2,14 @@
   inherit (lib) makeLibraryPath mkIf;
 in {
   environment.variables = {
-    CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+    CARGO_NET_GIT_FETCH_WITH_CLI = mkIf config.isDesktop "true";
 
     LIBRARY_PATH = mkIf config.isDarwin <| makeLibraryPath [
       pkgs.libiconv
     ];
   };
 
-  environment.systemPackages = [
+  environment.systemPackages = mkIf config.isDesktop [
     pkgs.cargo-deny
     pkgs.cargo-expand
     pkgs.cargo-fuzz
@@ -18,7 +18,6 @@ in {
     pkgs.evcxr
 
     pkgs.taplo
-
 
     (pkgs.fenix.complete.withComponents [
       "cargo"
