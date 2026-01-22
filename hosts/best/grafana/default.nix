@@ -14,10 +14,6 @@ in {
     file  = ./password.age;
     owner = "grafana";
   };
-  secrets.grafanaPasswordMail = {
-    file  = self + /modules/mail/password.plain.age;
-    owner = "grafana";
-  };
 
   services.postgresql.ensure = [ "grafana" ];
 
@@ -56,19 +52,6 @@ in {
       disable_gravatar = true;
 
       disable_initial_admin_creation = true; # Just in case.
-    };
-
-    settings.smtp = {
-      enabled = true;
-
-      password        = "$__file{${config.secrets.grafanaPasswordMail.path}}";
-      startTLS_policy = "MandatoryStartTLS";
-
-      ehlo_identity = "metrics@${domain}";
-      from_address  = "metrics@${domain}";
-      from_name     = "Metrics";
-      # host          = "${self.disk.mailserver.fqdn}:${toString self.disk.services.postfix.relayPort}";
-      host          = "${self.disk.mailserver.fqdn}:25"; # FIXME TODO
     };
   };
 

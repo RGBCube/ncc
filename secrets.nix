@@ -5,16 +5,7 @@ in {
   "hosts/best/id.age".publicKeys            = [ best ] ++ admins;
   "hosts/best/password.age".publicKeys  = [ best ] ++ admins;
 
-  "hosts/best/cache/key.age".publicKeys = [ best ] ++ admins;
-
-  "hosts/best/garage/environment.age".publicKeys = [ best ] ++ admins;
-
   "hosts/best/grafana/password.age".publicKeys = [ best ] ++ admins;
-
-  "hosts/best/hercules/caches.age".publicKeys      = [ best ] ++ admins;
-  "hosts/best/hercules/credentials.age".publicKeys = [ best ] ++ admins;
-  "hosts/best/hercules/secrets.age".publicKeys     = [ best ] ++ admins;
-  "hosts/best/hercules/token.age".publicKeys       = [ best ] ++ admins;
 
   "hosts/best/matrix/key.age".publicKeys    = [ best ] ++ admins;
   "hosts/best/matrix/secret.age".publicKeys = [ best ] ++ admins;
@@ -42,6 +33,5 @@ in {
 
   "modules/acme/environment.age".publicKeys              = all;
   "modules/mail/password.hash.age".publicKeys            = all;
-  "modules/mail/password.plain.age".publicKeys           = all;
   "modules/mail/password-supercell.hash.age".publicKeys  = all;
 }
