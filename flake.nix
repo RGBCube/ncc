@@ -26,6 +26,7 @@
     show-trace               = true;
     trusted-users            = [ "root" "@build" "@wheel" "@admin" ];
     use-cgroups              = true;
+    use-xdg-base-directories = true;
     warn-dirty               = false;
   };
 
