@@ -35,6 +35,9 @@ in {
   ] ++ optionals config.isDesktop [
     pkgs.claude-code
 
+    pkgs.kubectl
+    pkgs.kubernetes-helm
+
     pkgs.clang
     pkgs.clang-tools
     pkgs.deno
