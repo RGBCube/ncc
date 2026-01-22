@@ -1,14 +1,9 @@
 { self, config, inputs, lib, pkgs, ... }: let
   inherit (lib) attrsToList concatStringsSep const disabled filter filterAttrs flip id isType mapAttrs mapAttrsToList merge mkAfter optionalAttrs optionals;
-  inherit (lib.strings) toJSON;
 
   registryMap = inputs
     |> filterAttrs (const <| isType "flake");
 in {
-  # We don't want this to be garbage collected away because if
-  # that happens rebuilds are slow thanks to my garbage WiFi.
-  environment.etc.".system-inputs.json".text = toJSON registryMap;
-
   nix.distributedBuilds = true;
   nix.buildMachines     = self.nixosConfigurations
     |> attrsToList
