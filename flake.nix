@@ -22,7 +22,7 @@
     builders-use-substitutes = true;
     flake-registry           = "";
     http-connections         = 50;
-    lazy-trees               = true;
+    # lazy-trees               = true; # Only on dix.
     show-trace               = true;
     trusted-users            = [ "root" "@build" "@wheel" "@admin" ];
     use-cgroups              = true;
@@ -76,8 +76,6 @@
 
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    nix.url = "github:DeterminateSystems/nix-src";
 
     crash = {
       url = "github:RGBCube/crash";
