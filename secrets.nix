@@ -31,8 +31,6 @@ in {
   "hosts/nine/id.age".publicKeys       = [ nine ] ++ admins;
   "hosts/nine/password.age".publicKeys = [ nine ] ++ admins;
 
-  "hosts/nine/github2forgejo/environment.age".publicKeys = [ nine ] ++ admins;
-
   # pala
   "hosts/pala/id.age".publicKeys      = admins;
   "hosts/pala/id-cull.age".publicKeys = admins;

@@ -91,12 +91,6 @@
 
     nix.url = "github:DeterminateSystems/nix-src";
 
-    github2forgejo = {
-      url = "github:RGBCube/GitHub2Forgejo";
-
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     crash = {
       url = "github:RGBCube/crash";
 

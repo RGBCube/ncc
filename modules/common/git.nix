@@ -1,6 +1,5 @@
-{ self, config, lib, pkgs, ... }: let
-  inherit (lib) head enabled merge mkIf;
-  inherit (lib.strings) match;
+{ config, lib, pkgs, ... }: let
+  inherit (lib) enabled merge mkIf;
 in {
   environment.systemPackages = [
     pkgs.git-absorb
@@ -8,9 +7,6 @@ in {
 
   home-manager.sharedModules = [(homeArgs: let
     config' = homeArgs.config;
-
-    gitUrl    = self.best.services.forgejo.settings.server.ROOT_URL;
-    gitDomain = head <| match "https://(.*)/" gitUrl;
   in {
     programs.difftastic.git = enabled;
 
@@ -53,7 +49,6 @@ in {
       } <| mkIf config.isDesktop {
         core.sshCommand                                  = "ssh -i ~/.ssh/id";
         url."ssh://git@github.com/".insteadOf            = "https://github.com/";
-        url."ssh://forgejo@${gitDomain}:${toString self.best.services.forgejo.settings.server.SSH_PORT}/".insteadOf = gitUrl;
 
         commit.gpgSign  = true;
         tag.gpgSign     = true;
