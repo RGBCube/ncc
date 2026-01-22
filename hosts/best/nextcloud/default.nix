@@ -4,7 +4,7 @@
 
   fqdn = "cloud.${domain}";
 
-  packageNextcloud = pkgs.nextcloud31;
+  package = pkgs.nextcloud31;
 in {
   imports = [
     (self + /modules/nginx.nix)
@@ -51,7 +51,7 @@ in {
   };
 
   services.nextcloud = enabled {
-    package  = packageNextcloud;
+    inherit package;
 
     hostName = fqdn;
     https    = true;
@@ -105,8 +105,6 @@ in {
         bookmarks calendar contacts deck forms
         impersonate mail notes previewgenerator;
     };
-
-    nginx.recommendedHttpHeaders = true;
   };
 
   services.nginx.virtualHosts.${fqdn} = merge config.services.nginx.sslTemplate {
