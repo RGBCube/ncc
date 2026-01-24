@@ -53,6 +53,12 @@ in {
       hashedPasswordFile = config.secrets.mailPassword.path;
     };
 
+    loginAccounts."labubu@${head config.mailserver.domains}" = {
+      aliases = [ "linuxcom-labubu@${head config.mailserver.domains}" ];
+
+      hashedPasswordFile = config.secrets.mailPassword.path;
+    };
+
     loginAccounts."supercell@${head config.mailserver.domains}" = {
       hashedPasswordFile = config.secrets.mailSupercellPassword.path;
     };

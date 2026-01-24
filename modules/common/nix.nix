@@ -4,7 +4,8 @@
   registryMap = inputs
     |> filterAttrs (const <| isType "flake");
 in {
-  nix.distributedBuilds = true;
+  # "no trusted key, can't add"
+  # nix.distributedBuilds = true;
   nix.buildMachines     = self.nixosConfigurations
     |> attrsToList
     |> filter ({ name, value }:
