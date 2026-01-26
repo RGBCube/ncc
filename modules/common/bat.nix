@@ -1,9 +1,14 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) enabled;
+  inherit (lib) enabled getExe;
+
+  batPager = pkgs.writeScript "bat-pager.sh" /* bash */ ''
+    #!${getExe pkgs.bash}
+    bat --plain
+  '';
 in {
   environment.variables = {
-    MANPAGER = "bat --plain";
-    PAGER    = "bat --plain";
+    MANPAGER = "${batPager}";
+    PAGER    = "${batPager}";
   };
   environment.shellAliases = {
     cat  = "bat";
@@ -15,7 +20,7 @@ in {
       config.theme      = "base16";
       themes.base16.src = pkgs.writeText "base16.tmTheme" config.theme.tmTheme;
 
-      config.pager = "less --quit-if-one-screen --RAW-CONTROL-CHARS";
+      config.pager = "less --quit-if-one-screen --quit-on-intr --RAW-CONTROL-CHARS";
     };
   }];
 }

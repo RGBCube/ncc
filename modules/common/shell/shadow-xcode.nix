@@ -34,34 +34,34 @@ in {
     shadowPath = "${config'.home.homeDirectory}/.local/shadow"; # Did you read the comment?
     shadowPathLiteral = ''"${shadowPath}"'';
   in {
-    home.activation.shadow = entryAfter [ "installPackages" "linkGeneration" ] /* bash */ ''
-      ${getExe pkgs.nushell} ${pkgs.writeScript "shadow-xcode.nu" ''
-        use std null_device
+    home.activation.shadow = entryAfter [ "installPackages" "linkGeneration" ]
+    <| "${pkgs.writeScript "shadow-xcode.nu" ''
+      #!${getExe pkgs.nushell}
+      use std null_device
 
-        let original_size = ls ${originalTriggerLiteral} | get 0.size
+      let original_size = ls ${originalTriggerLiteral} | get 0.size
 
-        let shadoweds = ls /usr/bin
-        | flatten
-        | where {
-          # All xcode-select binaries are the same size, so we can narrow down and not run weird stuff.
-          $in.size == $original_size and (try {
-            open $null_device | ^$in.name out+err>| str contains "xcode-select: note: No developer tools were found, requesting install."
-          } catch {
-            # If it exited with a nonzero code, it's probably already set up.
-            false
-          })
-        }
-        | get name
-        | each { path basename }
+      let shadoweds = ls /usr/bin
+      | flatten
+      | where {
+        # All xcode-select binaries are the same size, so we can narrow down and not run weird stuff.
+        $in.size == $original_size and (try {
+          open $null_device | ^$in.name out+err>| str contains "xcode-select: note: No developer tools were found, requesting install."
+        } catch {
+          # If it exited with a nonzero code, it's probably already set up.
+          false
+        })
+      }
+      | get name
+      | each { path basename }
 
-        rm -rf ${shadowPathLiteral}
-        mkdir ${shadowPathLiteral}
+      rm -rf ${shadowPathLiteral}
+      mkdir ${shadowPathLiteral}
 
-        for shadowed in $shadoweds {
-          ln --symbolic /usr/bin/false (${shadowPathLiteral} | path join $shadowed)
-        }
-      ''}
-    '';
+      for shadowed in $shadoweds {
+        ln --symbolic /usr/bin/false (${shadowPathLiteral} | path join $shadowed)
+      }
+    ''}";
 
     programs.nushell.configFile.text = mkAfter /* nu */ ''
       do --env {

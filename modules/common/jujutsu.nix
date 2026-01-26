@@ -1,5 +1,5 @@
 { self, config, lib, pkgs, ... }: let
-  inherit (lib) enabled head mkIf;
+  inherit (lib) enabled getExe head mkIf;
 in {
   environment.systemPackages = [
     pkgs.difftastic
@@ -70,6 +70,7 @@ in {
         revsets.log = "present(@) | present(trunk()) | ancestors(remote_bookmarks().. | @.., 8)";
 
         ui.default-command = "ls";
+        ui.pager           = [ (getExe pkgs.bash) "-c" "exec \${PAGER:-${config.environment.variables.PAGER}}" ];
 
         ui.diff-editor    = ":builtin";
         ui.diff-formatter = [ "difft" "--color" "always" "$left" "$right" ];
