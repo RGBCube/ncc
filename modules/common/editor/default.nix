@@ -165,9 +165,6 @@ in {
 
       # YAML
       pkgs.yaml-language-server
-
-      # ZIG
-      pkgs.zls
     ];
   };
 }

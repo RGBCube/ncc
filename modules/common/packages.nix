@@ -44,7 +44,6 @@ in {
     pkgs.gh
     pkgs.go
     pkgs.lld
-    pkgs.zig
 
     pkgs.qbittorrent
   ] ++ optionals (config.isLinux && config.isDesktop) [
