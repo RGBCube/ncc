@@ -65,7 +65,8 @@
     url = "github:ryantm/agenix";
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.darwin.follows = "nix-darwin";
-    inputs.home-manager.follows = ""; # Not using home-manager, so don't fetch it.
+    inputs.home-manager.follows = "";
+    inputs.systems.follows = "home/smfh/systems";
   };
 
   inputs.homebrew = {
@@ -89,6 +90,8 @@
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.nix-github-actions.follows = "";
     inputs.treefmt-nix.follows = "";
+    inputs.flake-utils.inputs.systems.follows = "home/smfh/systems";
+    inputs.rust-overlay.follows = "home/smfh/rust-overlay";
   };
 
   outputs =
