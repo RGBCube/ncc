@@ -1,4 +1,8 @@
 {
+  flake.darwinModules.discord = {
+    homebrew.casks = [ "vesktop" ];
+  };
+
   flake.homeModules.discord =
     {
       config,
@@ -12,20 +16,21 @@
     {
       packages =
         singleton
+        <|
           (pkgs.discord.override {
             withOpenASAR = true;
             withVencord = true;
           }).overrideAttrs
-          (old: {
-            nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.makeWrapper ];
+            (old: {
+              nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.makeWrapper ];
 
-            postFixup = ''
-              wrapProgram $out/opt/Discord/Discord \
-                --set ELECTRON_OZONE_PLATFORM_HINT "auto" \
-                --add-flags "--enable-features=UseOzonePlatform --ozone-platform=wayland"
-            '';
-          });
+              postFixup = ''
+                wrapProgram $out/opt/Discord/Discord \
+                  --set ELECTRON_OZONE_PLATFORM_HINT "auto" \
+                  --add-flags "--enable-features=UseOzonePlatform --ozone-platform=wayland"
+              '';
+            });
 
-      xdg.config.file."Vencord/settings/quickCss.css".text = config.theme.discordCss;
+      xdg.config.files."Vencord/settings/quickCss.css".text = config.theme.discordCss;
     };
 }

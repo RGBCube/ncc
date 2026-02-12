@@ -7,11 +7,11 @@
   };
 
   flake.homeModules.hammerspoon =
-    { config, lib, ... }:
+    { lib, osConfig, ... }:
     let
       inherit (lib.modules) mkIf;
     in
     {
-      xdg.config.file."hammerspoon/init.lua".text = mkIf config.nixpkgs.hostPlatform.isDarwin "";
+      xdg.config.files."hammerspoon/init.lua".text = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "";
     };
 }

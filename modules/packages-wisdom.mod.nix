@@ -4,7 +4,7 @@
     {
       packages = [
         pkgs.cowsay
-        (pkgs.fortune.override { withOfffensive = true; })
+        (pkgs.fortune.override { withOffensive = true; })
       ];
     };
 }

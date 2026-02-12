@@ -1,8 +1,8 @@
 {
   flake.homeModules.dev-tools =
     {
-      config,
       lib,
+      osConfig,
       pkgs,
       ...
     }:
@@ -13,8 +13,9 @@
     {
       environment.sessionVariables = {
         CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+        RUSTC_BOOTSTRAP = "1";
 
-        LIBRARY_PATH = mkIf config.nixpkgs.hostPlatform.isDarwin <| makeLibraryPath [ pkgs.libiconv ];
+        LIBRARY_PATH = mkIf osConfig.nixpkgs.hostPlatform.isDarwin <| makeLibraryPath [ pkgs.libiconv ];
       };
 
       packages = [
@@ -36,13 +37,11 @@
 
         pkgs.taplo
 
-        (pkgs.fenix.complete.withComponents [
-          "cargo"
-          "clippy"
-          "rust-src"
-          "rustc"
-          "rustfmt"
-        ])
+        pkgs.cargo
+        pkgs.clippy
+        pkgs.rust-analyzer
+        pkgs.rustc
+        pkgs.rustfmt
       ];
     };
 }

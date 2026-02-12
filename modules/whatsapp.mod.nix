@@ -3,7 +3,7 @@
     { pkgs, ... }:
     {
       packages = [
-        pkgs.whatsapp-for-linux
+        pkgs.wasistlos
       ];
     };
 }

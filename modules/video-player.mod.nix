@@ -1,8 +1,8 @@
 {
   flake.homeModules.video-player =
     {
-      config,
       lib,
+      osConfig,
       pkgs,
       ...
     }:
@@ -13,9 +13,9 @@
       # TODO: xdg-mime
 
       packages = singleton (
-        if config.nixpkgs.hostPlatform.isLinux then
+        if osConfig.nixpkgs.hostPlatform.isLinux then
           pkgs.haruna
-        else if config.nixpkgs.hostPlatform.isDarwin then
+        else if osConfig.nixpkgs.hostPlatform.isDarwin then
           pkgs.iina
         else
           throw "Unsupported OS"

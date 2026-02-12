@@ -9,6 +9,6 @@
         self.packages.x86_64-linux.ida-pro
       ];
 
-      nixpkgs.config.allowedUnfreePackageNames = [ "ida-pro" ];
+      allowedUnfreePackageNames = [ "ida-pro" ];
     };
 }

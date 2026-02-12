@@ -7,6 +7,7 @@
     {
       config,
       lib,
+      osConfig,
       pkgs,
       ...
     }:
@@ -17,16 +18,16 @@
     in
     {
       environment.sessionVariables = {
-        TERMINAL = mkIf config.nixpkgs.hostPlatform.isLinux "ghostty";
-        TERM_PROGRAM = mkIf config.nixpkgs.hostPlatform.isDarwin "ghostty";
+        TERMINAL = mkIf osConfig.nixpkgs.hostPlatform.isLinux "ghostty";
+        TERM_PROGRAM = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "ghostty";
       };
 
-      packages = mkIf config.nixpkgs.hostPlatform.isLinux [
+      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
         pkgs.ghostty
       ];
 
-      xdg.config.file."ghostty/config".generator = toKeyValue { };
-      xdg.config.file."ghostty/config".value = {
+      xdg.config.files."ghostty/config".generator = toKeyValue { };
+      xdg.config.files."ghostty/config".value = {
         font-size = config.theme.font.size.normal;
         font-family = config.theme.font.mono.name;
 
@@ -41,10 +42,10 @@
         confirm-close-surface = false;
         quit-after-last-window-closed = true;
 
-        window-decoration = config.nixpkgs.hostPlatform.isDarwin;
-        macos-titlebar-style = mkIf config.nixpkgs.hostPlatform.isDarwin "tabs";
+        window-decoration = osConfig.nixpkgs.hostPlatform.isDarwin;
+        macos-titlebar-style = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "tabs";
 
-        macos-option-as-alt = mkIf config.nixpkgs.hostPlatform.isDarwin "left";
+        macos-option-as-alt = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "left";
 
         config-file = pkgs.writeText "base16-config" config.theme.ghosttyConfig;
 

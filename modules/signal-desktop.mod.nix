@@ -5,8 +5,8 @@
 
   flake.homeModules.signal-desktop =
     {
-      config,
       lib,
+      osConfig,
       pkgs,
       ...
     }:
@@ -14,7 +14,7 @@
       inherit (lib.modules) mkIf;
     in
     {
-      packages = mkIf config.nixpkgs.hostPlatform.isLinux [
+      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
         pkgs.signal-desktop
       ];
     };

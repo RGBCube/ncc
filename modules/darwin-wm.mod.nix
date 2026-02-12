@@ -73,8 +73,8 @@
 
   flake.homeModules.darwin-wm =
     {
-      config,
       lib,
+      osConfig,
       pkgs,
       ...
     }:
@@ -82,10 +82,10 @@
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter mkIf;
 
-      isDarwin = config.nixpkgs.hostPlatform.isDarwin;
+      isDarwin = osConfig.nixpkgs.hostPlatform.isDarwin;
       fast-workspace-switch =
         getExe
-          self.packages.${config.nixpkgs.hostPlatform.system}.fast-workspace-switch;
+          self.packages.${osConfig.nixpkgs.hostPlatform.system}.fast-workspace-switch;
     in
     {
       # SPOONS

@@ -1,8 +1,7 @@
 { lib, moduleLocation, ... }:
 let
   inherit (lib.attrsets) mapAttrs;
-  # inherit (lib.modules) mkOption; # TODO: Why???
-  inherit (lib) mkOption;
+  inherit (lib.options) mkOption;
   inherit (lib.types) deferredModule lazyAttrsOf;
 in
 {
@@ -11,7 +10,6 @@ in
     default = { };
     apply = mapAttrs (
       name: value: {
-        class = "darwin";
         _file = "${toString moduleLocation}#darwinModules.${name}";
         imports = lib.singleton value;
       }

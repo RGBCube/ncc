@@ -14,38 +14,24 @@
         (mkAliasOptionModule [ "programs" ] [ "rum" "programs" ])
       ];
 
-      # Hack to make hjem think the XDG defaults changed, so it
-      # actually sets the XDG env vars. Without this, Darwin programs
-      # fall back to ~/Library/Application Support/ instead of ~/.config.
-      options =
-        let
-          inherit (lib.lists) range;
-          inherit (lib.modules) mkForce;
-          inherit (lib.strings) concatStrings;
-          inherit (lib.trivial) const;
-
-          hasToBeChanged = range 0 (4096 / 2) |> map (const "No") |> concatStrings;
-        in
-        {
-          xdg.cache.directory.default = mkForce hasToBeChanged;
-          xdg.config.directory.default = mkForce hasToBeChanged;
-          xdg.data.directory.default = mkForce hasToBeChanged;
-          xdg.state.directory.default = mkForce hasToBeChanged;
-        };
-
       config = {
-        # These are already the default on Linux, but on Darwin they differ.
-        xdg.cache.directory = "${config.directory}/.cache";
-        xdg.config.directory = "${config.directory}/.config";
-        xdg.data.directory = "${config.directory}/.local/share";
-        xdg.state.directory = "${config.directory}/.local/state";
+        # FORCE XDG ENV VARS
+        # hjem only exports XDG_*_HOME when config value != option default.
+        # The defaults do not match platform realities and setting the Linux
+        # defaults here causes env vars to not be set. Setting them directly
+        # bypasses hjem's conditional logic.
+        environment.sessionVariables = {
+          XDG_CACHE_HOME = "${config.directory}/.cache";
+          XDG_CONFIG_HOME = "${config.directory}/.config";
+          XDG_DATA_HOME = "${config.directory}/.local/share";
+          XDG_STATE_HOME = "${config.directory}/.local/state";
+        };
       };
     };
 
   flake.nixosModules.home =
     { lib, ... }:
     let
-      inherit (lib.lists) singleton;
       inherit (lib.modules) mkAliasOptionModule;
     in
     {
@@ -53,14 +39,18 @@
         inputs.home.nixosModules.hjem
         (mkAliasOptionModule [ "home" ] [ "hjem" ])
 
-        { home.extraModules = singleton self.homeModules.home; }
+        {
+          home.extraModules = [
+            self.homeModules.home
+            inputs.home-modules.hjemModules.hjem-rum
+          ];
+        }
       ];
     };
 
   flake.darwinModules.home =
     { lib, ... }:
     let
-      inherit (lib.lists) singleton;
       inherit (lib.modules) mkAliasOptionModule;
     in
     {
@@ -68,7 +58,12 @@
         inputs.home.darwinModules.hjem
         (mkAliasOptionModule [ "home" ] [ "hjem" ])
 
-        { home.extraModules = singleton self.homeModules.home; }
+        {
+          home.extraModules = [
+            self.homeModules.home
+            inputs.home-modules.hjemModules.hjem-rum
+          ];
+        }
       ];
     };
 }

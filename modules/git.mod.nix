@@ -19,8 +19,8 @@
         pkgs.gh
       ];
 
-      xdg.config.file."gh/config.yml".generator = toYAML { };
-      xdg.config.file."gh/config.yml".value = {
+      xdg.config.files."gh/config.yml".generator = toYAML { };
+      xdg.config.files."gh/config.yml".value = {
         git_protocol = "ssh";
       };
     };
@@ -37,8 +37,8 @@
     {
       packages = singleton pkgs.git-absorb;
 
-      xdg.config.file."git/config".generator = toINI { };
-      xdg.config.file."git/config".value = {
+      xdg.config.files."git/config".generator = toINI { };
+      xdg.config.files."git/config".value = {
         user.name = "RGBCube";
         user.email = "git@rgbcu.be";
 
@@ -81,10 +81,8 @@
       inherit (lib.generators) toINI;
     in
     {
-      imports = [ self.homeModules.git ];
-
-      xdg.config.file."git/config".generator = toINI { };
-      xdg.config.file."git/config".value = {
+      xdg.config.files."git/config".generator = toINI { };
+      xdg.config.files."git/config".value = {
         core.sshCommand = "ssh -i ${config.directory}/.ssh/id";
 
         url."ssh://git@github.com/".insteadOf = "https://github.com/";

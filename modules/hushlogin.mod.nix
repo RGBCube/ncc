@@ -1,10 +1,10 @@
 {
   flake.homeModules.hushlogin =
-    { config, lib, ... }:
+    { lib, osConfig, ... }:
     let
       inherit (lib.modules) mkIf;
     in
     {
-      file.".hushlogin".text = mkIf config.nixpkgs.hostPlatform.isDarwin "";
+      files.".hushlogin".text = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "";
     };
 }

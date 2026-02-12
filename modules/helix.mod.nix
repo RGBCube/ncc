@@ -2,7 +2,12 @@
   flake.homeModules.helix =
     { lib, pkgs, ... }:
     let
-      inherit (lib.attrsets) attrValues genAttrs mapAttrs optionalAttrs;
+      inherit (lib.attrsets)
+        attrValues
+        genAttrs
+        mapAttrs
+        optionalAttrs
+        ;
       inherit (lib.generators) toTOML;
       inherit (lib.lists) elem;
       inherit (lib.meta) getExe;
@@ -18,8 +23,8 @@
       packages = [
         package
       ];
-      xdg.config.file."helix/config.toml".generator = toTOML;
-      xdg.config.file."helix/config.toml".value = {
+      xdg.config.files."helix/config.toml".generator = toTOML;
+      xdg.config.files."helix/config.toml".value = {
         theme = "gruvbox_dark_hard";
 
         editor = {
@@ -68,8 +73,8 @@
           };
       };
 
-      xdg.config.file."helix/languages.toml".generator = toTOML;
-      xdg.config.file."helix/languages.toml".value = {
+      xdg.config.files."helix/languages.toml".generator = toTOML;
+      xdg.config.files."helix/languages.toml".value = {
         language-server.deno = {
           command = "deno";
           args = [ "lsp" ];
@@ -248,7 +253,7 @@
         pkgs.basedpyright
 
         # RUST
-        pkgs.rust-analyzer-nightly
+        pkgs.rust-analyzer
         pkgs.lldb
 
         # TYPESCRIPT & OTHERS

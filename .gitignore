@@ -2,11 +2,14 @@
 
 !.gitignore
 
+!hosts/
+!hosts/**/
 !modules/
 
 !flake.nix
 !flake.lock
 
+!*.age
 !*.nix
 !*.png
 

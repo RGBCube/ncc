@@ -190,14 +190,14 @@ in
   };
 
   flake.homeModules.keycode-remap =
-    { config, lib, ... }:
+    { lib, osConfig, ... }:
     let
       inherit (lib.modules) mkIf;
     in
     {
-      xdg.config.file."karabiner/karabiner.json".generator =
-        mkIf config.nixpkgs.hostPlatform.isDarwin <| toJSON { };
-      xdg.config.file."karabiner/karabiner.json".value = mkIf config.nixpkgs.hostPlatform.isDarwin {
+      xdg.config.files."karabiner/karabiner.json".generator =
+        mkIf osConfig.nixpkgs.hostPlatform.isDarwin <| toJSON { };
+      xdg.config.files."karabiner/karabiner.json".value = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
         global.show_in_menu_bar = false;
 
         profiles = [

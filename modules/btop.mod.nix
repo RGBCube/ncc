@@ -11,10 +11,10 @@
         pkgs.btop
       ];
 
-      xdg.config.file."btop/themes/${color_theme}.theme".text = config.theme.btopTheme;
+      xdg.config.files."btop/themes/${color_theme}.theme".text = config.theme.btopTheme;
 
-      xdg.config.file."btop/btop.conf".generator = toKeyValue { };
-      xdg.config.file."btop/btop.conf".value = {
+      xdg.config.files."btop/btop.conf".generator = toKeyValue { };
+      xdg.config.files."btop/btop.conf".value = {
         inherit color_theme;
         rounded_corners = config.theme.cornerRadius > 0;
       };

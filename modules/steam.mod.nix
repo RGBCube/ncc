@@ -1,6 +1,6 @@
 {
   flake.nixosModules.steam = {
-    nixpkgs.config.allowedUnfreePackageNames = [ "steam" ];
+    allowedUnfreePackageNames = [ "steam" ];
 
     programs.steam.enable = true;
   };

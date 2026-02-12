@@ -42,3 +42,5 @@ Never use `git`. Always use `jj`.
   parenthesized expression is not the last argument (e.g.
   `callPackage (...) { }`). Does not work with `if`, `let`, or lambda
   expressions on the RHS — those still need parentheses.
+- In modules that define both `darwinModules` and other module types, put
+  `darwinModules` first.

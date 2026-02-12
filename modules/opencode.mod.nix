@@ -9,8 +9,8 @@
         pkgs.opencode
       ];
 
-      xdg.config.file."opencode/opencode.json".generator = toJSON { };
-      xdg.config.file."opencode/opencode.json".value = {
+      xdg.config.files."opencode/opencode.json".generator = toJSON { };
+      xdg.config.files."opencode/opencode.json".value = {
         "$schema" = "https://opencode.ai/config.json";
 
         permission = {
@@ -28,6 +28,7 @@
           websearch = "allow";
 
           bash = {
+            "rg*" = "allow";
             "jj diff*" = "allow";
             "jj evolog*" = "allow";
             "jj help*" = "allow";

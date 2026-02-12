@@ -1,6 +1,6 @@
 {
   flake.homeModules.network-tools =
-    { config, pkgs, ... }:
+    { osConfig, pkgs, ... }:
     {
       packages = [
         (pkgs.curl.override {
@@ -29,18 +29,18 @@
         })
 
         (pkgs.xh.override {
-          wihtNativeTls = false; # Use rustls.
+          withNativeTls = false; # Use rustls.
         })
 
         pkgs.dig
         pkgs.doggo
 
-        (if config.nixpkgs.hostPlatform.isLinux then pkgs.traceroute else pkgs.dublin-traceroute)
+        (if osConfig.nixpkgs.hostPlatform.isLinux then pkgs.traceroute else pkgs.dublin-traceroute)
       ];
     };
 
   flake.homeModules.wifi-alias =
-    { config, pkgs, ... }:
+    { osConfig, pkgs, ... }:
     let
       showPasswordDarwin = pkgs.writeShellScript "show-password" ''
         echo "You really thought, didn't you! TODO"
@@ -51,9 +51,9 @@
     in
     {
       programs.nushell.aliases.wifi =
-        if config.nixpkgs.system.hostPlatform.isLinux then
+        if osConfig.nixpkgs.hostPlatform.isLinux then
           showPasswordLinux
-        else if config.nixpkgs.system.hostPlatform.isDarwin then
+        else if osConfig.nixpkgs.hostPlatform.isDarwin then
           showPasswordDarwin
         else
           throw "Unsupported OS";

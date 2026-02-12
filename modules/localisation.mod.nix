@@ -28,7 +28,7 @@
     };
 
   flake.homeModules.localisation-linux = {
-    xdg.config.file."xkb/symbols/tr-swapped-i".text = # rs
+    xdg.config.files."xkb/symbols/tr-swapped-i".text = # rs
       ''
         default partial
         xkb_symbols "basic" {

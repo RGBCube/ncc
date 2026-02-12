@@ -6,7 +6,7 @@ in
 {
   # CLI flag config format used by bat, ripgrep, etc.
   # true -> --flag, string/int -> --flag=value
-  flake.lib.generators.toCliFlagList =
+  flake.lib'.generators.toCliFlagList =
     attrs:
     concatLines
     <| mapAttrsToList (

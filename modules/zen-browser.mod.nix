@@ -1,14 +1,6 @@
 {
   flake.homeModules.zen-browser =
-    {
-      config,
-      lib,
-      pkgs,
-      ...
-    }:
     let
-      inherit (lib.modules) mkIf;
-
       lockedAs =
         Value: attrs:
         attrs

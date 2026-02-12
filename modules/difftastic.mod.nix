@@ -14,8 +14,8 @@
       packages = singleton difft;
 
       # GIT INTEGRATION
-      xdg.config.file."git/config".generator = toINI { };
-      xdg.config.file."git/config".value = {
+      xdg.config.files."git/config".generator = toINI { };
+      xdg.config.files."git/config".value = {
         diff.external = getExe difft;
         diff.tool = "difftastic";
         difftool.difftastic.cmd = # sh
@@ -23,8 +23,8 @@
       };
 
       # JUJUTSU INTEGRATION
-      xdg.config.file."jj/config.toml".generator = toTOML;
-      xdg.config.file."jj/config.toml".value.ui.diff-formatter = [
+      xdg.config.files."jj/config.toml".generator = toTOML;
+      xdg.config.files."jj/config.toml".value.ui.diff-formatter = [
         (getExe difft)
         "--color"
         "always"

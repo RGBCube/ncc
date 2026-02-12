@@ -75,7 +75,12 @@
     };
 
   flake.homeModules.shadow-xcode =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      osConfig,
+      ...
+    }:
     let
       inherit (lib.modules) mkAfter mkIf;
 
@@ -85,14 +90,13 @@
       assertions = [
         {
           assertion =
-            !config.nixpkgs.hostPlatform.isDarwin
-            || shadowPath == "${config.home.directory}/.local/share/shadow";
+            !osConfig.nixpkgs.hostPlatform.isDarwin || shadowPath == "${config.directory}/.local/share/shadow";
           message = "shadow-xcode: XDG_DATA_HOME drifted from the hardcoded path in darwinModules.unshittify";
         }
       ];
 
       programs.nushell.extraConfig =
-        mkIf config.nixpkgs.hostPlatform.isDarwin
+        mkIf osConfig.nixpkgs.hostPlatform.isDarwin
         <| mkAfter /* nu */ ''
           do --env {
             let usr_bin_index = $env.PATH

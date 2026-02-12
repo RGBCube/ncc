@@ -32,12 +32,12 @@
         pkgs.bat
       ];
 
-      xdg.config.file."bat/config".generator = self.lib.generators.toCliFlagList;
-      xdg.config.file."bat/config".value = {
+      xdg.config.files."bat/config".generator = self.lib.generators.toCliFlagList;
+      xdg.config.files."bat/config".value = {
         theme = "base16";
         pager = "${getExe pkgs.less} --quit-if-one-screen --quit-on-intr --RAW-CONTROL-CHARS";
       };
 
-      xdg.config.file."bat/themes/${config.xdg.config.file."bat/config".value.theme}.tmTheme".text = config.theme.tmTheme;
+      xdg.config.files."bat/themes/${config.xdg.config.files."bat/config".value.theme}.tmTheme".text = config.theme.tmTheme;
     };
 }

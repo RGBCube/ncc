@@ -1,10 +1,10 @@
 { self, inputs, ... }:
 {
   flake.homeModules.sudo-run0-shim =
-    { config, ... }:
+    { osConfig, ... }:
     {
       packages = [
-        inputs.sudo-run0-shim.packages.${config.nixpkgs.hostPlatform.system}
+        inputs.sudo-run0-shim.packages.${osConfig.nixpkgs.hostPlatform.system}.run0-sudo-shim
       ];
     };
 

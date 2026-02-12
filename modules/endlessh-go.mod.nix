@@ -7,7 +7,7 @@
       ...
     }:
     let
-      inherit (lib.modules) mkEnableOption mkOption;
+      inherit (lib.options) mkEnableOption mkOption;
       inherit (lib.types) str port;
     in
     {

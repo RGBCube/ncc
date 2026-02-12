@@ -1,7 +1,6 @@
 let
   commonModule =
     {
-      config,
       lib,
       pkgs,
       ...
@@ -14,11 +13,11 @@ let
         mapAttrs
         mapAttrsToList
         ;
+      inherit (lib.attrsets) listToAttrs;
       inherit (lib.lists)
         filter
         flatten
         last
-        listToAttrs
         singleton
         ;
       inherit (lib.meta) getExe;
@@ -41,19 +40,17 @@ let
       ];
 
       home.extraModules = singleton (
-        homeArgs:
+        { config, osConfig, ... }:
         let
-          config' = homeArgs.config;
-
           variablesMap =
             {
-              HOME = config'.home.directory;
-              USER = config'.home.directory |> splitString "/" |> filter (s: s != "") |> last;
+              HOME = config.directory;
+              USER = config.directory |> splitString "/" |> filter (s: s != "") |> last;
 
-              XDG_CACHE_HOME = config'.xdg.cache.directory;
-              XDG_CONFIG_HOME = config'.xdg.config.directory;
-              XDG_DATA_HOME = config'.xdg.data.directory;
-              XDG_STATE_HOME = config'.xdg.state.directory;
+              XDG_CACHE_HOME = config.xdg.cache.directory;
+              XDG_CONFIG_HOME = config.xdg.config.directory;
+              XDG_DATA_HOME = config.xdg.data.directory;
+              XDG_STATE_HOME = config.xdg.state.directory;
             }
             |> mapAttrsToList (
               name: value: [
@@ -71,7 +68,7 @@ let
             |> listToAttrs;
 
           nuVariables =
-            config.environment.variables
+            osConfig.environment.variables
             |> mapAttrs (const <| replaceStrings (attrNames variablesMap) (attrValues variablesMap))
             |> filterAttrs (name: const <| name != "TERM");
 
@@ -87,13 +84,12 @@ let
             |> concatStrings;
 
           nuConfig = nuVariables' + readFile ./nushell.config.nu;
-
         in
         {
-          home.file.".zshrc".text =
-            mkIf config.nixpkgs.system.hostPlatform.isDarwin # zsh
+          files.".zshrc".text =
+            mkIf osConfig.nixpkgs.hostPlatform.isDarwin # zsh
               ''
-                SHELL=${getExe config'.programs.nushell.package} exec ${getExe config'.programs.nushell.package}
+                SHELL=${getExe config.programs.nushell.package} exec ${getExe config.programs.nushell.package}
               '';
 
           programs.nushell = {

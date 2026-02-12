@@ -18,8 +18,8 @@
         pkgs.radicle-node
       ];
 
-      xdg.config.file."jj/config.toml".generator = toTOML;
-      xdg.config.file."jj/config.toml".value = {
+      xdg.config.files."jj/config.toml".generator = toTOML;
+      xdg.config.files."jj/config.toml".value = {
         user.name = "RGBCube";
         user.email = "git@rgbcu.be";
 

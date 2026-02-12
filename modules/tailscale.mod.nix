@@ -61,8 +61,8 @@ in
 
   flake.homeModules.tailscale =
     {
-      config,
       lib,
+      osConfig,
       pkgs,
       ...
     }:
@@ -74,9 +74,9 @@ in
     in
     {
       programs.nushell.aliases.ts =
-        if config.nixpkgs.hostPlatform.isDarwin then "tailscale" else getExe pkgs.tailscale;
+        if osConfig.nixpkgs.hostPlatform.isDarwin then "tailscale" else getExe pkgs.tailscale;
 
-      packages = mkIf config.nixpkgs.hostPlatform.isLinux [
+      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
         package
       ];
     };

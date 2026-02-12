@@ -10,7 +10,7 @@
         getAttr
         mapAttrs
         ;
-      inherit (lib.lists) head remove;
+      inherit (lib.lists) head remove singleton;
       inherit (lib.strings) concatLines;
 
       hosts =
@@ -46,31 +46,32 @@
         );
     in
     {
-      file.".ssh/config".text =
+      files.".ssh/config".text =
         # sshclientconfig
         ''
           Include ${config.xdg.config.directory}/ssh/config
         '';
 
-      xdg.config.file."ssh/config".text =
+      xdg.config.files."ssh/config".text =
         concatLines
         <|
-          hosts
+          attrValues hosts
           ++
-            # sshclientconfig
-            ''
-              Host *
-                IdentityFile ${config.xdg.config.directory}/id
+            singleton
+              # sshclientconfig
+              ''
+                Host *
+                  IdentityFile ${config.xdg.config.directory}/id
 
-                SetEnv COLORTERM=truecolor TERM=xterm256-color
+                  SetEnv COLORTERM=truecolor TERM=xterm256-color
 
-                ControlMaster auto
-                ControlPersist 60m
-                ControlPath ${config.xdg.cache.directory}/ssh/%r@%n:%p
-            '';
+                  ControlMaster auto
+                  ControlPersist 60m
+                  ControlPath ${config.xdg.cache.directory}/ssh/%r@%n:%p
+              '';
 
       # Create that directory. I don't think hjem has a better way of doing this.
-      xdg.cache.file."ssh/.keep".text = "";
+      xdg.cache.files."ssh/.keep".text = "";
     };
 
   flake.homeModules.ssh-client-desktop =

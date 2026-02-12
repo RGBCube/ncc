@@ -3,7 +3,8 @@ let
   commonModule =
     { lib, pkgs, ... }:
     let
-      inherit (lib.modules) mkOption mkDefault;
+      inherit (lib.modules) mkDefault;
+      inherit (lib.options) mkOption;
       inherit (lib.types) attrs;
     in
     {
