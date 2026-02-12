@@ -1,5 +1,5 @@
 {
-  flake.homeModules.rust =
+  flake.homeModules.dev-tools =
     {
       config,
       lib,
@@ -18,6 +18,15 @@
       };
 
       packages = [
+        # C/C++
+        pkgs.clang
+        pkgs.clang-tools
+        pkgs.lld
+
+        # GO
+        pkgs.go
+
+        # RUST
         pkgs.cargo-deny
         pkgs.cargo-expand
         pkgs.cargo-fuzz

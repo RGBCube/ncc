@@ -172,9 +172,5 @@
       };
     in
     {
-      packages = mkIf config.nixpkgs.hostPlatform.isLinux [
-        # TODO
-        pkgs.zen-browser
-      ];
     };
 }

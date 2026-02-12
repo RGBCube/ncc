@@ -8,7 +8,9 @@
     in
     {
       programs.nushell.aliases.ddg = # sh
-        ''${getExe package} lite.duckduckgo.com'';
+        "${getExe package} lite.duckduckgo.com";
+
+      programs.nushell.aliases.web = getExe package;
 
       packages = [
         package

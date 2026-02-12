@@ -5,6 +5,7 @@
     {
       environment.systemPackages = [
         pkgs.strace
+        pkgs.usbutils
         self.packages.x86_64-linux.ida-pro
       ];
 

@@ -1,5 +1,5 @@
 {
-  flake.homeModules.cinny-desktop =
+  flake.homeModules.matrix =
     { pkgs, ... }:
     {
       packages = [
