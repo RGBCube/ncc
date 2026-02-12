@@ -11,11 +11,16 @@
 
       package = getExe pkgs.bat;
       theme = "base16";
+
+      batPager = pkgs.writeScript "bat-pager.sh" /* bash */ ''
+        #!${getExe pkgs.bash}
+        bat --plain
+      '';
     in
     {
       environment.sessionVariables = {
-        MANPAGER = "${package} --plain";
-        PAGER = "${package} --plain";
+        MANPAGER = "${batPager}";
+        PAGER = "${batPager}";
       };
 
       programs.nushell.aliases = {
@@ -29,7 +34,7 @@
 
       xdg.config.file."bat/config".text = ''
         --theme=${theme}
-        --pager="${getExe pkgs.less} --quit-if-one-screen --RAW-CONTROL-CHARS"
+        --pager="${getExe pkgs.less} --quit-if-one-screen --quit-on-intr --RAW-CONTROL-CHARS"
       '';
 
       xdg.config.file."bat/themes/${theme}.tmTheme".text = config.theme.tmTheme;

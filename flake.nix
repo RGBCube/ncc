@@ -1,4 +1,37 @@
 {
+  nixConfig = {
+    extra-substituters = [
+      "https://cache.garnix.io/"
+      "https://nix-community.cachix.org/"
+    ];
+
+    extra-trusted-public-keys = [
+      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
+
+    experimental-features = [
+      "cgroups"
+      "flakes"
+      "nix-command"
+      "pipe-operators"
+    ];
+
+    builders-use-substitutes = true;
+    flake-registry = "";
+    http-connections = 50;
+    show-trace = true;
+    trusted-users = [
+      "root"
+      "@build"
+      "@wheel"
+      "@admin"
+    ];
+    use-cgroups = true;
+    use-xdg-base-directories = true;
+    warn-dirty = false;
+  };
+
   inputs.os = {
     url = "github:NixOS/nixpkgs/nixos-unstable-small";
   };

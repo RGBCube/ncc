@@ -15,7 +15,7 @@
       ];
 
       # Hack to make hjem think the XDG defaults changed, so it
-      # actually sets the XDG env vars. Without this, macOS apps
+      # actually sets the XDG env vars. Without this, Darwin programs
       # fall back to ~/Library/Application Support/ instead of ~/.config.
       options =
         let

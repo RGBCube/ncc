@@ -19,7 +19,7 @@
 
       locked = attrs: attrs // { Locked = true; };
 
-      policies = {
+      _policies = {
         AutofillAddressEnabled = false;
         AutofillCreditCardEnabled = false;
 

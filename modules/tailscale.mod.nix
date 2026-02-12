@@ -3,9 +3,15 @@ let
 in
 {
   flake.nixosModules.tailscale =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
-      inherit (lib.modules) mkAfter;
+      inherit (lib.meta) getExe;
+      inherit (lib.modules) mkAfter mkIf;
     in
     {
       services.tailscale = {
@@ -17,9 +23,29 @@ in
 
       networking.firewall.trustedInterfaces = [ config.services.tailscale.interfaceName ];
 
-      etc."resolf.conf".text = mkAfter ''
+      etc."resolv.conf".text = mkAfter ''
         search ${domain}
       '';
+
+      # NFTABLES
+      systemd.services.tailscaled.serviceConfig.Environment = mkIf config.networking.nftables.enable [
+        "TS_DEBUG_FIREWALL_MODE=nftables"
+      ];
+
+      # UDP GRO FORWARDING OPTIMIZATION
+      services.networkd-dispatcher = {
+        enable = true;
+        rules."50-tailscale-optimizations" = {
+          onState = [ "routable" ];
+          script = /* sh */ ''
+            ${getExe pkgs.ethtool} --features ${config.networking.defaultGateway.interface} rx-udp-gro-forwarding on rx-gro-list off
+          '';
+        };
+      };
+
+      # WAIT-ONLINE
+      systemd.network.wait-online.enable = false;
+      boot.initrd.systemd.network.wait-online.enable = false;
     };
 
   flake.darwinModules.tailscale =
@@ -28,7 +54,7 @@ in
       inherit (lib.lists) singleton;
     in
     {
-      homebrew.casks = [ "tailscale" ];
+      homebrew.casks = [ "tailscale-app" ];
 
       networking.search = singleton domain;
     };

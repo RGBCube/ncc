@@ -12,7 +12,7 @@
     in
     {
       packages = [
-        pkgs.difftastic
+        pkgs.jjui
         pkgs.jujutsu
         pkgs.mergiraf
         pkgs.radicle-node
@@ -48,14 +48,12 @@
         aliases.clone = [
           "git"
           "clone"
-          "--colocate"
         ];
 
         aliases.i = [ "init" ];
         aliases.init = [
           "git"
           "init"
-          "--colocate"
         ];
 
         aliases.a = [ "abandon" ];
@@ -73,26 +71,6 @@
         aliases.l = [ "log" ];
         aliases.la = [
           "log"
-          "--revisions"
-          "::"
-        ];
-        aliases.ls = [
-          "log"
-          "--summary"
-        ];
-        aliases.lsa = [
-          "log"
-          "--summary"
-          "--revisions"
-          "::"
-        ];
-        aliases.lp = [
-          "log"
-          "--patch"
-        ];
-        aliases.lpa = [
-          "log"
-          "--patch"
           "--revisions"
           "::"
         ];
@@ -145,12 +123,10 @@
         ui.default-command = "ls";
 
         ui.diff-editor = ":builtin";
-        ui.diff-formatter = [
-          "${getExe pkgs.difftastic}"
-          "--color"
-          "always"
-          "$left"
-          "$right"
+        ui.pager = [
+          (getExe pkgs.bash)
+          "-c"
+          "exec \${PAGER:-less}"
         ];
 
         ui.conflict-marker-style = "snapshot";
@@ -174,7 +150,10 @@
             "change-rgbcube-" ++ change_id.short()
           '';
 
-        git.auto-local-bookmark = true;
+        remotes."*" = {
+          auto-track-bookmarks = "glob:*";
+          push-new-bookmarks = true;
+        };
 
         git.fetch = [
           "origin"

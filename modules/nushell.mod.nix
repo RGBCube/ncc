@@ -32,6 +32,14 @@ let
         ;
     in
     {
+      # CARAPACE
+      environment.systemPackages = [
+        pkgs.carapace
+        pkgs.fish
+        pkgs.zsh
+        pkgs.inshellisense
+      ];
+
       home.extraModules = singleton (
         homeArgs:
         let

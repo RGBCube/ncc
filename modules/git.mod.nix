@@ -30,76 +30,12 @@
     let
       inherit (lib.meta) getExe;
       inherit (lib.generators) toINI;
+      inherit (lib.lists) singleton;
 
       package = getExe pkgs.git;
     in
     {
-      programs.nushell.aliases = {
-        g = package;
-
-        ga = "${package} add";
-        gaa = "${package} add ./";
-
-        gab = "${package} absorb";
-        gabr = "${package} absorb --and-rebase";
-
-        gb = "${package} branch";
-        gbv = "${package} branch --verbose";
-
-        gc = "${package} commit";
-        gca = "${package} commit --amend --no-edit";
-        gcm = "${package} commit --message";
-        gcam = "${package} commit --amend --message";
-
-        gcl = "${package} clone";
-
-        gd = "${package} diff";
-        gds = "${package} diff --staged";
-
-        gp = "${package} push";
-        gpf = "${package} push --force-with-lease";
-
-        gl = "${package} log";
-        glo = "${package} log --oneline --graph";
-        glp = "${package} log --patch --ext-diff";
-
-        gpl = "${package} pull";
-        gplr = "${package} pull --rebase";
-        gplff = "${package} pull --ff-only";
-
-        gr = "${package} recent";
-
-        grb = "${package} rebase";
-        grba = "${package} rebase --abort";
-        grbc = "${package} rebase --continue";
-        grbi = "${package} rebase --interactive";
-        grbm = "${package} rebase master";
-
-        grl = "${package} reflog";
-
-        grm = "${package} remote";
-        grma = "${package} remote add";
-        grmv = "${package} remote --verbose";
-        grmsu = "${package} remote set-url";
-
-        grs = "${package} reset";
-        grsh = "${package} reset --hard";
-
-        gs = "${package} stash";
-        gsp = "${package} stash pop";
-
-        gsw = "${package} switch";
-        gswm = "${package} switch master";
-
-        gsh = "${package} show --ext-diff";
-
-        gst = "${package} status";
-      };
-
-      packages = [
-        package
-        pkgs.difftastic
-      ];
+      packages = singleton pkgs.git-absorb;
 
       xdg.config.file."git/config".generator = toINI { };
       xdg.config.file."git/config".value = {
@@ -118,11 +54,6 @@
 
         diff.algorithm = "histogram";
         diff.colorMoved = "default";
-
-        diff.external = getExe pkgs.difftastic;
-        diff.tool = "difftastic";
-        difftool.difftastic.cmd = # sh
-          ''${getExe pkgs.difftastic} "$LOCAL" "$REMOTE"'';
 
         pull.rebase = true;
         push.autoSetupRemote = true;

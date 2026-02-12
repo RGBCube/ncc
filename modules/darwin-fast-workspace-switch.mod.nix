@@ -126,7 +126,7 @@
           '';
 
           meta = {
-            description = "Fast workspace switcher for macOS";
+            description = "Fast workspace switcher for Darwin";
             platforms = lib.platforms.darwin;
             mainProgram = "fast-workspace-switch";
           };

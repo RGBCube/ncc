@@ -18,7 +18,7 @@ let
         ;
       inherit (lib.lists) filter optionals singleton;
       inherit (lib.modules) mkMerge;
-      inherit (lib.strings) concatStringsSep toJSON;
+      inherit (lib.strings) concatStringsSep;
       inherit (lib.trivial) const flip id;
       inherit (lib.types) isType;
 
@@ -30,11 +30,6 @@ let
         pkgs.nix-index
         pkgs.nix-output-monitor
       ];
-
-      # We don't want inputs to be garbage collected away because if
-      # that happens rebuilds need to re-fetch everything.
-      # TODO: Don't do this on servers.
-      environment.etc.".system-inputs.json".text = toJSON registryMap;
 
       nix.distributedBuilds = true;
       nix.buildMachines =
@@ -85,6 +80,8 @@ let
         |> flip removeAttrs (optionals config.nixpkgs.hostPlatform.isDarwin [ "use-cgroups" ]);
 
       nix.optimise.automatic = true;
+
+      nix.package = pkgs.nixVersions.latest;
 
       home.extraModules = singleton {
         programs.nushell.extraConfig = # nu
