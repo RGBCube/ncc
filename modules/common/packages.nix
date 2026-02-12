@@ -1,8 +1,6 @@
 { config, lib, pkgs, ... }: let
   inherit (lib) optionals;
 in {
-  unfree.allowedNames = [ "claude-code" ];
-
   environment.systemPackages = [
     pkgs.asciinema
     pkgs.cowsay
@@ -33,7 +31,7 @@ in {
     pkgs.usbutils
     pkgs.strace
   ] ++ optionals config.isDesktop [
-    pkgs.claude-code
+    pkgs.opencode
 
     pkgs.kubectl
     pkgs.kubernetes-helm
