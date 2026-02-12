@@ -1,3 +1,4 @@
+{ self, ... }:
 {
   flake.homeModules.bat =
     {
@@ -10,7 +11,6 @@
       inherit (lib.meta) getExe;
 
       package = getExe pkgs.bat;
-      theme = "base16";
 
       batPager = pkgs.writeScript "bat-pager.sh" /* bash */ ''
         #!${getExe pkgs.bash}
@@ -32,11 +32,12 @@
         pkgs.bat
       ];
 
-      xdg.config.file."bat/config".text = ''
-        --theme=${theme}
-        --pager="${getExe pkgs.less} --quit-if-one-screen --quit-on-intr --RAW-CONTROL-CHARS"
-      '';
+      xdg.config.file."bat/config".generator = self.lib.generators.toCliFlagList;
+      xdg.config.file."bat/config".value = {
+        theme = "base16";
+        pager = "${getExe pkgs.less} --quit-if-one-screen --quit-on-intr --RAW-CONTROL-CHARS";
+      };
 
-      xdg.config.file."bat/themes/${theme}.tmTheme".text = config.theme.tmTheme;
+      xdg.config.file."bat/themes/${config.xdg.config.file."bat/config".value.theme}.tmTheme".text = config.theme.tmTheme;
     };
 }

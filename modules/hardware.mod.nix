@@ -1,4 +1,5 @@
-{ inputs, ... }: {
+{ inputs, ... }:
+{
   flake.nixosModules.hardware-report =
     { lib, ... }:
     let
@@ -6,7 +7,7 @@
     in
     {
       imports = [
-        inputs.os-linux.nixosModules.facter
+        inputs.nixos-facter.nixosModules.facter
 
         (mkAliasOptionModule [ "hardware" "report" ] [ "facter" "reportPath" ])
       ];

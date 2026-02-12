@@ -23,7 +23,7 @@ let
       python313,
       qt6,
       stdenv,
-      writePython3Bin,
+      writers,
       xorg,
       zlib,
     }:
@@ -31,7 +31,7 @@ let
       python = python313.withPackages (pyPkgs: [ pyPkgs.rpyc ]);
 
       rape =
-        writePython3Bin "rape"
+        writers.writePython3Bin "rape"
           {
             flakeIgnore = [
               "E501" # Line too long.
@@ -333,9 +333,17 @@ let
     });
 in
 {
+  # IDA Pro only supports x86_64-linux. optionalAttrs is needed because
+  # flake-parts transposition exposes package attrs across all systems,
+  # and mkIf would leave the attr defined but valueless on other systems.
   perSystem =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.attrsets) optionalAttrs;
+    in
     {
-      packages.ida-pro = pkgs.callPackage package { };
+      packages = optionalAttrs (pkgs.stdenv.hostPlatform.isx86_64 && pkgs.stdenv.hostPlatform.isLinux) {
+        ida-pro = pkgs.callPackage package { };
+      };
     };
 }

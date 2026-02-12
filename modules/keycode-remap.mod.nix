@@ -182,7 +182,7 @@ let
 in
 { lib, ... }:
 let
-  inherit (lib.strings) toJSON;
+  inherit (lib.generators) toJSON;
 in
 {
   flake.darwinModules.keycode-remap = {
@@ -195,29 +195,29 @@ in
       inherit (lib.modules) mkIf;
     in
     {
-      xdg.config.file."karabiner/karabiner.json".text =
-        mkIf config.nixpkgs.hostPlatform.isDarwin
-        <| toJSON {
-          global.show_in_menu_bar = false;
+      xdg.config.file."karabiner/karabiner.json".generator =
+        mkIf config.nixpkgs.hostPlatform.isDarwin <| toJSON { };
+      xdg.config.file."karabiner/karabiner.json".value = mkIf config.nixpkgs.hostPlatform.isDarwin {
+        global.show_in_menu_bar = false;
 
-          profiles = [
-            {
-              inherit complex_modifications;
+        profiles = [
+          {
+            inherit complex_modifications;
 
-              name = "Default";
-              selected = true;
+            name = "Default";
+            selected = true;
 
-              virtual_hid_keyboard.keyboard_type_v2 = "ansi";
+            virtual_hid_keyboard.keyboard_type_v2 = "ansi";
 
-              devices = [
-                {
-                  inherit simple_modifications;
+            devices = [
+              {
+                inherit simple_modifications;
 
-                  identifiers.is_keyboard = true;
-                }
-              ];
-            }
-          ];
-        };
+                identifiers.is_keyboard = true;
+              }
+            ];
+          }
+        ];
+      };
     };
 }

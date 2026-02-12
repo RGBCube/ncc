@@ -32,25 +32,25 @@
     warn-dirty = false;
   };
 
-  inputs.os = {
+  inputs.nixpkgs = {
     url = "github:NixOS/nixpkgs/nixos-unstable-small";
   };
-  inputs.os-linux = {
+  inputs.nixos-facter = {
     url = "github:nix-community/nixos-facter-modules";
   };
-  inputs.os-darwin = {
+  inputs.nix-darwin = {
     url = "github:LnL7/nix-darwin";
-    inputs.nixpkgs.follows = "os";
+    inputs.nixpkgs.follows = "nixpkgs";
   };
 
   inputs.home = {
     url = "github:feel-co/hjem";
-    inputs.nixpkgs.follows = "os";
-    inputs.nix-darwin.follows = "os-darwin";
+    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.nix-darwin.follows = "nix-darwin";
   };
   inputs.home-modules = {
     url = "github:snugnug/hjem-rum";
-    inputs.nixpkgs.follows = "os";
+    inputs.nixpkgs.follows = "nixpkgs";
     inputs.hjem.follows = "home";
     inputs.ndg.follows = "";
     inputs.treefmt-nix.follows = "";
@@ -58,13 +58,13 @@
 
   inputs.parts = {
     url = "github:hercules-ci/flake-parts";
-    inputs.nixpkgs-lib.follows = "os";
+    inputs.nixpkgs-lib.follows = "nixpkgs";
   };
 
   inputs.age = {
     url = "github:ryantm/agenix";
-    inputs.nixpkgs.follows = "os";
-    inputs.darwin.follows = "os-darwin";
+    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.darwin.follows = "nix-darwin";
     inputs.home-manager.follows = ""; # Not using home-manager, so don't fetch it.
   };
 
@@ -86,7 +86,7 @@
 
   inputs.sudo-run0-shim = {
     url = "github:LordGrimmauld/run0-sudo-shim";
-    inputs.nixpkgs.follows = "os";
+    inputs.nixpkgs.follows = "nixpkgs";
     inputs.nix-github-actions.follows = "";
     inputs.treefmt-nix.follows = "";
   };
@@ -101,6 +101,12 @@
         inherit (lib.strings) hasSuffix;
       in
       {
+        systems = [
+          "aarch64-darwin"
+          "aarch64-linux"
+          "x86_64-linux"
+        ];
+
         imports = filter (hasSuffix ".mod.nix") (listFilesRecursive ./.);
       }
     );

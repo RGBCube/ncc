@@ -2,14 +2,15 @@
   flake.homeModules.opencode =
     { lib, pkgs, ... }:
     let
-      inherit (lib.strings) toJSON;
+      inherit (lib.generators) toJSON;
     in
     {
       packages = [
         pkgs.opencode
       ];
 
-      xdg.config.file."opencode/opencode.json".text = toJSON {
+      xdg.config.file."opencode/opencode.json".generator = toJSON { };
+      xdg.config.file."opencode/opencode.json".value = {
         "$schema" = "https://opencode.ai/config.json";
 
         permission = {

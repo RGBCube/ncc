@@ -3,11 +3,11 @@
     "age": {
       "inputs": {
         "darwin": [
-          "os-darwin"
+          "nix-darwin"
         ],
         "home-manager": [],
         "nixpkgs": [
-          "os"
+          "nixpkgs"
         ],
         "systems": "systems"
       },
@@ -63,10 +63,10 @@
     "home": {
       "inputs": {
         "nix-darwin": [
-          "os-darwin"
+          "nix-darwin"
         ],
         "nixpkgs": [
-          "os"
+          "nixpkgs"
         ],
         "smfh": "smfh"
       },
@@ -91,7 +91,7 @@
         ],
         "ndg": [],
         "nixpkgs": [
-          "os"
+          "nixpkgs"
         ],
         "treefmt-nix": []
       },
@@ -159,26 +159,10 @@
         "type": "github"
       }
     },
-    "os": {
-      "locked": {
-        "lastModified": 1770861900,
-        "narHash": "sha256-zeNZTIO0FyNht31Vd1Rwur5THhvwNwmIP5LW3smjhwY=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "bdea685ed95455a82fcb77295bd4222820b297ac",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable-small",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "os-darwin": {
+    "nix-darwin": {
       "inputs": {
         "nixpkgs": [
-          "os"
+          "nixpkgs"
         ]
       },
       "locked": {
@@ -195,7 +179,7 @@
         "type": "github"
       }
     },
-    "os-linux": {
+    "nixos-facter": {
       "locked": {
         "lastModified": 1766558141,
         "narHash": "sha256-Ud9v49ZPsoDBFuyJSQ2Mpw1ZgAH/aMwUwwzrVoetNus=",
@@ -210,10 +194,26 @@
         "type": "github"
       }
     },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1770861900,
+        "narHash": "sha256-zeNZTIO0FyNht31Vd1Rwur5THhvwNwmIP5LW3smjhwY=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "bdea685ed95455a82fcb77295bd4222820b297ac",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable-small",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "parts": {
       "inputs": {
         "nixpkgs-lib": [
-          "os"
+          "nixpkgs"
         ]
       },
       "locked": {
@@ -238,9 +238,9 @@
         "homebrew": "homebrew",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
-        "os": "os",
-        "os-darwin": "os-darwin",
-        "os-linux": "os-linux",
+        "nix-darwin": "nix-darwin",
+        "nixos-facter": "nixos-facter",
+        "nixpkgs": "nixpkgs",
         "parts": "parts",
         "sudo-run0-shim": "sudo-run0-shim",
         "themes": "themes"
@@ -317,7 +317,7 @@
         "flake-utils": "flake-utils",
         "nix-github-actions": [],
         "nixpkgs": [
-          "os"
+          "nixpkgs"
         ],
         "rust-overlay": "rust-overlay_2",
         "treefmt-nix": []
