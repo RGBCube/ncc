@@ -42,10 +42,6 @@ in {
 
         aliases.l   = [ "log" ];
         aliases.la  = [ "log" "--revisions" "::" ];
-        aliases.ls  = [ "log" "--summary" ];
-        aliases.lsa = [ "log" "--summary" "--revisions" "::" ];
-        aliases.lp  = [ "log" "--patch" ];
-        aliases.lpa = [ "log" "--patch" "--revisions" "::" ];
 
         aliases.r = [ "rebase" ];
 
@@ -96,6 +92,11 @@ in {
 
         git.fetch = [ "origin" "upstream" "rad" ];
         git.push  =   "origin";
+
+        remotes."*" = {
+          auto-track-bookmarks = "glob:*";
+          push-new-bookmarks   = true;
+        };
 
         signing.backend  = mkIf config.isDesktop "ssh";
         signing.behavior = mkIf config.isDesktop "own";
