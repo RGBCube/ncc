@@ -113,7 +113,7 @@ let
     };
 in
 {
-  nixosModules.nushell =
+  flake.nixosModules.nushell =
     { lib, pkgs, ... }:
     let
       inherit (lib.modules) mkForce;
@@ -129,5 +129,5 @@ in
       };
     };
 
-  darwinModules.nushell = commonModule;
+  flake.darwinModules.nushell = commonModule;
 }

@@ -1,5 +1,5 @@
 {
-  homeModules.python =
+  flake.homeModules.python =
     { pkgs, ... }:
     let
       package = pkgs.python314;

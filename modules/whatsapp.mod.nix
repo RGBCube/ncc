@@ -1,5 +1,5 @@
 {
-  homeModules.whatsapp =
+  flake.homeModules.whatsapp =
     { pkgs, ... }:
     {
       packages = [

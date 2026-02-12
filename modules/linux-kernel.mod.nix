@@ -1,5 +1,5 @@
 {
-  nixosModules.linux-kernel =
+  flake.nixosModules.linux-kernel =
     {
       lib,
       pkgs,
@@ -145,7 +145,7 @@
       ];
     };
 
-  nixosModules.linux-kernel-desktop =
+  flake.nixosModules.linux-kernel-desktop =
     { pkgs, ... }:
     {
       boot.kernelPackages = pkgs.linuxKernel.packages.linux_zen;

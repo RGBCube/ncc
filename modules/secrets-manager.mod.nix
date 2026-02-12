@@ -1,5 +1,5 @@
 {
-  homeModules.secrets-manager =
+  flake.homeModules.secrets-manager =
     {
       config,
       lib,

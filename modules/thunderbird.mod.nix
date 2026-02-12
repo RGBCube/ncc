@@ -1,5 +1,5 @@
 {
-  homeModules.thunderbird =
+  flake.homeModules.thunderbird =
     { pkgs, ... }:
     {
       packages = [

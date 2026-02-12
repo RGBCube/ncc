@@ -1,5 +1,5 @@
 {
-  darwinModules.hostname =
+  flake.darwinModules.hostname =
     { config, ... }:
     {
       system.defaults.smb = {

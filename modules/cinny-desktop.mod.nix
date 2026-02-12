@@ -1,5 +1,5 @@
 {
-  homeModules.cinny-desktop =
+  flake.homeModules.cinny-desktop =
     { pkgs, ... }:
     {
       packages = [

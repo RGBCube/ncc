@@ -1,5 +1,5 @@
 {
-  homeModules.qbittorrent-client =
+  flake.homeModules.qbittorrent-client =
     { pkgs, ... }:
     {
       packages = [

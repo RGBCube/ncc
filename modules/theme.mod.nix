@@ -1,6 +1,7 @@
+{ inputs, ... }:
 let
   commonModule =
-    { lib, pkgs, themes, ... }:
+    { lib, pkgs, ... }:
     let
       inherit (lib.modules) mkOption mkDefault;
       inherit (lib.types) attrs;
@@ -12,29 +13,34 @@ let
         default = { };
       };
 
-      config.theme = mkDefault (themes.custom (themes.raw.gruvbox-dark-hard // {
-        cornerRadius = 4;
-        borderWidth = 2;
+      config.theme =
+        mkDefault
+        <| inputs.themes.custom
+        <|
+          inputs.themes.raw.gruvbox-dark-hard
+          // {
+            cornerRadius = 4;
+            borderWidth = 2;
 
-        margin = 0;
-        padding = 8;
+            margin = 0;
+            padding = 8;
 
-        font.size.normal = 16;
-        font.size.big = 20;
+            font.size.normal = 16;
+            font.size.big = 20;
 
-        font.sans.name = "Lexend";
-        font.sans.package = pkgs.lexend;
+            font.sans.name = "Lexend";
+            font.sans.package = pkgs.lexend;
 
-        font.mono.name = "JetBrainsMono Nerd Font";
-        font.mono.package = pkgs.nerd-fonts.jetbrains-mono;
+            font.mono.name = "JetBrainsMono Nerd Font";
+            font.mono.package = pkgs.nerd-fonts.jetbrains-mono;
 
-        icons.name = "Gruvbox-Plus-Dark";
-        icons.package = pkgs.gruvbox-plus-icons;
-      }));
+            icons.name = "Gruvbox-Plus-Dark";
+            icons.package = pkgs.gruvbox-plus-icons;
+          };
     };
 in
 {
-  nixosModules.theme = commonModule;
-  darwinModules.theme = commonModule;
-  homeModules.theme = commonModule;
+  flake.nixosModules.theme = commonModule;
+  flake.darwinModules.theme = commonModule;
+  flake.homeModules.theme = commonModule;
 }

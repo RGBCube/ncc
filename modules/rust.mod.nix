@@ -1,5 +1,5 @@
 {
-  homeModules.rust =
+  flake.homeModules.rust =
     {
       config,
       lib,

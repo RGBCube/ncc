@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  homeModules.ssh-client =
+  flake.homeModules.ssh-client =
     { config, lib, ... }:
     let
       inherit (lib.attrsets)
@@ -73,7 +73,7 @@
       xdg.cache.file."ssh/.keep".text = "";
     };
 
-  homeModules.ssh-client-desktop =
+  flake.homeModules.ssh-client-desktop =
     { pkgs, ... }:
     {
       packages = [
@@ -83,7 +83,7 @@
       programs.nushell.aliases.mosh = "mosh --no-init";
     };
 
-  nixosModules.ssh-server = {
+  flake.nixosModules.ssh-server = {
     programs.mosh = {
       enable = true;
       openFirewall = true;

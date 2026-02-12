@@ -1,5 +1,5 @@
 {
-  darwinModules.localisation = {
+  flake.darwinModules.localisation = {
     system.defaults.NSGlobalDomain = {
       AppleICUForce24HourTime = true;
 
@@ -9,7 +9,7 @@
     };
   };
 
-  nixosModules.localisation =
+  flake.nixosModules.localisation =
     { pkgs, ... }:
     {
       console.keyMap =
@@ -27,7 +27,7 @@
       i18n.defaultLocale = "C.UTF-8";
     };
 
-  homeModules.localisation-linux = {
+  flake.homeModules.localisation-linux = {
     xdg.config.file."xkb/symbols/tr-swapped-i".text = # rs
       ''
         default partial

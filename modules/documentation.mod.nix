@@ -1,5 +1,5 @@
 {
-  nixosModules.documentation = {
+  flake.nixosModules.documentation = {
     documentation = {
       doc.enable = false;
       info.enable = false;

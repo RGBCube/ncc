@@ -1,5 +1,5 @@
 { inputs, ... }: {
-  nixosModules.hardware-report =
+  flake.nixosModules.hardware-report =
     { lib, ... }:
     let
       inherit (lib.modules) mkAliasOptionModule;

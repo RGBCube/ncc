@@ -2,7 +2,7 @@ let
   domain = "warthog-major.ts.net.";
 in
 {
-  nixosModules.tailscale =
+  flake.nixosModules.tailscale =
     { config, lib, ... }:
     let
       inherit (lib.modules) mkAfter;
@@ -22,7 +22,7 @@ in
       '';
     };
 
-  darwinModules.tailscale =
+  flake.darwinModules.tailscale =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;
@@ -33,7 +33,7 @@ in
       networking.search = singleton domain;
     };
 
-  homeModules.tailscale =
+  flake.homeModules.tailscale =
     {
       config,
       lib,

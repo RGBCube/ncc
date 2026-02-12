@@ -1,5 +1,5 @@
 {
-  homeModules.shell-utils = { pkgs, ...}: {
+  flake.homeModules.shell-utils = { pkgs, ...}: {
     packages = [
       pkgs.fd
       pkgs.jc

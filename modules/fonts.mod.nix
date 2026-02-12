@@ -1,5 +1,5 @@
 {
-  nixosModules.fonts =
+  flake.nixosModules.fonts =
     { config, pkgs, ... }:
     {
       console = {
@@ -19,7 +19,7 @@
       ];
     };
 
-  nixosModules.fonts-disable = {
+  flake.nixosModules.fonts-disable = {
     fonts.fontconfig.enable = false;
   };
 }

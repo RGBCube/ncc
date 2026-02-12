@@ -12,7 +12,7 @@ let
     };
 in
 {
-  homeModules.claude-code =
+  flake.homeModules.claude-code =
     { pkgs, ... }:
     {
       packages = [
@@ -20,6 +20,6 @@ in
       ];
     };
 
-  nixosModules.claude-code = commonModule;
-  darwinModules.claude-code = commonModule;
+  flake.nixosModules.claude-code = commonModule;
+  flake.darwinModules.claude-code = commonModule;
 }

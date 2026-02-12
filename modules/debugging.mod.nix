@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  nixosModules.debugging =
+  flake.nixosModules.debugging =
     { pkgs, ... }:
     {
       environment.systemPackages = [

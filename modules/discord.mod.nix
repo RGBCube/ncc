@@ -1,5 +1,5 @@
 {
-  homeModules.discord =
+  flake.homeModules.discord =
     {
       config,
       lib,
@@ -26,6 +26,6 @@
             '';
           });
 
-      xdg.config.files."Vencord/settings/quickCss.css".text = config.theme.discordCss;
+      xdg.config.file."Vencord/settings/quickCss.css".text = config.theme.discordCss;
     };
 }

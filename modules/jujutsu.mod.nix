@@ -1,5 +1,5 @@
 {
-  homeModules.jujutsu =
+  flake.homeModules.jujutsu =
     {
       config,
       lib,

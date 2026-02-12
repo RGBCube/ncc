@@ -1,5 +1,9 @@
 {
-  homeModules.ghostty =
+  flake.darwinModules.ghostty = {
+    homebrew.casks = [ "ghostty" ];
+  };
+
+  flake.homeModules.ghostty =
     {
       config,
       lib,

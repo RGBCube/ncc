@@ -1,13 +1,11 @@
 { self, inputs, ... }:
 {
-  homeModules.home =
+  flake.homeModules.home =
     {
       config,
       lib,
-      pkgs,
       ...
     }:
-
     let
       inherit (lib.modules) mkAliasOptionModule;
     in
@@ -16,9 +14,9 @@
         (mkAliasOptionModule [ "programs" ] [ "rum" "programs" ])
       ];
 
-      # Temporary hack to make sure hjem sees the defaults are
-      # changed and thus sets the appropriate XDG variables.
-      # Remove after hjem gets proper Darwin support.
+      # Hack to make hjem think the XDG defaults changed, so it
+      # actually sets the XDG env vars. Without this, macOS apps
+      # fall back to ~/Library/Application Support/ instead of ~/.config.
       options =
         let
           inherit (lib.lists) range;
@@ -36,8 +34,6 @@
         };
 
       config = {
-        linker = pkgs.smfh;
-
         # These are already the default on Linux, but on Darwin they differ.
         xdg.cache.directory = "${config.directory}/.cache";
         xdg.config.directory = "${config.directory}/.config";
@@ -46,7 +42,7 @@
       };
     };
 
-  nixosModules.home =
+  flake.nixosModules.home =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;
@@ -61,7 +57,7 @@
       ];
     };
 
-  darwinModules.home =
+  flake.darwinModules.home =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;

@@ -1,5 +1,5 @@
 {
-  homeModules.termbin =
+  flake.homeModules.termbin =
     { lib, pkgs, ... }:
     let
       inherit (lib.attrsets) genAttrs;

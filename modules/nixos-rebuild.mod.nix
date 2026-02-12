@@ -1,5 +1,5 @@
 {
-  nixosModules.nixos-rebuild = {
+  flake.nixosModules.nixos-rebuild = {
     system.rebuild.enableNg = true;
   };
 }

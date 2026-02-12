@@ -19,6 +19,6 @@ let
     };
 in
 {
-  nixosModules.unfree = commonModule;
-  darwinModules.unfree = commonModule;
+  flake.nixosModules.unfree = commonModule;
+  flake.darwinModules.unfree = commonModule;
 }

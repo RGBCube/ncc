@@ -1,5 +1,5 @@
 {
-  homeModules.direnv =
+  flake.homeModules.direnv =
     { pkgs, ... }:
     {
       packages = [

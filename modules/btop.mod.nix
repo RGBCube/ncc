@@ -1,5 +1,5 @@
 {
-  homeModules.btop =
+  flake.homeModules.btop =
     { config, lib, pkgs, ... }:
     let
       inherit (lib.generators) toKeyValue;

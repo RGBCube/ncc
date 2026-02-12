@@ -11,11 +11,9 @@
   };
 
   inputs.home = {
-    url = "github:SquirrelModeller/hjem";
+    url = "github:feel-co/hjem";
     inputs.nixpkgs.follows = "os";
-    inputs.darwin.follows = "os-darwin";
-    inputs.smfh.follows = "";
-    inputs.ndg.follows = "";
+    inputs.nix-darwin.follows = "os-darwin";
   };
   inputs.home-modules = {
     url = "github:snugnug/hjem-rum";
@@ -47,6 +45,10 @@
   inputs.homebrew-cask = {
     url = "github:homebrew/homebrew-cask";
     flake = false;
+  };
+
+  inputs.themes = {
+    url = "github:RGBCube/ThemeNix";
   };
 
   inputs.sudo-run0-shim = {

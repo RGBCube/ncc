@@ -112,6 +112,6 @@ let
 in
 { inputs, ... }:
 {
-  nixosModules.nix = commonModule inputs;
-  darwinModules.nix = commonModule inputs;
+  flake.nixosModules.nix = commonModule inputs;
+  flake.darwinModules.nix = commonModule inputs;
 }

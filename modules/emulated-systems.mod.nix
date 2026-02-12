@@ -1,5 +1,5 @@
 {
-  nixosModules.emulated-systems =
+  flake.nixosModules.emulated-systems =
     { config, lib, ... }:
     let
       inherit (lib.lists) remove;

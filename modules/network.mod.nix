@@ -1,5 +1,5 @@
 {
-  homeModules.network-tools =
+  flake.homeModules.network-tools =
     { pkgs, ... }:
     {
       packages = [
@@ -39,7 +39,7 @@
       ];
     };
 
-  homeModules.wifi-alias =
+  flake.homeModules.wifi-alias =
     { config, pkgs, ... }:
     let
       showPasswordDarwin = pkgs.writeShellScript "show-password" ''
@@ -59,7 +59,7 @@
           throw "Unsupported OS";
     };
 
-  nixosModules.network =
+  flake.nixosModules.network =
     { config, lib, ... }:
     let
       inherit (lib.attrsets) attrNames filterAttrs getAttr;

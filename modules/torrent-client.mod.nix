@@ -1,5 +1,5 @@
 {
-  homeModules.torrent-client = { pkgs, ... }: {
+  flake.homeModules.torrent-client = { pkgs, ... }: {
     # TODO: xdg.mime
 
     packages = [

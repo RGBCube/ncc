@@ -47,7 +47,7 @@ let
     };
 in
 {
-  nixosModules.dns =
+  flake.nixosModules.dns =
     { config, lib, ... }:
     let
       inherit (lib.lists) head;
@@ -63,7 +63,7 @@ in
         '';
     };
 
-  darwinModules.dns =
+  flake.darwinModules.dns =
     { config, lib, ... }:
     let
       inherit (lib.lists) head singleton;

@@ -1,5 +1,5 @@
 {
-  homeModules.wisdon = { pkgs, ... }: {
+  flake.homeModules.wisdon = { pkgs, ... }: {
     packages = [
       pkgs.cowsay
       (pkgs.fortune.override { withOfffensive = true; })

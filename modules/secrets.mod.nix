@@ -12,7 +12,7 @@ let
 in
 { inputs, ... }:
 {
-  nixosModules.secrets = {
+  flake.nixosModules.secrets = {
     imports = [
       inputs.age.nixosModules.age
 
@@ -20,7 +20,7 @@ in
     ];
   };
 
-  darwinModules.secrets = {
+  flake.darwinModules.secrets = {
     imports = [
       inputs.age.darwinModules.age
 

@@ -1,5 +1,5 @@
 {
-  nixosModules.nix-ld = {
+  flake.nixosModules.nix-ld = {
     programs.nix-ld.enable = true;
   };
 }

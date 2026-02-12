@@ -1,5 +1,5 @@
 {
-  homeModules.helix =
+  flake.homeModules.helix =
     { lib, pkgs, ... }:
     let
       inherit (lib.attrsets) attrValues genAttrs mapAttrs optionalAttrs;
@@ -215,7 +215,7 @@
       };
     };
 
-  homeModules.helix-desktop =
+  flake.homeModules.helix-desktop =
     { pkgs, ... }:
     {
       packages = [

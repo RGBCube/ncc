@@ -1,5 +1,5 @@
 {
-  homeModules.obs-studio =
+  flake.homeModules.obs-studio =
     { pkgs, ... }:
     {
       packages = [

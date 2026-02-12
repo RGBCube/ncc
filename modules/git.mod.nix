@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  homeModules.gh =
+  flake.homeModules.gh =
     { lib, pkgs, ... }:
     let
       inherit (lib.generators) toYAML;
@@ -25,7 +25,7 @@
       };
     };
 
-  homeModules.git =
+  flake.homeModules.git =
     { lib, pkgs, ... }:
     let
       inherit (lib.meta) getExe;
@@ -144,7 +144,7 @@
       };
     };
 
-  homeModules.git-sign =
+  flake.homeModules.git-sign =
     { config, lib, ... }:
     let
       inherit (lib.generators) toINI;

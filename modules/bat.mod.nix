@@ -1,5 +1,5 @@
 {
-  homeModules.bat =
+  flake.homeModules.bat =
     {
       config,
       lib,

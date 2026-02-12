@@ -1,6 +1,6 @@
 { self, inputs, ... }:
 {
-  homeModules.sudo-run0-shim =
+  flake.homeModules.sudo-run0-shim =
     { config, ... }:
     {
       packages = [
@@ -8,7 +8,7 @@
       ];
     };
 
-  nixosModules.sudo =
+  flake.nixosModules.sudo =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;
@@ -20,7 +20,7 @@
       home.extraModules = singleton self.homeModules.sudo-run0-shim;
     };
 
-  nixosModules.sudo-desktop = {
+  flake.nixosModules.sudo-desktop = {
     security.polkit.extraConfig = # js
       ''
         polkit.addRule(function(action, subject) {
@@ -37,7 +37,7 @@
       '';
   };
 
-  darwinModules.sudo = {
+  flake.darwinModules.sudo = {
     security.pam.services.sudo_local = {
       enable = true;
       touchIdAuth = true;

@@ -1,5 +1,5 @@
 {
-  homeModules.w3m-ddg =
+  flake.homeModules.w3m-ddg =
     { lib, pkgs, ... }:
     let
       inherit (lib.meta) getExe;

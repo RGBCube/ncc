@@ -1,5 +1,5 @@
 {
-  homeModules.ripgrep =
+  flake.homeModules.ripgrep =
     { lib, pkgs, ... }:
     let
       inherit (lib.meta) getExe;

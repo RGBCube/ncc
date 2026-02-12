@@ -1,5 +1,5 @@
 {
-  homeModules.yak-shaving = { pkgs, ... }: {
+  flake.homeModules.yak-shaving = { pkgs, ... }: {
     packages = [
       pkgs.hyperfine
       pkgs.typos

@@ -1,5 +1,5 @@
 {
-  nixosModules.endlessh-go =
+  flake.nixosModules.endlessh-go =
     {
       config,
       lib,

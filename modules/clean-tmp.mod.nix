@@ -1,5 +1,5 @@
 {
-  nixosModules.clean-tmp = {
+  flake.nixosModules.clean-tmp = {
     boot.tmp.cleanOnBoot = true;
   };
 }

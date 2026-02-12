@@ -1,5 +1,5 @@
 {
-  homeModules.video-player =
+  flake.homeModules.video-player =
     {
       config,
       lib,

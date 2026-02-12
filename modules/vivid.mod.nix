@@ -1,5 +1,5 @@
 {
-  homeModules.vivid =
+  flake.homeModules.vivid =
     { lib, pkgs, ... }:
     let
       inherit (lib.meta) getExe;

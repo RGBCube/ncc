@@ -1,5 +1,5 @@
 {
-  homeModules.zulip =
+  flake.homeModules.zulip =
     { pkgs, ... }:
     {
       packages = [
