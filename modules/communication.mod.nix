@@ -3,18 +3,6 @@
     homebrew.casks = [ "vesktop" ];
   };
 
-  flake.darwinModules.signal-desktop = {
-    homebrew.casks = [ "signal" ];
-  };
-
-  flake.darwinModules.whatsapp = {
-    homebrew.casks = [ "whatsapp" ];
-  };
-
-  flake.darwinModules.zulip = {
-    homebrew.casks = [ "zulip" ];
-  };
-
   flake.homeModules.discord =
     {
       osConfig,
@@ -47,11 +35,9 @@
       xdg.config.files."Vencord/settings/quickCss.css".text = config.theme.discordCss;
     };
 
-  flake.homeModules.matrix =
-    { pkgs, ... }:
-    {
-      packages = [ pkgs.cinny-desktop ];
-    };
+  flake.darwinModules.signal-desktop = {
+    homebrew.casks = [ "signal" ];
+  };
 
   flake.homeModules.signal-desktop =
     {
@@ -67,11 +53,9 @@
       packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.signal-desktop;
     };
 
-  flake.homeModules.thunderbird =
-    { pkgs, ... }:
-    {
-      packages = [ pkgs.thunderbird ];
-    };
+  flake.darwinModules.whatsapp = {
+    homebrew.casks = [ "whatsapp" ];
+  };
 
   flake.homeModules.whatsapp =
     {
@@ -87,6 +71,10 @@
       packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.wasistlos;
     };
 
+  flake.darwinModules.zulip = {
+    homebrew.casks = [ "zulip" ];
+  };
+
   flake.homeModules.zulip =
     {
       osConfig,
@@ -99,5 +87,17 @@
     in
     {
       packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.zulip;
+    };
+
+  flake.homeModules.cinny =
+    { pkgs, ... }:
+    {
+      packages = [ pkgs.cinny-desktop ];
+    };
+
+  flake.homeModules.thunderbird =
+    { pkgs, ... }:
+    {
+      packages = [ pkgs.thunderbird ];
     };
 }
