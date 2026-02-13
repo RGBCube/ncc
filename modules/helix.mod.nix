@@ -248,8 +248,8 @@
         pkgs.markdown-oxide
 
         # NIX
-        pkgs.nixfmt-rfc-style
-        pkgs.nixd
+        pkgs.nixfmt
+        pkgs.nil
 
         # PYTHON
         pkgs.basedpyright
@@ -263,9 +263,6 @@
 
         # YAML
         pkgs.yaml-language-server
-
-        # ZIG
-        pkgs.zls
       ];
     };
 }
