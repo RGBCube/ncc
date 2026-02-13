@@ -43,30 +43,30 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  inputs.home = {
+  inputs.hjem = {
     url = "github:feel-co/hjem";
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.nix-darwin.follows = "nix-darwin";
   };
-  inputs.home-modules = {
+  inputs.hjem-rum = {
     url = "github:snugnug/hjem-rum";
     inputs.nixpkgs.follows = "nixpkgs";
-    inputs.hjem.follows = "home";
+    inputs.hjem.follows = "hjem";
     inputs.ndg.follows = "";
     inputs.treefmt-nix.follows = "";
   };
 
-  inputs.parts = {
+  inputs.flake-parts = {
     url = "github:hercules-ci/flake-parts";
     inputs.nixpkgs-lib.follows = "nixpkgs";
   };
 
-  inputs.age = {
+  inputs.agenix = {
     url = "github:ryantm/agenix";
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.darwin.follows = "nix-darwin";
     inputs.home-manager.follows = "";
-    inputs.systems.follows = "home/smfh/systems";
+    inputs.systems.follows = "hjem/smfh/systems";
   };
 
   inputs.homebrew = {
@@ -85,18 +85,23 @@
     url = "github:RGBCube/ThemeNix";
   };
 
+  inputs.helium = {
+    url = "github:amaanq/helium-flake";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   inputs.sudo-run0-shim = {
     url = "github:LordGrimmauld/run0-sudo-shim";
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.nix-github-actions.follows = "";
     inputs.treefmt-nix.follows = "";
-    inputs.flake-utils.inputs.systems.follows = "home/smfh/systems";
-    inputs.rust-overlay.follows = "home/smfh/rust-overlay";
+    inputs.flake-utils.inputs.systems.follows = "hjem/smfh/systems";
+    inputs.rust-overlay.follows = "hjem/smfh/rust-overlay";
   };
 
   outputs =
     inputs:
-    inputs.parts.lib.mkFlake { inherit inputs; } (
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
       { lib, ... }:
       let
         inherit (lib.filesystem) listFilesRecursive;

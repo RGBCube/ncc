@@ -34,13 +34,13 @@
     in
     {
       imports = [
-        inputs.home.nixosModules.hjem
+        inputs.hjem.nixosModules.hjem
         (mkAliasOptionModule [ "home" ] [ "hjem" ])
       ];
 
       home.extraModules = [
         self.homeModules.home
-        inputs.home-modules.hjemModules.hjem-rum
+        inputs.hjem-rum.hjemModules.hjem-rum
       ];
     };
 
@@ -51,13 +51,13 @@
     in
     {
       imports = [
-        inputs.home.darwinModules.hjem
+        inputs.hjem.darwinModules.hjem
         (mkAliasOptionModule [ "home" ] [ "hjem" ])
       ];
 
       home.extraModules = [
         self.homeModules.home
-        inputs.home-modules.hjemModules.hjem-rum
+        inputs.hjem-rum.hjemModules.hjem-rum
       ];
     };
 }

@@ -14,7 +14,7 @@ in
 {
   flake.nixosModules.secrets = {
     imports = [
-      inputs.age.nixosModules.age
+      inputs.agenix.nixosModules.age
 
       commonModule
     ];
@@ -22,7 +22,7 @@ in
 
   flake.darwinModules.secrets = {
     imports = [
-      inputs.age.darwinModules.age
+      inputs.agenix.darwinModules.age
 
       commonModule
     ];
