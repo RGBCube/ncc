@@ -34,10 +34,10 @@
 
       xdg.config.files."bat/config".generator = self.lib.generators.toCliFlagList;
       xdg.config.files."bat/config".value = {
-        theme = "base16";
+        theme = "default";
         pager = "${getExe pkgs.less} --quit-if-one-screen --quit-on-intr --RAW-CONTROL-CHARS";
       };
 
-      xdg.config.files."bat/themes/${config.xdg.config.files."bat/config".value.theme}.tmTheme".text = config.theme.tmTheme;
+      xdg.config.files."bat/themes/default.tmTheme".text = config.theme.tmTheme;
     };
 }

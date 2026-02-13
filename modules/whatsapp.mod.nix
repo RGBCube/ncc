@@ -1,8 +1,20 @@
 {
+  flake.darwinModules.whatsapp = {
+    homebrew.casks = [ "whatsapp" ];
+  };
+
   flake.homeModules.whatsapp =
-    { pkgs, ... }:
     {
-      packages = [
+      osConfig,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      inherit (lib.modules) mkIf;
+    in
+    {
+      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
         pkgs.wasistlos
       ];
     };

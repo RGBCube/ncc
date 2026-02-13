@@ -344,11 +344,11 @@
     },
     "themes": {
       "locked": {
-        "lastModified": 1751294078,
-        "narHash": "sha256-nhjEKaILnVdQwUUYOmdIYuOWjQczi25nPpd7PaQewmE=",
+        "lastModified": 1770999457,
+        "narHash": "sha256-018znIdT/TBFsNcDYv6l4NCnK96gDiJMODoIGqnVn7o=",
         "owner": "RGBCube",
         "repo": "ThemeNix",
-        "rev": "27db9067eff05b1606c1e1baf515414364a538b8",
+        "rev": "3779a7ba289d88ea092063e8bc512cfe80f293ba",
         "type": "github"
       },
       "original": {

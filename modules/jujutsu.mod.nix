@@ -8,7 +8,9 @@
     }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.generators) toTOML;
+      inherit (lib.strings) readFile;
+
+      toTOML = value: readFile <| pkgs.writers.writeTOML "workaround.toml" value;
     in
     {
       packages = [

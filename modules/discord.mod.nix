@@ -5,17 +5,21 @@
 
   flake.homeModules.discord =
     {
+      osConfig,
       config,
+
       lib,
       pkgs,
       ...
     }:
     let
       inherit (lib.lists) singleton;
+      inherit (lib.modules) mkIf;
     in
     {
       packages =
-        singleton
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux
+        <| singleton
         <|
           (pkgs.discord.override {
             withOpenASAR = true;

@@ -1,7 +1,7 @@
 {
   flake.homeModules.secrets-manager =
     {
-      config,
+      osConfig,
       lib,
       pkgs,
       ...
@@ -13,8 +13,8 @@
       package = pkgs.ragenix;
     in
     {
-      programs.nushell.aliases = # sh
-        ''${getExe package} --identity ${head config.age.identityPaths}'';
+      programs.nushell.aliases.age = # sh
+        ''${getExe package} --identity ${head osConfig.age.identityPaths}'';
 
       packages = [
         package

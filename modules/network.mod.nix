@@ -1,6 +1,6 @@
 {
   flake.homeModules.network-tools =
-    { osConfig, pkgs, ... }:
+    { pkgs, ... }:
     {
       packages = [
         (pkgs.curl.override {
@@ -34,8 +34,7 @@
 
         pkgs.dig
         pkgs.doggo
-
-        (if osConfig.nixpkgs.hostPlatform.isLinux then pkgs.traceroute else pkgs.dublin-traceroute)
+        pkgs.inetutils
       ];
     };
 

@@ -82,7 +82,7 @@
       ...
     }:
     let
-      inherit (lib.modules) mkAfter mkIf;
+      inherit (lib.strings) optionalString;
 
       shadowPath = "${config.xdg.data.directory}/shadow";
     in
@@ -96,8 +96,9 @@
       ];
 
       programs.nushell.extraConfig =
-        mkIf osConfig.nixpkgs.hostPlatform.isDarwin
-        <| mkAfter /* nu */ ''
+        # For some reason mkIf does not work here.
+        optionalString osConfig.nixpkgs.hostPlatform.isDarwin
+        <| /* nu */ ''
           do --env {
             let usr_bin_index = $env.PATH
             | enumerate

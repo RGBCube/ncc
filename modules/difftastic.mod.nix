@@ -1,20 +1,23 @@
 {
   flake.homeModules.difftastic =
-    { lib, pkgs, ... }:
+    { config, lib, pkgs, ... }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.generators) toINI toTOML;
+      inherit (lib.generators) toGitINI;
       inherit (lib.lists) singleton;
+      inherit (lib.strings) readFile;
+
+      toTOML = value: readFile <| pkgs.writers.writeTOML "workaround.toml" value;
 
       difft = pkgs.writeShellScriptBin "difft" /* bash */ ''
-        exec ${getExe pkgs.difftastic} --background dark "$@"
+        exec ${getExe pkgs.difftastic} --background ${if config.theme.isDark then "dark" else "light"} "$@"
       '';
     in
     {
       packages = singleton difft;
 
       # GIT INTEGRATION
-      xdg.config.files."git/config".generator = toINI { };
+      xdg.config.files."git/config".generator = toGitINI;
       xdg.config.files."git/config".value = {
         diff.external = getExe difft;
         diff.tool = "difftastic";

@@ -11,12 +11,9 @@ in
   flake.darwinConfigurations.pala = inputs.nix-darwin.lib.darwinSystem {
     specialArgs = { inherit self inputs; };
 
-    modules = attrValues self.darwinModules ++ [
+    modules = (attrValues (removeAttrs self.darwinModules [ "hickory-dns" ])) ++ [
       (
-        { config, lib, ... }:
-        let
-          inherit (lib.attrsets) mapAttrs;
-        in
+        { config, ... }:
         {
           nixpkgs.hostPlatform = "aarch64-darwin";
 
@@ -30,15 +27,7 @@ in
             name = "pala";
             home = "/Users/pala";
           };
-          home.users =
-            config.users.users
-            |> mapAttrs (
-              _:
-              { home, ... }:
-              {
-                directory = home;
-              }
-            );
+          home.users.pala = {};
 
           # homeModules.home is already injected via home.extraModules.
           home.extraModules = attrValues <| removeAttrs self.homeModules [ "home" ];

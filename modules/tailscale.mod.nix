@@ -1,5 +1,24 @@
 let
-  domain = "warthog-major.ts.net.";
+  commonMagicDnsModule =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      services.hickory-dns.settings.zones = singleton {
+        zone = "warthog-major.ts.net.";
+        zone_type = "External";
+
+        stores.type = "forward";
+        stores.name_servers = singleton {
+          ip = "100.100.100.100";
+          trust_negative_responses = true;
+          connections = singleton {
+            protocol.type = "udp";
+          };
+        };
+      };
+    };
 in
 {
   flake.nixosModules.tailscale =
@@ -11,9 +30,11 @@ in
     }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.modules) mkAfter mkIf;
+      inherit (lib.modules) mkIf;
     in
     {
+      imports = [ commonMagicDnsModule ];
+
       services.tailscale = {
         enable = true;
 
@@ -22,10 +43,6 @@ in
       };
 
       networking.firewall.trustedInterfaces = [ config.services.tailscale.interfaceName ];
-
-      etc."resolv.conf".text = mkAfter ''
-        search ${domain}
-      '';
 
       # NFTABLES
       systemd.services.tailscaled.serviceConfig.Environment = mkIf config.networking.nftables.enable [
@@ -48,16 +65,11 @@ in
       boot.initrd.systemd.network.wait-online.enable = false;
     };
 
-  flake.darwinModules.tailscale =
-    { lib, ... }:
-    let
-      inherit (lib.lists) singleton;
-    in
-    {
-      homebrew.casks = [ "tailscale-app" ];
+  flake.darwinModules.tailscale = {
+    imports = [ commonMagicDnsModule ];
 
-      networking.search = singleton domain;
-    };
+    homebrew.casks = [ "tailscale-app" ];
+  };
 
   flake.homeModules.tailscale =
     {

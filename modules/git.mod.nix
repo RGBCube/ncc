@@ -29,7 +29,7 @@
     { lib, pkgs, ... }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.generators) toINI;
+      inherit (lib.generators) toGitINI;
       inherit (lib.lists) singleton;
 
       package = getExe pkgs.git;
@@ -37,7 +37,7 @@
     {
       packages = singleton pkgs.git-absorb;
 
-      xdg.config.files."git/config".generator = toINI { };
+      xdg.config.files."git/config".generator = toGitINI;
       xdg.config.files."git/config".value = {
         user.name = "RGBCube";
         user.email = "git@rgbcu.be";
@@ -78,10 +78,10 @@
   flake.homeModules.git-sign =
     { config, lib, ... }:
     let
-      inherit (lib.generators) toINI;
+      inherit (lib.generators) toGitINI;
     in
     {
-      xdg.config.files."git/config".generator = toINI { };
+      xdg.config.files."git/config".generator = toGitINI;
       xdg.config.files."git/config".value = {
         core.sshCommand = "ssh -i ${config.directory}/.ssh/id";
 

@@ -26,7 +26,7 @@
         pkgs.ghostty
       ];
 
-      xdg.config.files."ghostty/config".generator = toKeyValue { };
+      xdg.config.files."ghostty/config".generator = toKeyValue { listsAsDuplicateKeys = true; };
       xdg.config.files."ghostty/config".value = {
         font-size = config.theme.font.size.normal;
         font-family = config.theme.font.mono.name;

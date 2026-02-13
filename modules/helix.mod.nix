@@ -8,10 +8,12 @@
         mapAttrs
         optionalAttrs
         ;
-      inherit (lib.generators) toTOML;
       inherit (lib.lists) elem;
+      inherit (lib.strings) readFile;
       inherit (lib.meta) getExe;
       inherit (lib.trivial) const;
+
+      toTOML = value: readFile <| pkgs.writers.writeTOML "workaround.toml" value;
 
       package = pkgs.helix;
     in
