@@ -2,63 +2,53 @@ let
   inherit (builtins)
     attrNames
     concatMap
-    elem
     filter
-    hasAttr
     listToAttrs
     readDir
     ;
 
-  keys = import ./keys.nix;
+  singleton = value: [ value ];
+  optional = condition: consequence: if condition then [ consequence ] else [ ];
 
-  # Recursively find all .age files under a directory, returning relative paths.
-  findAgeFiles =
-    base: dir:
+  listFilesRecursive =
+    base: directory:
     let
-      entries = readDir dir;
+      entries = readDir directory;
       names = attrNames entries;
     in
-    concatMap (
+    names
+    |> concatMap (
       name:
-      let
-        path = dir + "/${name}";
-        rel = "${base}/${name}";
-      in
       if entries.${name} == "directory" then
-        findAgeFiles rel path
-      else if entries.${name} == "regular" && builtins.match ".*\\.age$" name != null then
-        [ rel ]
+        listFilesRecursive "${base}/${name}" /${directory}/${name}
+      else if entries.${name} == "regular" then
+        singleton "${base}/${name}"
       else
         [ ]
-    ) names;
+    );
 
-  # Extract the host name from a relative path like "hosts/best/grafana/password.age".
-  hostOf =
-    path:
-    let
-      parts = builtins.split "/" path;
-      # parts = [ "hosts" "/" "best" "/" ... ], host is at index 2.
-    in
-    builtins.elemAt parts 2;
+  isAge = name: builtins.match ".*\\.age$" name != null;
 
-  hostSecrets = concatMap (
-    host:
-    let
-      paths = findAgeFiles "hosts/${host}" ./hosts/${host};
-    in
-    map (path: {
-      name = path;
-      value.publicKeys = (if hasAttr host keys then [ keys.${host} ] else [ ]) ++ keys.admins;
-    }) paths
-  ) (attrNames (readDir ./hosts));
+  keys = import ./keys.nix;
+
+  hostSecrets =
+    attrNames (readDir ./hosts)
+    |> concatMap (
+      host:
+      listFilesRecursive "hosts/${host}" ./hosts/${host}
+      |> filter isAge
+      |> map (path: {
+        name = path;
+        value.publicKeys = optional (keys ? ${host}) keys.${host} ++ keys.admins;
+      })
+    );
 
   moduleSecrets =
-    let
-      paths = findAgeFiles "modules" ./modules;
-    in
-    map (path: {
+    listFilesRecursive "modules" ./modules
+    |> filter isAge
+    |> map (path: {
       name = path;
       value.publicKeys = keys.all;
-    }) paths;
+    });
 in
 listToAttrs (hostSecrets ++ moduleSecrets)
