@@ -1,7 +1,7 @@
 {
 
   flake.darwinModules.obs-studio = {
-    homebrew.casks = [ "obs-studio" ];
+    homebrew.casks = [ "obs" ];
   };
 
   flake.homeModules.obs-studio =

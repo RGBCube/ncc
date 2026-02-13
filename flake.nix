@@ -90,6 +90,11 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
+  inputs.ublock = {
+    url = "github:gorhill/uBlock";
+    flake = false;
+  };
+
   inputs.sudo-run0-shim = {
     url = "github:LordGrimmauld/run0-sudo-shim";
     inputs.nixpkgs.follows = "nixpkgs";

@@ -1,9 +1,12 @@
 { self, inputs, ... }:
 {
   flake.homeModules.sudo-run0-shim =
-    { osConfig, ... }:
+    { osConfig, lib, ... }:
+    let
+      inherit (lib.modules) mkIf;
+    in
     {
-      packages = [
+      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
         inputs.sudo-run0-shim.packages.${osConfig.nixpkgs.hostPlatform.system}.run0-sudo-shim
       ];
     };

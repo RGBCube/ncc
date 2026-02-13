@@ -27,18 +27,26 @@
       i18n.defaultLocale = "C.UTF-8";
     };
 
-  flake.homeModules.localisation-linux = {
-    xdg.config.files."xkb/symbols/tr-swapped-i".text = # rs
-      ''
-        default partial
-        xkb_symbols "basic" {
-          include "tr(basic)"
+  flake.homeModules.localisation =
+    { osConfig, lib, ... }:
+    let
+      inherit (lib.modules) mkIf;
+    in
+    {
+      xdg.config.files."xkb/symbols/tr-swapped-i" = mkIf osConfig.nixpkgs.hostPlatform.isLinux {
+        text =
+          # rs
+          ''
+            default partial
+            xkb_symbols "basic" {
+              include "tr(basic)"
 
-          name[Group1]="Turkish (i and ı swapped)";
+              name[Group1]="Turkish (i and ı swapped)";
 
-          key <AC11>  { type[group1] = "FOUR_LEVEL_SEMIALPHABETIC", [ idotless, Iabovedot,  paragraph , none      ]};
-          key <AD08>  { type[group1] = "FOUR_LEVEL_SEMIALPHABETIC", [ i       , I        ,  apostrophe, dead_caron ]};
-        };
-      '';
-  };
+              key <AC11>  { type[group1] = "FOUR_LEVEL_SEMIALPHABETIC", [ idotless, Iabovedot,  paragraph , none      ]};
+              key <AD08>  { type[group1] = "FOUR_LEVEL_SEMIALPHABETIC", [ i       , I        ,  apostrophe, dead_caron ]};
+            };
+          '';
+      };
+    };
 }

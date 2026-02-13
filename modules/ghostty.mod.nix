@@ -1,8 +1,4 @@
 {
-  flake.darwinModules.ghostty = {
-    homebrew.casks = [ "ghostty" ];
-  };
-
   flake.homeModules.ghostty =
     {
       config,
@@ -13,7 +9,6 @@
     }:
     let
       inherit (lib.attrsets) mapAttrsToList;
-      inherit (lib.generators) toKeyValue;
       inherit (lib.modules) mkIf;
     in
     {
@@ -22,77 +17,78 @@
         TERM_PROGRAM = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "ghostty";
       };
 
-      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
-        pkgs.ghostty
-      ];
+      programs.ghostty = {
+        enable = true;
 
-      xdg.config.files."ghostty/config".generator = toKeyValue { listsAsDuplicateKeys = true; };
-      xdg.config.files."ghostty/config".value = {
-        font-size = config.theme.font.size.normal;
-        font-family = config.theme.font.mono.name;
+        package = if osConfig.nixpkgs.hostPlatform.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
 
-        window-padding-x = config.theme.padding;
-        window-padding-y = config.theme.padding;
+        settings = {
+          font-size = config.theme.font.size.normal;
+          font-family = config.theme.font.mono.name;
 
-        # 100 MiB
-        scrollback-limit = 100 * 1024 * 1024;
+          window-padding-x = config.theme.padding;
+          window-padding-y = config.theme.padding;
 
-        mouse-hide-while-typing = true;
+          # 100 MiB
+          scrollback-limit = 100 * 1024 * 1024;
 
-        confirm-close-surface = false;
-        quit-after-last-window-closed = true;
+          mouse-hide-while-typing = true;
 
-        window-decoration = osConfig.nixpkgs.hostPlatform.isDarwin;
-        macos-titlebar-style = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "tabs";
+          confirm-close-surface = false;
+          quit-after-last-window-closed = true;
 
-        macos-option-as-alt = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "left";
+          window-decoration = osConfig.nixpkgs.hostPlatform.isDarwin;
+          macos-titlebar-style = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "tabs";
 
-        config-file = pkgs.writeText "base16-config" config.theme.ghosttyConfig;
+          macos-option-as-alt = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "left";
 
-        keybind =
-          mapAttrsToList (name: value: "ctrl+shift+${name}=${value}") {
-            c = "copy_to_clipboard";
-            v = "paste_from_clipboard";
+          config-file = "${pkgs.writeText "base16-config" config.theme.ghosttyConfig}";
 
-            z = "jump_to_prompt:-2";
-            x = "jump_to_prompt:2";
+          keybind =
+            mapAttrsToList (name: value: "ctrl+shift+${name}=${value}") {
+              c = "copy_to_clipboard";
+              v = "paste_from_clipboard";
 
-            h = "write_scrollback_file:paste";
-            i = "inspector:toggle";
+              z = "jump_to_prompt:-2";
+              x = "jump_to_prompt:2";
 
-            page_down = "scroll_page_fractional:0.33";
-            down = "scroll_page_lines:1";
-            j = "scroll_page_lines:1";
+              h = "write_scrollback_file:paste";
+              i = "inspector:toggle";
 
-            page_up = "scroll_page_fractional:-0.33";
-            up = "scroll_page_lines:-1";
-            k = "scroll_page_lines:-1";
+              page_down = "scroll_page_fractional:0.33";
+              down = "scroll_page_lines:1";
+              j = "scroll_page_lines:1";
 
-            home = "scroll_to_top";
-            end = "scroll_to_bottom";
+              page_up = "scroll_page_fractional:-0.33";
+              up = "scroll_page_lines:-1";
+              k = "scroll_page_lines:-1";
 
-            enter = "reset_font_size";
-            plus = "increase_font_size:1";
-            minus = "decrease_font_size:1";
+              home = "scroll_to_top";
+              end = "scroll_to_bottom";
 
-            t = "new_tab";
-            q = "close_surface";
+              enter = "reset_font_size";
+              plus = "increase_font_size:1";
+              minus = "decrease_font_size:1";
 
-            "one" = "goto_tab:1";
-            "two" = "goto_tab:2";
-            "three" = "goto_tab:3";
-            "four" = "goto_tab:4";
-            "five" = "goto_tab:5";
-            "six" = "goto_tab:6";
-            "seven" = "goto_tab:7";
-            "eight" = "goto_tab:8";
-            "nine" = "goto_tab:9";
-            "zero" = "goto_tab:10";
-          }
-          ++ mapAttrsToList (name: value: "ctrl+${name}=${value}") {
-            "tab" = "next_tab";
-            "shift+tab" = "previous_tab";
-          };
+              t = "new_tab";
+              q = "close_surface";
+
+              "one" = "goto_tab:1";
+              "two" = "goto_tab:2";
+              "three" = "goto_tab:3";
+              "four" = "goto_tab:4";
+              "five" = "goto_tab:5";
+              "six" = "goto_tab:6";
+              "seven" = "goto_tab:7";
+              "eight" = "goto_tab:8";
+              "nine" = "goto_tab:9";
+              "zero" = "goto_tab:10";
+            }
+            ++ mapAttrsToList (name: value: "ctrl+${name}=${value}") {
+              "tab" = "next_tab";
+              "shift+tab" = "previous_tab";
+            };
+        };
       };
     };
 }

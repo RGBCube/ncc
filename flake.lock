@@ -272,7 +272,8 @@
         "nixos-facter": "nixos-facter",
         "nixpkgs": "nixpkgs",
         "sudo-run0-shim": "sudo-run0-shim",
-        "themes": "themes"
+        "themes": "themes",
+        "ublock": "ublock"
       }
     },
     "rust-overlay": {
@@ -375,6 +376,22 @@
       "original": {
         "owner": "RGBCube",
         "repo": "ThemeNix",
+        "type": "github"
+      }
+    },
+    "ublock": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771255459,
+        "narHash": "sha256-nByzPw8/wFH/4PDcrTwQaopFhHbi5KmTnY2c/967oqk=",
+        "owner": "gorhill",
+        "repo": "uBlock",
+        "rev": "f1689a9ab30ae5aece3db6d7a67dbde90f6e69df",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gorhill",
+        "repo": "uBlock",
         "type": "github"
       }
     }

@@ -14,7 +14,11 @@
     in
     {
       # SHADOW-XCODE
-      system.activationScripts.postActivation.text = mkAfter /* bash */ ''
+      system.activationScripts.script.text = mkAfter ''
+        ${config.system.activationScripts.shadow-xcode.text}
+      '';
+      system.activationScripts.shadow-xcode.text = /* bash */ ''
+        echo "shadowing xcode..."
         ${getExe pkgs.nushell} ${
           pkgs.writeText "shadow-xcode.nu" /* nu */ ''
             use std null_device

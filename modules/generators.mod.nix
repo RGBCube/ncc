@@ -10,6 +10,6 @@ in
     attrs:
     concatLines
     <| mapAttrsToList (
-      name: value: if value == true then "--${name}" else "--${name}=${toString value}"
+      name: value: if value == true then "--${name}" else "--${name} '${toString value}'"
     ) attrs;
 }

@@ -81,7 +81,7 @@
       inherit (lib.generators) toGitINI;
     in
     {
-      xdg.config.files."git/config".generator = toGitINI;
+      # xdg.config.files."git/config".generator = toGitINI; # FIXME
       xdg.config.files."git/config".value = {
         core.sshCommand = "ssh -i ${config.directory}/.ssh/id";
 
