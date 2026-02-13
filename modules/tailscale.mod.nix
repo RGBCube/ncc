@@ -40,6 +40,9 @@ in
 
         interfaceName = "ts0";
         useRoutingFeatures = "both";
+        extraUpFlags = [
+          "--accept-dns=false" # hickory-dns handles DNS.
+        ];
       };
 
       networking.firewall.trustedInterfaces = [ config.services.tailscale.interfaceName ];
