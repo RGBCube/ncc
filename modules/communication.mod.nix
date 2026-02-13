@@ -1,14 +1,21 @@
 {
-  flake.darwinModules.communication = {
-    homebrew.casks = [
-      "signal"
-      "vesktop"
-      "whatsapp"
-      "zulip"
-    ];
+  flake.darwinModules.discord = {
+    homebrew.casks = [ "vesktop" ];
   };
 
-  flake.homeModules.communication =
+  flake.darwinModules.signal-desktop = {
+    homebrew.casks = [ "signal" ];
+  };
+
+  flake.darwinModules.whatsapp = {
+    homebrew.casks = [ "whatsapp" ];
+  };
+
+  flake.darwinModules.zulip = {
+    homebrew.casks = [ "zulip" ];
+  };
+
+  flake.homeModules.discord =
     {
       osConfig,
       config,
@@ -18,22 +25,14 @@
       ...
     }:
     let
-      inherit (lib.lists) optionals;
-
-      isLinux = osConfig.nixpkgs.hostPlatform.isLinux;
+      inherit (lib.lists) optional;
     in
     {
-      packages = [
-        pkgs.cinny-desktop
-        pkgs.thunderbird
-      ]
-      ++ optionals isLinux [
-        pkgs.signal-desktop
-        (
-          (pkgs.discord.override {
-            withOpenASAR = true;
-            withVencord = true;
-          }).overrideAttrs
+      packages = optional osConfig.nixpkgs.hostPlatform.isLinux (
+        (pkgs.discord.override {
+          withOpenASAR = true;
+          withVencord = true;
+        }).overrideAttrs
           (old: {
             nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.makeWrapper ];
 
@@ -43,11 +42,62 @@
                 --add-flags "--enable-features=UseOzonePlatform --ozone-platform=wayland"
             '';
           })
-        )
-        pkgs.wasistlos
-        pkgs.zulip
-      ];
+      );
 
       xdg.config.files."Vencord/settings/quickCss.css".text = config.theme.discordCss;
+    };
+
+  flake.homeModules.matrix =
+    { pkgs, ... }:
+    {
+      packages = [ pkgs.cinny-desktop ];
+    };
+
+  flake.homeModules.signal-desktop =
+    {
+      osConfig,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (lib.lists) optional;
+    in
+    {
+      packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.signal-desktop;
+    };
+
+  flake.homeModules.thunderbird =
+    { pkgs, ... }:
+    {
+      packages = [ pkgs.thunderbird ];
+    };
+
+  flake.homeModules.whatsapp =
+    {
+      osConfig,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (lib.lists) optional;
+    in
+    {
+      packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.wasistlos;
+    };
+
+  flake.homeModules.zulip =
+    {
+      osConfig,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (lib.lists) optional;
+    in
+    {
+      packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.zulip;
     };
 }
