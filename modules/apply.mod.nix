@@ -1,3 +1,4 @@
+{ self, ... }:
 {
   perSystem =
     { lib, pkgs, ... }:
@@ -55,7 +56,7 @@
               "
 
               ${jj} file list
-              | sync --files-from - ./ $"root@($host):ncc"
+              | sync --files-from - ${self}/ $"root@($host):ncc"
 
               ${ssh} -tt ("root@" + $host) $"
                 cd ncc
@@ -76,9 +77,9 @@
             ] | append ($args_split | get --optional 1 | default [])
 
             if (uname | get kernel-name) == "Darwin" {
-              ${nh} darwin switch . ...$nh_flags -- ...$nix_flags
+              ${nh} darwin switch path:${self} ...$nh_flags -- ...$nix_flags
             } else {
-              with-env { NH_BYPASS_ROOT_CHECK: "true" } { ${nh} os switch . ...$nh_flags -- ...$nix_flags }
+              with-env { NH_BYPASS_ROOT_CHECK: "true" } { ${nh} os switch path:${self} ...$nh_flags -- ...$nix_flags }
             }
           }
         '';
