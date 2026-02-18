@@ -160,7 +160,7 @@
           ++ [
             {
               name = "nix";
-              auto-format = false;
+              auto-format = true;
               formatter.command = "nixfmt";
             }
 
