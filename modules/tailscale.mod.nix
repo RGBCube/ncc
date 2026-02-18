@@ -11,11 +11,9 @@ let
 
         stores.type = "forward";
         stores.name_servers = singleton {
-          ip = "100.100.100.100";
+          socket_addr = "100.100.100.100:53";
+          protocol = "udp";
           trust_negative_responses = true;
-          connections = singleton {
-            protocol.type = "udp";
-          };
         };
       };
     };

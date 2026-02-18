@@ -1,49 +1,66 @@
 { self, lib, ... }:
 let
-  inherit (lib.strings) substring;
+  inherit (lib.strings) hasInfix substring;
+
+  mkSocketAddr =
+    { ip, port }: if hasInfix ":" ip then "[${ip}]:${toString port}" else "${ip}:${toString port}";
 
   id = "7f2bf8";
   idv6 = "${substring 0 2 id}:${substring 2 4 id}";
 
-  mkNextDnsServer =
+  mkNextDnsServers =
     { ip, hostName }:
-    {
-      inherit ip;
-      trust_negative_responses = true;
-      connections = [
-        {
-          protocol = {
-            server_name = "dns.nextdns.io";
-            path = "/${id}/${hostName}";
-            type = "h3";
-          };
-        }
-        {
-          protocol = {
-            server_name = "dns.nextdns.io";
-            path = "/${id}/${hostName}";
-            type = "https";
-          };
-        }
-        {
-          protocol = {
-            server_name = "${hostName}-${id}.dns.nextdns.io";
-            type = "quic";
-          };
-        }
-        {
-          protocol = {
-            server_name = "${hostName}-${id}.dns.nextdns.io";
-            type = "tls";
-          };
-        }
-      ];
-    };
+    [
+      {
+        socket_addr = mkSocketAddr {
+          inherit ip;
+          port = 443;
+        };
+        protocol = "h3";
+        tls_dns_name = "dns.nextdns.io";
+        http_endpoint = "/${id}/${hostName}";
+        trust_negative_responses = true;
+      }
+      {
+        socket_addr = mkSocketAddr {
+          inherit ip;
+          port = 853;
+        };
+        protocol = "quic";
+        tls_dns_name = "${hostName}-${id}.dns.nextdns.io";
+        trust_negative_responses = true;
+      }
+      {
+        socket_addr = mkSocketAddr {
+          inherit ip;
+          port = 443;
+        };
+        protocol = "https";
+        tls_dns_name = "dns.nextdns.io";
+        http_endpoint = "/${id}/${hostName}";
+        trust_negative_responses = true;
+      }
+      {
+        socket_addr = mkSocketAddr {
+          inherit ip;
+          port = 853;
+        };
+        protocol = "tls";
+        tls_dns_name = "${hostName}-${id}.dns.nextdns.io";
+        trust_negative_responses = true;
+      }
+    ];
 
   commonModule =
     { config, ... }:
     let
-      inherit (lib.lists) singleton;
+      inherit (lib.attrsets) getAttr;
+      inherit (lib.lists)
+        concatMap
+        imap0
+        singleton
+        sort
+        ;
     in
     {
       services.hickory-dns = {
@@ -57,24 +74,49 @@ let
             zone_type = "External";
 
             stores.type = "forward";
-            stores.name_servers = [
-              (mkNextDnsServer {
-                inherit (config.networking) hostName;
-                ip = "2a07:a8c0::${idv6}";
-              })
-              (mkNextDnsServer {
-                inherit (config.networking) hostName;
-                ip = "2a07:a8c1::${idv6}";
-              })
-              (mkNextDnsServer {
-                inherit (config.networking) hostName;
-                ip = "45.90.28.0";
-              })
-              (mkNextDnsServer {
-                inherit (config.networking) hostName;
-                ip = "45.90.30.0";
-              })
-            ];
+            stores.name_servers =
+              [
+                # { # FIXME: Slow.
+                #   inherit (config.networking) hostName;
+                #   ip = "2a07:a8c0::${idv6}";
+                # }
+                # {
+                #   inherit (config.networking) hostName;
+                #   ip = "2a07:a8c1::${idv6}";
+                # }
+                # {
+                #   inherit (config.networking) hostName;
+                #   ip = "45.90.28.0";
+                # }
+                {
+                  inherit (config.networking) hostName;
+                  ip = "45.90.30.0";
+                }
+              ]
+              |> concatMap mkNextDnsServers
+              |> imap0 (index: server: { inherit index server; })
+              |> sort (
+                a: b:
+                let
+                  protocolPriority =
+                    protocol:
+                    if protocol == "h3" then
+                      0
+                    else if protocol == "quic" then
+                      1
+                    else if protocol == "https" then
+                      2
+                    else if protocol == "tls" then
+                      3
+                    else
+                      67;
+
+                  aPriority = protocolPriority a.server.protocol;
+                  bPriority = protocolPriority b.server.protocol;
+                in
+                if aPriority == bPriority then a.index < b.index else aPriority < bPriority
+              )
+              |> map (getAttr "server");
           };
         };
       };
@@ -167,9 +209,6 @@ in
       lib,
       ...
     }:
-    let
-      inherit (lib.lists) head singleton;
-    in
     {
       imports = [
         commonModule
@@ -178,16 +217,23 @@ in
       ];
 
       services.hickory-dns.package = pkgs.hickory-dns.overrideAttrs (old: {
+        cargoBuildFeatures = (old.cargoBuildFeatures or [ ]) ++ [
+          "tls-aws-lc-rs"
+          "https-aws-lc-rs"
+          "quic-aws-lc-rs"
+          "h3-aws-lc-rs"
+        ];
+
         meta.platforms = old.meta.platforms ++ lib.platforms.darwin;
       });
 
-      networking.dns = singleton <| head config.services.hickory-dns.settings.listen_addrs_ipv6;
+      networking.dns = config.services.hickory-dns.settings.listen_addrs_ipv6 ++ config.services.hickory-dns.settings.listen_addrs_ipv4;
     };
 
   flake.nixosModules.dns =
     { config, ... }:
     let
-      inherit (lib.lists) head;
+      inherit (lib.strings) concatStringsSep;
     in
     {
       imports = [ commonModule ];
@@ -195,7 +241,7 @@ in
       etc."resolv.conf".text = /* resolvconf */ ''
         # Generated by NixOS modules, should use the Hickory-DNS forwarder.
         options edns0 trust-ad
-        nameserver ${head config.services.hickory-dns.settings.listen_addrs_ipv6}
+        nameserver ${concatStringsSep " " <| config.services.hickory-dns.settings.listen_addrs_ipv6 ++ config.services.hickory-dns.settings.listen_addrs_ipv4}
       '';
     };
 }
