@@ -20,8 +20,6 @@
     {
       environment.sessionVariables.EDITOR = getExe package;
 
-      programs.nushell.aliases.e = getExe package;
-
       packages = [
         package
       ];

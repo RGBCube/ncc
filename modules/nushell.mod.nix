@@ -116,6 +116,8 @@
         extraConfig = nuConfig;
 
         aliases = {
+          e = "^$env.EDITOR";
+
           la = "ls --all";
           ll = "ls --long";
           lla = "ls --long --all";
