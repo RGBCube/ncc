@@ -132,12 +132,10 @@ in
     }:
     let
       inherit (lib.meta) getExe';
-      inherit (lib.attrsets) filterAttrsRecursive;
       inherit (lib.modules) mkIf;
       inherit (lib.options) mkEnableOption mkOption mkPackageOption;
       inherit (lib.types)
         listOf
-        nullOr
         path
         port
         str
@@ -154,7 +152,7 @@ in
 
         configFile = mkOption {
           type = path;
-          default = toml.generate "hickory-dns.toml" (cfg.settings |> filterAttrsRecursive (_: value: value != null));
+          default = toml.generate "hickory-dns.toml" cfg.settings;
           description = "Path to the hickory-dns TOML configuration file.";
         };
 
@@ -164,14 +162,14 @@ in
             freeformType = toml.type;
             options = {
               listen_addrs_ipv4 = mkOption {
-                type = nullOr <| listOf str;
-                default = null;
+                type = listOf str;
+                default = [ ];
                 description = "IPv4 addresses to listen on.";
               };
 
               listen_addrs_ipv6 = mkOption {
-                type = nullOr <| listOf str;
-                default = null;
+                type = listOf str;
+                default = [ ];
                 description = "IPv6 addresses to listen on.";
               };
 
