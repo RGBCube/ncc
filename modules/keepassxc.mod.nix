@@ -1,21 +1,14 @@
 {
-  flake.darwinModules.keepassxc = {
-    homebrew.casks = [ "keepassxc" ];
-  };
-
   flake.homeModules.keepassxc =
     {
       lib,
-      osConfig,
       pkgs,
       ...
     }:
     let
-      inherit (lib.modules) mkIf;
+      inherit (lib.lists) singleton;
     in
     {
-      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
-        pkgs.keepassxc
-      ];
+      packages = singleton pkgs.keepassxc;
     };
 }

@@ -35,9 +35,14 @@
       xdg.config.files."Vencord/settings/quickCss.css".text = config.theme.discordCss;
     };
 
-  flake.darwinModules.signal-desktop = {
-    homebrew.casks = [ "signal" ];
-  };
+  flake.darwinModules.signal-desktop =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      allowedUnfreePackageNames = singleton "signal-desktop-bin"; # Signing bullshit.
+    };
 
   flake.homeModules.signal-desktop =
     {
@@ -50,7 +55,9 @@
       inherit (lib.lists) optional;
     in
     {
-      packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.signal-desktop;
+      packages =
+        optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.signal-desktop
+        ++ optional osConfig.nixpkgs.hostPlatform.isDarwin pkgs.signal-desktop-bin;
     };
 
   flake.darwinModules.whatsapp = {

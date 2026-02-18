@@ -3,37 +3,41 @@ let
   inherit (lib.strings) toJSON;
 in
 {
-  flake.darwinModules.clipboard = {
-    homebrew.casks = [ "maccy" ];
-
-    system.defaults.CustomSystemPreferences."org.p0deje.Maccy" = {
-      KeyboardShortcuts_delete = 0;
-      KeyboardShortcuts_pin = 0;
-
-      # control+command+v (carbonKeyCode 9 = v, carbonModifiers 4352 = control+command)
-      KeyboardShortcuts_popup = toJSON {
-        carbonKeyCode = 9;
-        carbonModifiers = 4352;
-      };
-
-      SUEnableAutomaticChecks = 0;
-
-      enabledPasteboardTypes = [
-        "public.png"
-        "public.file-url"
-        "public.utf8-plain-text"
-        "public.rtf"
-        "public.tiff"
-        "public.html"
+  flake.darwinModules.clipboard =
+    { pkgs, ... }:
+    {
+      environment.systemPackages = [
+        pkgs.maccy
       ];
 
-      menuIcon = "clipboard";
-      popupPosition = "window";
-      searchMode = "fuzzy";
+      system.defaults.CustomSystemPreferences."org.p0deje.Maccy" = {
+        KeyboardShortcuts_delete = 0;
+        KeyboardShortcuts_pin = 0;
 
-      showFooter = 0;
-      showSearch = 1;
-      showTitle = 0;
+        # control+command+v (carbonKeyCode 9 = v, carbonModifiers 4352 = control+command)
+        KeyboardShortcuts_popup = toJSON {
+          carbonKeyCode = 9;
+          carbonModifiers = 4352;
+        };
+
+        SUEnableAutomaticChecks = 0;
+
+        enabledPasteboardTypes = [
+          "public.png"
+          "public.file-url"
+          "public.utf8-plain-text"
+          "public.rtf"
+          "public.tiff"
+          "public.html"
+        ];
+
+        menuIcon = "clipboard";
+        popupPosition = "window";
+        searchMode = "fuzzy";
+
+        showFooter = 0;
+        showSearch = 1;
+        showTitle = 0;
+      };
     };
-  };
 }
