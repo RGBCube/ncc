@@ -1,7 +1,7 @@
 {
   flake.homeModules.network-tools =
     {
-      config,
+      osConfig,
       pkgs,
       lib,
       ...
@@ -44,7 +44,7 @@
         pkgs.doggo
         pkgs.inetutils
       ]
-      ++ optionals config.nixpkgs.hostPlatform.isDarwin [
+      ++ optionals osConfig.nixpkgs.hostPlatform.isDarwin [
         pkgs.iproute2mac
       ];
     };
