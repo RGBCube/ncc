@@ -15,15 +15,17 @@
       xdg.config.files."aws/.keep".text = "";
 
       environment.sessionVariables.ZDOTDIR = "${config.xdg.config.directory}/zsh";
-      xdg.config.files."zsh/.zshrc".text =
-        mkIf osConfig.nixpkgs.hostPlatform.isDarwin
-        <| mkBefore /* zsh */ ''
+      xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
+        text = mkBefore /* zsh */ ''
           autoload -Uz compinit
           compinit -d "${config.xdg.cache.directory}/zsh/zcompdump-$ZSH_VERSION"
         '';
-      files.".zshrc".text = mkIf osConfig.nixpkgs.hostPlatform.isDarwin /* zsh */ ''
-        [[ -f "${config.xdg.config.directory}/zsh/.zshrc" ]] && source "${config.xdg.config.directory}/zsh/.zshrc"
-      '';
+      };
+      files.".zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
+        text = /* zsh */ ''
+          [[ -f "${config.xdg.config.directory}/zsh/.zshrc" ]] && source "${config.xdg.config.directory}/zsh/.zshrc"
+        '';
+      };
       xdg.cache.files."zsh/.keep".text = "";
 
       environment.sessionVariables.CARGO_HOME = "${config.xdg.data.directory}/cargo";

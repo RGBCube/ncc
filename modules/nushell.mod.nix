@@ -103,13 +103,13 @@
         pkgs.zsh
         pkgs.inshellisense
       ];
-
-      xdg.config.files."zsh/.zshrc".text =
-        mkIf osConfig.nixpkgs.hostPlatform.isDarwin # zsh
-          mkAfter
-          ''
+      xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
+        text =
+          # zsh
+          mkAfter ''
             SHELL=${getExe config.programs.nushell.package} exec ${getExe config.programs.nushell.package} --config '${config.environment.sessionVariables.XDG_CONFIG_HOME}/nushell/config.nu'
           '';
+      };
 
       programs.nushell = {
         enable = true;
