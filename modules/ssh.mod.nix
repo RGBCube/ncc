@@ -1,7 +1,12 @@
 { self, ... }:
 {
   flake.homeModules.ssh-client =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      osConfig,
+      ...
+    }:
     let
       inherit (lib.attrsets)
         attrNames
@@ -11,7 +16,8 @@
         mapAttrs
         ;
       inherit (lib.lists) head remove singleton;
-      inherit (lib.strings) concatLines;
+      inherit (lib.modules) mkAfter;
+      inherit (lib.strings) concatLines optionalString;
 
       hosts =
         self.nixosConfigurations
@@ -46,6 +52,10 @@
         );
     in
     {
+      xdg.config.files."ssh/key.pub".text = /* ssh */ ''
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH2kVKjObNIGGERpe46YLsjuPcWI6sgjefmSToBvXoSy rgbcube
+      '';
+
       files.".ssh/config".text =
         # sshclientconfig
         ''
@@ -61,8 +71,6 @@
               # sshclientconfig
               ''
                 Host *
-                  IdentityFile ${config.xdg.config.directory}/id
-
                   SetEnv COLORTERM=truecolor TERM=xterm256-color
 
                   ControlMaster auto
@@ -70,8 +78,15 @@
                   ControlPath ${config.xdg.cache.directory}/ssh/%r@%n:%p
               '';
 
-      # Create that directory. I don't think hjem has a better way of doing this.
-      xdg.cache.files."ssh/.keep".text = "";
+      xdg.cache.files."ssh".type = "directory";
+
+      programs.nushell.extraConfig =
+        mkAfter
+        <| optionalString osConfig.nixpkgs.hostPlatform.isDarwin /* nu */ ''
+          try {
+            $env.SSH_AUTH_SOCK = ^launchctl getenv SSH_AUTH_SOCK | str trim
+          }
+        '';
     };
 
   flake.homeModules.ssh-client-desktop =

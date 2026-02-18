@@ -10,10 +10,11 @@
       inherit (lib.modules) mkBefore mkIf;
     in
     {
+      xdg.config.files."aws".type = "directory";
       environment.sessionVariables.AWS_CONFIG_FILE = "${config.xdg.config.directory}/aws/config";
       environment.sessionVariables.AWS_SHARED_CREDENTIALS_FILE = "${config.xdg.config.directory}/aws/credentials";
-      xdg.config.files."aws/.keep".text = "";
 
+      xdg.cache.files."zsh".type = "directory";
       environment.sessionVariables.ZDOTDIR = "${config.xdg.config.directory}/zsh";
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
         text = mkBefore /* zsh */ ''
@@ -26,27 +27,26 @@
           [[ -f "${config.xdg.config.directory}/zsh/.zshrc" ]] && source "${config.xdg.config.directory}/zsh/.zshrc"
         '';
       };
-      xdg.cache.files."zsh/.keep".text = "";
 
+      xdg.data.files."cargo".type = "directory";
       environment.sessionVariables.CARGO_HOME = "${config.xdg.data.directory}/cargo";
-      xdg.data.files."cargo/.keep".text = "";
 
+      xdg.data.files."go".type = "directory";
       environment.sessionVariables.GOPATH = "${config.xdg.data.directory}/go";
-      xdg.data.files."go/.keep".text = "";
 
+      xdg.state.files."sqlite".type = "directory";
       environment.sessionVariables.SQLITE_HISTORY = "${config.xdg.state.directory}/sqlite/history";
-      xdg.state.files."sqlite/.keep".text = "";
 
+      xdg.state.files."zsh".type = "directory";
       environment.sessionVariables.HISTFILE = "${config.xdg.state.directory}/zsh/history";
-      xdg.state.files."zsh/.keep".text = "";
 
+      xdg.state.files."less".type = "directory";
       environment.sessionVariables.LESSHISTFILE = "${config.xdg.state.directory}/less/history";
-      xdg.state.files."less/.keep".text = "";
 
+      xdg.state.files."node".type = "directory";
       environment.sessionVariables.NODE_REPL_HISTORY = "${config.xdg.state.directory}/node/history";
-      xdg.state.files."node/.keep".text = "";
 
+      xdg.state.files."python".type = "directory";
       environment.sessionVariables.PYTHON_HISTORY = "${config.xdg.state.directory}/python/history";
-      xdg.state.files."python/.keep".text = "";
     };
 }

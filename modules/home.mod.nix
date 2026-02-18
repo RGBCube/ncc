@@ -42,6 +42,8 @@
         self.homeModules.home
         inputs.hjem-rum.hjemModules.hjem-rum
       ];
+
+      home.clobberFiles = true;
     };
 
   flake.darwinModules.home =

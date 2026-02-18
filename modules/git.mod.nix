@@ -83,15 +83,13 @@
     {
       # xdg.config.files."git/config".generator = toGitINI; # FIXME
       xdg.config.files."git/config".value = {
-        core.sshCommand = "ssh -i ${config.directory}/.ssh/id";
-
         url."ssh://git@github.com/".insteadOf = "https://github.com/";
 
         commit.gpgSign = true;
         tag.gpgSign = true;
 
         gpg.format = "ssh";
-        user.signingKey = "~/.ssh/id";
+        user.signingKey = "${config.xdg.config.directory}/ssh/key.pub";
       };
     };
 }

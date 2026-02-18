@@ -1,13 +1,11 @@
 let
-  commonModule =
+  aliasModule =
     { lib, ... }:
     let
       inherit (lib.modules) mkAliasOptionModule;
     in
     {
       imports = [ (mkAliasOptionModule [ "secrets" ] [ "age" "secrets" ]) ];
-
-      age.identityPaths = [ "/etc/age/id" ];
     };
 in
 { inputs, ... }:
@@ -16,15 +14,32 @@ in
     imports = [
       inputs.agenix.nixosModules.age
 
-      commonModule
+      aliasModule
     ];
+
+    age.identityPaths = [ "/etc/age/id" ];
   };
 
-  flake.darwinModules.secrets = {
-    imports = [
-      inputs.agenix.darwinModules.age
+  flake.darwinModules.secrets =
+    { config, ... }:
+    {
+      imports = [
+        inputs.agenix.darwinModules.age
 
-      commonModule
-    ];
-  };
+        aliasModule
+      ];
+
+      age.identityPaths = [ "/Users/${config.system.primaryUser}/.ssh/id" ]; # FIXME: This path shouldn't exist, but does because of agenix (sigh)
+    };
+
+  flake.homeModules.secrets-manager =
+    {
+      pkgs,
+      ...
+    }:
+    {
+      packages = [
+        pkgs.ragenix
+      ];
+    };
 }

@@ -17,7 +17,6 @@
         pkgs.jjui
         pkgs.jujutsu
         pkgs.mergiraf
-        pkgs.radicle-node
       ];
 
       xdg.config.files."jj/config.toml".generator = toTOML;
@@ -166,7 +165,7 @@
 
         signing.backend = "ssh";
         signing.behavior = "own";
-        signing.key = "~/.ssh/id";
+        signing.key = "${config.xdg.config.directory}/ssh/key.pub";
       };
     };
 }

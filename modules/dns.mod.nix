@@ -192,9 +192,11 @@ in
       config = mkIf cfg.enable {
         launchd.daemons.hickory-dns.serviceConfig = {
           ProgramArguments = [
-            (getExe' cfg.package "hickory-dns")
-            "--config"
-            "${cfg.configFile}"
+            "/bin/sh"
+            "-c"
+            /* bash */ ''
+              /bin/wait4path /nix/store && exec ${getExe' cfg.package "hickory-dns"} --config ${cfg.configFile}
+            ''
           ];
           KeepAlive = true;
           RunAtLoad = true;

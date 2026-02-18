@@ -5,6 +5,7 @@
 !hosts/
 !hosts/**/
 !modules/
+!modules/**/
 
 !flake.nix
 !flake.lock
