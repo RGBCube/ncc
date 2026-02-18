@@ -14,11 +14,6 @@
       magnification = false;
 
       enable-spring-load-actions-on-all-items = true;
-
-      persistent-apps = [
-        { app = "/Applications/Zen.app"; }
-        { app = "/Applications/Ghostty.app"; }
-      ];
     };
 
     system.defaults.CustomSystemPreferences."com.apple.dock" = {
