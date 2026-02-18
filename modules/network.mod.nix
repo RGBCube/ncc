@@ -1,6 +1,14 @@
 {
   flake.homeModules.network-tools =
-    { pkgs, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      inherit (lib.lists) optionals;
+    in
     {
       packages = [
         (pkgs.curl.override {
@@ -35,6 +43,9 @@
         pkgs.dig
         pkgs.doggo
         pkgs.inetutils
+      ]
+      ++ optionals config.nixpkgs.hostPlatform.isDarwin [
+        pkgs.iproute2mac
       ];
     };
 
