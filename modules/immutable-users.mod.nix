@@ -1,5 +1,5 @@
 {
   flake.nixosModules.immutable-users = {
-    users.mutableUsers = false;
+    users.mutableUsers = false; # TODO
   };
 }
