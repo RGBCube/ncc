@@ -16,7 +16,7 @@ let
         mapAttrsToList
         optionalAttrs
         ;
-      inherit (lib.lists) filter optionals singleton;
+      inherit (lib.lists) filter optional singleton;
       inherit (lib.modules) mkMerge;
       inherit (lib.strings) concatStringsSep;
       inherit (lib.trivial) const flip id;
@@ -77,7 +77,7 @@ let
 
       nix.settings =
         (import <| self + /flake.nix).nixConfig
-        |> flip removeAttrs (optionals config.nixpkgs.hostPlatform.isDarwin [ "use-cgroups" ]);
+        |> flip removeAttrs (optional config.nixpkgs.hostPlatform.isDarwin "use-cgroups");
 
       nix.optimise.automatic = true;
 
