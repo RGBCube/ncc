@@ -36,7 +36,7 @@
         last
         ;
       inherit (lib.meta) getExe;
-      inherit (lib.modules) mkIf;
+      inherit (lib.modules) mkIf mkAfter;
       inherit (lib.trivial) const flip;
       inherit (lib.strings)
         concatStrings
@@ -104,8 +104,9 @@
         pkgs.inshellisense
       ];
 
-      files.".zshrc".text =
+      xdg.config.files."zsh/.zshrc".text =
         mkIf osConfig.nixpkgs.hostPlatform.isDarwin # zsh
+          mkAfter
           ''
             SHELL=${getExe config.programs.nushell.package} exec ${getExe config.programs.nushell.package} --config '${config.environment.sessionVariables.XDG_CONFIG_HOME}/nushell/config.nu'
           '';
