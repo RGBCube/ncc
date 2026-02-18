@@ -1,8 +1,9 @@
 { self, ... }:
 {
   perSystem =
-    { lib, pkgs, ... }:
+    { self', lib, pkgs, ... }:
     {
+      packages.default = self'.packages.apply;
       packages.apply =
         let
           inherit (lib.meta) getExe;
