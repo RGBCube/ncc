@@ -14,8 +14,11 @@
 !flake.nix
 !flake.lock
 
-!*.age
 !*.nix
-!*.png
+!*.age
 
+!*.conf
+!*.keymap
 !*.md
+!*.png
+!*.yml

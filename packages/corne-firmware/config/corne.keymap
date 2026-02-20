@@ -1,0 +1,132 @@
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/mouse.h>
+#include <dt-bindings/zmk/bt.h>
+
+#define BASE       0
+#define NUMBER     1
+#define SYMBOL     2
+#define NAVIGATION 3
+#define MOUSE      4
+
+/ {
+    macros {
+        m_email: m_email {
+            compatible = "zmk,behavior-macro";
+            wait-ms = <0>;
+            tap-ms = <0>;
+            #binding-cells = <0>;
+            bindings = <&kp AT &kp R &kp G &kp B &kp C &kp U &kp DOT &kp B &kp E>;
+        };
+
+        m_derive: m_derive {
+            compatible = "zmk,behavior-macro";
+            wait-ms = <0>;
+            tap-ms = <0>;
+            #binding-cells = <0>;
+            bindings = <&kp HASH &kp LBKT &kp D &kp E &kp R &kp I &kp V &kp E &kp LPAR>;
+        };
+
+        m_dbg: m_dbg {
+            compatible = "zmk,behavior-macro";
+            wait-ms = <0>;
+            tap-ms = <0>;
+            #binding-cells = <0>;
+            bindings = <&kp M &kp S &kp LPAR &kp I &kp D &kp B &kp G &kp EXCL &kp ESC>;
+        };
+
+        m_000: m_000 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&kp KP_N0 &kp KP_N0 &kp KP_N0>;
+        };
+
+        m_00: m_00 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&kp KP_N0 &kp KP_N0>;
+        };
+
+        ss_windows: ss_windows {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&kp LG(LS(S))>;
+        };
+
+        ss_darwin: ss_darwin {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&kp LG(LC(LS(N4)))>;
+        };
+    };
+
+    behaviors {
+        hm: homerow_mods {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            tapping-term-ms = <150>;
+            quick-tap-ms = <150>;
+            require-prior-idle-ms = <125>;
+            retro-tap;
+            flavor = "balanced";
+            bindings = <&kp>, <&kp>;
+        };
+
+        ht: hold_tap {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            tapping-term-ms = <150>;
+            flavor = "balanced";
+            bindings = <&kp>, <&kp>;
+        };
+    };
+
+    keymap {
+        compatible = "zmk,keymap";
+
+        base_layer {
+            bindings = <
+&ss_windows     &kp       V     &kp       M   &kp      L     &kp      C        &kp P                    &kp X              &kp            F     &kp      O       &kp       U      &kp       J                &ss_darwin
+&kp LG(V)       &hm LSHFT S     &hm LCTRL T   &hm LALT R     &hm LGUI D        &kp Y                    &kp DOT            &hm RGUI       N     &hm RALT A       &hm RCTRL E      &hm RSHFT I                &kp BSPC
+&kp LG(C)       &kp       Z     &kp       K   &kp      Q     &kp      G        &kp W                    &kp B              &kp            H     &kp      SQT     &kp       SEMI   &kp       COMMA            &kp DEL
+                                              &lt NUMBER X   &lt SYMBOL SPACE  &ht LC(LGUI) TAB         &ht RC(RGUI) ESC   &lt NAVIGATION RET   &lt MOUSE X
+            >;
+        };
+
+        number_layer {
+            bindings = <
+&trans          &kp F1          &kp F2        &kp F3         &kp F4            &trans                   &kp N0             &kp N1               &kp N2           &kp N3            &trans                    &trans
+&trans          &kp F5          &kp F6        &kp F7         &kp F8            &trans                   &m_00              &kp N4               &kp N5           &kp N6            &trans                    &trans
+&trans          &kp F9          &kp F10       &kp F11        &kp F12           &trans                   &m_000             &kp N7               &kp N8           &kp N9            &trans                    &trans
+                                              &trans         &trans            &trans                   &trans             &trans               &trans
+            >;
+        };
+
+        symbol_layer {
+            bindings = <
+&m_email        &kp PRCNT       &kp DLLR      &kp GRAVE      &kp STAR          &kp PIPE                 &kp AMPS           &kp TILDE            &kp LBKT         &kp RBKT          &kp CARET                 &trans
+&m_derive       &kp COLON       &kp EXCL      &kp DQT        &kp UNDER         &kp FSLH                 &kp AT             &kp EQUAL            &kp LPAR         &kp RPAR          &kp GT                    &trans
+&m_dbg          &kp SEMI        &kp QMARK     &kp SQT        &kp PLUS          &kp BSLH                 &kp HASH           &kp MINUS            &kp LBRC         &kp RBRC          &kp LT                    &trans
+                                              &trans         &trans            &trans                   &trans             &trans               &trans
+            >;
+        };
+
+        navigation_layer {
+            bindings = <
+&kp C_BRI_DEC   &kp C_BRI_INC   &kp C_PREV    &kp C_PP       &kp C_NEXT        &trans                   &trans             &kp HOME             &kp UP           &kp END           &ht C_MUTE C_VOL_DN       &ht C_MUTE C_VOL_UP
+&trans          &trans          &trans        &trans         &trans            &trans                   &trans             &kp LEFT             &kp DOWN         &kp RIGHT         &trans                    &trans
+&bt BT_CLR      &bt BT_SEL 0    &bt BT_SEL 1  &bt BT_SEL 2   &bt BT_SEL 3      &bt BT_SEL 4             &trans             &kp PG_DN            &trans           &kp PG_UP         &trans                    &trans
+                                              &trans         &trans            &trans                   &trans             &trans               &trans
+            >;
+        };
+
+        mouse_layer {
+            bindings = <
+&trans          &trans          &trans        &trans         &trans            &trans                   &trans             &mkp LCLK            &mmv MOVE_UP     &mkp RCLK         &trans                    &trans
+&trans          &trans          &trans        &trans         &trans            &trans                   &trans             &mmv MOVE_LEFT       &mmv MOVE_DOWN   &mmv MOVE_RIGHT   &trans                    &trans
+&trans          &trans          &trans        &trans         &trans            &trans                   &trans             &msc SCRL_DOWN       &trans           &msc SCRL_UP      &trans                    &trans
+                                              &trans         &trans            &trans                   &trans             &trans               &trans
+            >;
+        };
+    };
+};

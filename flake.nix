@@ -104,6 +104,11 @@
     inputs.rust-overlay.follows = "hjem/smfh/rust-overlay";
   };
 
+  inputs.zmk-nix = {
+    url = "github:lilyinstarlight/zmk-nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   outputs =
     inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } (

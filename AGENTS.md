@@ -44,3 +44,5 @@ Never use `git`. Always use `jj`.
   expressions on the RHS — those still need parentheses.
 - In modules that define both `darwinModules` and other module types, put
   `darwinModules` first.
+- Do not use `builtins.` in modules.
+- Never use `rec` ever. Worst case, define a custom `fix`.
