@@ -18,6 +18,13 @@ in
         board = "nice_nano@2.0.0//zmk";
         shield = "corne_%PART% nice_view_adapter nice_view";
 
+        enableZmkStudio = true;
+        extraCmakeFlags = [
+          "-DCONFIG_ZMK_MOUSE=y"
+          "-DCONFIG_ZMK_STUDIO_TRANSPORT_UART=y"
+          "-DCONFIG_ZMK_STUDIO_TRANSPORT_BLE=y"
+        ];
+
         zephyrDepsHash = "sha256-sCIbjeRbmKivNQQB4O/E7Hd/1mwfhhLPQTPWE6vADco=";
 
         meta = {

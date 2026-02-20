@@ -17,7 +17,6 @@
 !*.nix
 !*.age
 
-!*.conf
 !*.keymap
 !*.md
 !*.png
