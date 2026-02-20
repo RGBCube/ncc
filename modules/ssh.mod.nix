@@ -53,7 +53,7 @@
     in
     {
       xdg.config.files."ssh/key.pub".text = /* ssh */ ''
-        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH2kVKjObNIGGERpe46YLsjuPcWI6sgjefmSToBvXoSy rgbcube
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBVkWUQ6Z4OK539tore/R5wnueNPPaX532RUAld8UOCo rgbcube
       '';
 
       files.".ssh/config".text =
