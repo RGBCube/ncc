@@ -6,13 +6,15 @@
 }:
 let
   inherit (lib.attrsets) attrValues;
+  inherit (lib.lists) singleton;
 in
 {
   flake.darwinConfigurations.pala = inputs.nix-darwin.lib.darwinSystem {
     specialArgs = { inherit self inputs; };
 
-    modules = (attrValues (removeAttrs self.darwinModules [ "hickory-dns" ])) ++ [
-      (
+    modules =
+      attrValues self.darwinModuless
+      ++ singleton (
         { config, ... }:
         {
           nixpkgs.hostPlatform = "aarch64-darwin";
@@ -34,7 +36,6 @@ in
 
           system.stateVersion = 5;
         }
-      )
-    ];
+      );
   };
 }

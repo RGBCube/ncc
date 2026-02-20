@@ -6,6 +6,10 @@
 !hosts/**/
 !modules/
 !modules/**/
+!options/
+!options/**/
+!packages/
+!packages/**/
 
 !flake.nix
 !flake.lock
