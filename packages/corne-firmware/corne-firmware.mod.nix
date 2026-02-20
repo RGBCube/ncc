@@ -15,10 +15,10 @@ in
 
         src = ./.;
 
-        board = "nice_nano@2.0.0";
+        board = "nice_nano@2.0.0//zmk";
         shield = "corne_%PART% nice_view_adapter nice_view";
 
-        zephyrDepsHash = "sha256-+FTVUUnfgHMRLM17GghIdUIEgoAmlQNXm13jPXLR03k=";
+        zephyrDepsHash = "sha256-sCIbjeRbmKivNQQB4O/E7Hd/1mwfhhLPQTPWE6vADco=";
 
         meta = {
           description = "ZMK firmware";
