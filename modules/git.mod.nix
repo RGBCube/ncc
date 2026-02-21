@@ -28,14 +28,13 @@
   flake.homeModules.git =
     { lib, pkgs, ... }:
     let
-      inherit (lib.meta) getExe;
       inherit (lib.generators) toGitINI;
-      inherit (lib.lists) singleton;
-
-      package = getExe pkgs.git;
     in
     {
-      packages = singleton pkgs.git-absorb;
+      packages = [
+        pkgs.git
+        pkgs.git-absorb
+      ];
 
       xdg.config.files."git/config".generator = toGitINI;
       xdg.config.files."git/config".value = {
@@ -71,7 +70,7 @@
         transfer.fsckobjects = true;
 
         alias.recent = # sh
-          ''! ${package} branch --sort=-committerdate --format="%(committerdate:relative)%09%(refname:short)" | head -10'';
+          ''! git branch --sort=-committerdate --format="%(committerdate:relative)%09%(refname:short)" | head -10'';
       };
     };
 
