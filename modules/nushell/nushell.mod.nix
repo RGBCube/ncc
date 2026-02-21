@@ -96,14 +96,6 @@
       nuConfig = nuVariables' + readFile ./nushell.config.nu;
     in
     {
-      # CARAPACE
-      packages = [
-        pkgs.carapace
-        pkgs.fish
-        pkgs.zsh
-        pkgs.inshellisense
-      ];
-
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
         text =
           # zsh

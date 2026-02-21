@@ -18,8 +18,6 @@ $env.config.cursor_shape.emacs = "line"
 $env.config.cursor_shape.vi_insert = "line"
 $env.config.cursor_shape.vi_normal = "block"
 
-$env.CARAPACE_BRIDGES = "inshellisense,carapace,zsh,fish,bash"
-
 $env.config.completions.algorithm = "substring"
 $env.config.completions.sort = "smart"
 $env.config.completions.case_sensitive = false
