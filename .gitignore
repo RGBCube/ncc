@@ -15,6 +15,7 @@
 !flake.lock
 
 !*.nix
+!*.nu
 !*.age
 
 !*.keymap
