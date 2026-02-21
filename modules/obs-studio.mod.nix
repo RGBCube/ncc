@@ -1,8 +1,13 @@
 {
 
-  flake.darwinModules.obs-studio = {
-    homebrew.casks = [ "obs" ];
-  };
+  flake.darwinModules.obs-studio =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "obs";
+    };
 
   flake.homeModules.obs-studio =
     {
@@ -16,7 +21,7 @@
     in
     {
       packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
-        pkgs.obs-studio 
+        pkgs.obs-studio
       ];
     };
 }

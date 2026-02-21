@@ -1,10 +1,15 @@
 {
-  flake.darwinModules.hammerspoon = {
-    system.defaults.CustomSystemPreferences."org.hammerspoon.Hammerspoon".MJConfigFile =
-      "~/.config/hammerspoon/init.lua";
+  flake.darwinModules.hammerspoon =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      system.defaults.CustomSystemPreferences."org.hammerspoon.Hammerspoon".MJConfigFile =
+        "~/.config/hammerspoon/init.lua";
 
-    homebrew.casks = [ "hammerspoon" ];
-  };
+      homebrew.casks = singleton "hammerspoon";
+    };
 
   flake.homeModules.hammerspoon =
     { lib, osConfig, ... }:

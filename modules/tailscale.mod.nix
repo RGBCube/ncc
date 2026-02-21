@@ -66,11 +66,16 @@ in
       boot.initrd.systemd.network.wait-online.enable = false;
     };
 
-  flake.darwinModules.tailscale = {
-    imports = [ commonMagicDnsModule ];
+  flake.darwinModules.tailscale =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      imports = [ commonMagicDnsModule ];
 
-    homebrew.casks = [ "tailscale-app" ];
-  };
+      homebrew.casks = singleton "tailscale-app";
+    };
 
   flake.homeModules.tailscale =
     {

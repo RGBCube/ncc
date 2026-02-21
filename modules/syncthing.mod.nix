@@ -1,7 +1,12 @@
 {
-  flake.darwinModules.syncthing = {
-    homebrew.casks = [ "syncthing-app" ];
-  };
+  flake.darwinModules.syncthing =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "syncthing-app";
+    };
 
   flake.nixosModules.syncthing = {
     services.syncthing.enable = true;

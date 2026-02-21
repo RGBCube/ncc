@@ -1,7 +1,12 @@
 {
-  flake.darwinModules.discord = {
-    homebrew.casks = [ "vesktop" ];
-  };
+  flake.darwinModules.discord =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "vesktop";
+    };
 
   flake.homeModules.discord =
     {
@@ -41,7 +46,7 @@
       inherit (lib.lists) singleton;
     in
     {
-      allowedUnfreePackageNames = singleton "signal-desktop-bin"; # Signing bullshit.
+      homebrew.casks = singleton "signal";
     };
 
   flake.homeModules.signal-desktop =
@@ -55,14 +60,17 @@
       inherit (lib.lists) optional;
     in
     {
-      packages =
-        optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.signal-desktop
-        ++ optional osConfig.nixpkgs.hostPlatform.isDarwin pkgs.signal-desktop-bin;
+      packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.signal-desktop;
     };
 
-  flake.darwinModules.whatsapp = {
-    homebrew.casks = [ "whatsapp" ];
-  };
+  flake.darwinModules.whatsapp =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "whatsapp";
+    };
 
   flake.homeModules.whatsapp =
     {
@@ -78,9 +86,14 @@
       packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.wasistlos;
     };
 
-  flake.darwinModules.zulip = {
-    homebrew.casks = [ "zulip" ];
-  };
+  flake.darwinModules.zulip =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "zulip";
+    };
 
   flake.homeModules.zulip =
     {

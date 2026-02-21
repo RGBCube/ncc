@@ -185,9 +185,14 @@ let
   inherit (lib.generators) toJSON;
 in
 {
-  flake.darwinModules.keycode-remap = {
-    homebrew.casks = [ "karabiner-elements" ];
-  };
+  flake.darwinModules.keycode-remap =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "karabiner-elements";
+    };
 
   flake.homeModules.keycode-remap =
     { lib, osConfig, ... }:

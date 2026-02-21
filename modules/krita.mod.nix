@@ -1,7 +1,12 @@
 {
-  flake.darwinModules.krita = {
-    homebrew.casks = [ "krita" ];
-  };
+  flake.darwinModules.krita =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "krita";
+    };
 
   flake.homeModules.krita =
     {

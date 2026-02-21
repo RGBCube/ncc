@@ -1,7 +1,12 @@
 {
-  flake.darwinModules.libreoffice = {
-    homebrew.casks = [ "libreoffice" ];
-  };
+  flake.darwinModules.libreoffice =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "libreoffice";
+    };
 
   flake.homeModules.libreoffice =
     {
