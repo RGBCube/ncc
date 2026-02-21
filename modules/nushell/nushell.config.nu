@@ -76,9 +76,7 @@ $env.config.float_precision = 2
 
 $env.config.ls.use_ls_colors = true
 
-$env.config.hooks.pre_prompt = []
-
-$env.config.hooks.pre_execution = [
+$env.config.hooks.pre_execution = $env.config?.hooks?.pre_execution? | default [] | append [
   {||
     commandline
     | str trim
@@ -86,15 +84,11 @@ $env.config.hooks.pre_execution = [
   }
 ]
 
-$env.config.hooks.env_change = {}
-
 $env.config.hooks.display_output = {||
   tee { table --expand | print }
   # SQLiteDatabase doesn't support equality comparisions
   | try { if $in != null { $env.last = $in } }
 }
-
-$env.config.hooks.command_not_found = []
 
 # `nu-highlight` with default colors
 #

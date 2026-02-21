@@ -103,6 +103,7 @@
         pkgs.zsh
         pkgs.inshellisense
       ];
+
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
         text =
           # zsh
