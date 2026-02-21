@@ -13,7 +13,7 @@ in
     specialArgs = { inherit self inputs; };
 
     modules =
-      attrValues self.darwinModuless
+      attrValues self.darwinModules
       ++ singleton (
         { config, ... }:
         {
