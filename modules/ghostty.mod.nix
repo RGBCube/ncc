@@ -70,7 +70,7 @@
               plus = "increase_font_size:1";
               minus = "decrease_font_size:1";
 
-              t = "new_tab";
+              t = "new_window";
               q = "close_surface";
 
               "one" = "goto_tab:1";

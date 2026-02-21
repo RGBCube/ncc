@@ -224,7 +224,17 @@
 
             -- APPLICATIONS
             hs.hotkey.bind(super, "w", function() hs.application.launchOrFocus("Zen") end)
-            hs.hotkey.bind(super, "return", function() hs.application.launchOrFocus("Ghostty") end)
+            hs.hotkey.bind(super, "return", function()
+              local ghostty = hs.application.get("Ghostty")
+
+              if not ghostty then
+                hs.application.launchOrFocus("Ghostty")
+                return
+              end
+
+              ghostty:activate()
+              hs.eventtap.keyStroke({ "ctrl", "shift" }, "t", 0, ghostty)
+            end)
             hs.hotkey.bind(super, "t", function() hs.application.launchOrFocus("Finder") end)
 
             PaperWM.swipe_fingers = 3
