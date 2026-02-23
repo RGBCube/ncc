@@ -170,10 +170,16 @@
             local super_shift = { "cmd", "ctrl", "shift" }
 
             -- FOCUS
-            hs.hotkey.bind(super, "left", PaperWM.actions.focus_left)
+            hs.hotkey.bind(super, "left", function()
+              PaperWM.actions.focus_left()
+              PaperWM.actions.center_window()
+            end)
             hs.hotkey.bind(super, "down", PaperWM.actions.focus_down)
             hs.hotkey.bind(super, "up", PaperWM.actions.focus_up)
-            hs.hotkey.bind(super, "right", PaperWM.actions.focus_right)
+            hs.hotkey.bind(super, "right", function()
+              PaperWM.actions.focus_right()
+              PaperWM.actions.center_window()
+            end)
 
             -- RESIZE
             hs.hotkey.bind(super_alt, "left", function() windowResize(-100, 0) end)
