@@ -175,21 +175,11 @@
             hs.hotkey.bind(super, "up", PaperWM.actions.focus_up)
             hs.hotkey.bind(super, "right", PaperWM.actions.focus_right)
 
-            hs.hotkey.bind(super, "h", PaperWM.actions.focus_left)
-            hs.hotkey.bind(super, "j", PaperWM.actions.focus_down)
-            hs.hotkey.bind(super, "k", PaperWM.actions.focus_up)
-            hs.hotkey.bind(super, "l", PaperWM.actions.focus_right)
-
             -- RESIZE
             hs.hotkey.bind(super_alt, "left", function() windowResize(-100, 0) end)
             hs.hotkey.bind(super_alt, "down", function() windowResize(0, 100) end)
             hs.hotkey.bind(super_alt, "up", function() windowResize(0, -100) end)
             hs.hotkey.bind(super_alt, "right", function() windowResize(100, 0) end)
-
-            hs.hotkey.bind(super_alt, "h", function() windowResize(-100, 0) end)
-            hs.hotkey.bind(super_alt, "j", function() windowResize(0, 100) end)
-            hs.hotkey.bind(super_alt, "k", function() windowResize(0, -100) end)
-            hs.hotkey.bind(super_alt, "l", function() windowResize(100, 0) end)
 
             hs.hotkey.bind(super_alt, "f", PaperWM.actions.full_width)
 
@@ -207,11 +197,6 @@
             hs.hotkey.bind(super_shift, "down", PaperWM.actions.swap_down)
             hs.hotkey.bind(super_shift, "up", PaperWM.actions.swap_up)
             hs.hotkey.bind(super_shift, "right", PaperWM.actions.swap_right)
-
-            hs.hotkey.bind(super_shift, "h", PaperWM.actions.swap_left)
-            hs.hotkey.bind(super_shift, "j", PaperWM.actions.swap_down)
-            hs.hotkey.bind(super_shift, "k", PaperWM.actions.swap_up)
-            hs.hotkey.bind(super_shift, "l", PaperWM.actions.swap_right)
 
             -- SLURP & BARF
             hs.hotkey.bind(super_shift, "t", PaperWM.actions.slurp_in)
