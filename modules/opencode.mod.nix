@@ -3,6 +3,8 @@
     { lib, pkgs, ... }:
     let
       inherit (lib.generators) toJSON;
+      inherit (lib.trivial) const flip;
+      inherit (lib.attrsets) genAttrs;
     in
     {
       packages = [
@@ -27,43 +29,48 @@
           webfetch = "allow";
           websearch = "allow";
 
-          bash = {
-            "rg*" = "allow";
-            "jj diff*" = "allow";
-            "jj evolog*" = "allow";
-            "jj help*" = "allow";
-            "jj interdiff*" = "allow";
-            "jj log*" = "allow";
-            "jj root*" = "allow";
-            "jj show*" = "allow";
-            "jj status*" = "allow";
-            "jj st*" = "allow";
-            "jj version*" = "allow";
-            "jj bookmark list*" = "allow";
-            "jj config get*" = "allow";
-            "jj config list*" = "allow";
-            "jj config path*" = "allow";
-            "jj file annotate*" = "allow";
-            "jj file list*" = "allow";
-            "jj file search*" = "allow";
-            "jj file show*" = "allow";
-            "jj git remote list*" = "allow";
-            "jj git root*" = "allow";
-            "jj git colocation status*" = "allow";
-            "jj operation diff*" = "allow";
-            "jj operation log*" = "allow";
-            "jj operation show*" = "allow";
-            "jj op diff*" = "allow";
-            "jj op log*" = "allow";
-            "jj op show*" = "allow";
-            "jj sparse list*" = "allow";
-            "jj tag list*" = "allow";
-            "jj util completion*" = "allow";
-            "jj util config-schema*" = "allow";
-            "jj util markdown-help*" = "allow";
-            "jj workspace list*" = "allow";
-            "jj workspace root*" = "allow";
-          };
+          bash = flip genAttrs (const "allow") [
+            "rg*"
+            "ls*"
+
+            "jj diff*"
+            "jj evolog*"
+            "jj help*"
+            "jj interdiff*"
+            "jj log*"
+            "jj root*"
+            "jj show*"
+            "jj status*"
+            "jj st*"
+            "jj version*"
+            "jj bookmark list*"
+            "jj config get*"
+            "jj config list*"
+            "jj config path*"
+            "jj file annotate*"
+            "jj file list*"
+            "jj file search*"
+            "jj file show*"
+            "jj git remote list*"
+            "jj git root*"
+            "jj git colocation status*"
+            "jj operation diff*"
+            "jj operation log*"
+            "jj operation show*"
+            "jj op diff*"
+            "jj op log*"
+            "jj op show*"
+            "jj sparse list*"
+            "jj tag list*"
+            "jj util completion*"
+            "jj util config-schema*"
+            "jj util markdown-help*"
+            "jj workspace list*"
+            "jj workspace root*"
+
+            "cargo clippy*"
+            "cargo check*"
+          ];
         };
 
         autoupdate = false;
