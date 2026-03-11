@@ -49,44 +49,34 @@
       ];
     };
 
-  flake.homeModules.wifi-alias =
-    { osConfig, pkgs, ... }:
-    let
-      showPasswordDarwin = pkgs.writeShellScript "show-password" ''
-        echo "You really thought, didn't you! TODO"
-        exit 1
-      '';
-
-      showPasswordLinux = "${pkgs.networkmanager}/bin/nmcli dev wifi show-password";
-    in
-    {
-      programs.nushell.aliases.wifi =
-        if osConfig.nixpkgs.hostPlatform.isLinux then
-          showPasswordLinux
-        else if osConfig.nixpkgs.hostPlatform.isDarwin then
-          showPasswordDarwin
-        else
-          throw "Unsupported OS";
-    };
+  flake.homeModules.wifi-alias = { };
 
   flake.nixosModules.network =
     { config, lib, ... }:
     let
-      inherit (lib.attrsets) attrNames filterAttrs getAttr;
       inherit (lib.lists) map;
       inherit (lib.modules) mkAfter mkDefault;
       inherit (lib.strings) concatStringsSep optionalString replaceStrings;
-      inherit (lib.trivial) const;
     in
     {
       networking.useNetworkd = true;
 
       networking.nftables.enable = true;
 
-      networking.networkmanager.enable = true;
+      networking.wireless.enable = false;
+      networking.wireless.iwd.enable = true;
+      networking.wireless.iwd.settings.Settings.AutoConnect = true;
 
-      users.extraGroups.networkmanager.members =
-        config.users.users |> filterAttrs (const <| getAttr "isNormalUser") |> attrNames;
+      secrets.wifiHome = {
+        file = ./home.psk.age;
+        owner = "root";
+        mode = "0400";
+      };
+
+      systemd.tmpfiles.rules = [
+        "d /var/lib/iwd 0700 root root -"
+        "C /var/lib/iwd/PALA.psk 0600 root root - ${config.secrets.wifiHome.path}"
+      ];
 
       services.zapret = {
         enable = true;
