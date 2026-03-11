@@ -73,6 +73,9 @@
     { config, lib, ... }:
     let
       inherit (lib.attrsets) attrNames filterAttrs getAttr;
+      inherit (lib.lists) map;
+      inherit (lib.modules) mkAfter mkDefault;
+      inherit (lib.strings) concatStringsSep optionalString replaceStrings;
       inherit (lib.trivial) const;
     in
     {
@@ -84,5 +87,44 @@
 
       users.extraGroups.networkmanager.members =
         config.users.users |> filterAttrs (const <| getAttr "isNormalUser") |> attrNames;
+
+      services.zapret = {
+        enable = true;
+
+        configureFirewall = false;
+        httpSupport = false;
+
+        params = mkDefault [
+          "--dpi-desync=fake,disorder2"
+          "--dpi-desync-ttl=1"
+          "--dpi-desync-autottl=2"
+        ];
+      };
+
+      networking.nftables.ruleset = mkAfter /* nft */ ''
+        table inet zapret {
+          define desync_mark = 0x40000000
+
+          chain postrouting {
+            type filter hook postrouting priority mangle;
+            policy accept;
+
+            # Skip packets already handled by zapret (mark 0x40000000).
+            meta mark & $desync_mark == 0 tcp dport 443 queue num ${toString config.services.zapret.qnum} bypass
+
+          ${optionalString config.services.zapret.httpSupport ''
+            meta mark & $desync_mark == 0 tcp dport 80 queue num ${toString config.services.zapret.qnum} bypass
+          ''}
+
+          ${optionalString config.services.zapret.udpSupport ''
+            meta mark & $desync_mark == 0 udp dport { ${
+              config.services.zapret.udpPorts
+              |> map (port: replaceStrings [ ":" ] [ "-" ] port)
+              |> concatStringsSep ", "
+            } } queue num ${toString config.services.zapret.qnum} bypass
+          ''}
+          }
+        }
+      '';
     };
 }
