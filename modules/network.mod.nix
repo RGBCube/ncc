@@ -91,8 +91,11 @@
       services.zapret = {
         enable = true;
 
+        # This configures iptables, we use ntfables.
         configureFirewall = false;
-        httpSupport = false;
+
+        # Troll packets on port 80 too.
+        httpSupport = true;
 
         params = mkDefault [
           "--dpi-desync=fake,disorder2"
@@ -110,14 +113,14 @@
             policy accept;
 
             # Skip packets already handled by zapret (mark 0x40000000).
-            meta mark & $desync_mark == 0 tcp dport 443 queue num ${toString config.services.zapret.qnum} bypass
+            oifname != "lo" meta mark & $desync_mark == 0 tcp dport 443 queue num ${toString config.services.zapret.qnum} bypass
 
           ${optionalString config.services.zapret.httpSupport ''
-            meta mark & $desync_mark == 0 tcp dport 80 queue num ${toString config.services.zapret.qnum} bypass
+            oifname != "lo" meta mark & $desync_mark == 0 tcp dport 80 queue num ${toString config.services.zapret.qnum} bypass
           ''}
 
           ${optionalString config.services.zapret.udpSupport ''
-            meta mark & $desync_mark == 0 udp dport { ${
+            oifname != "lo" meta mark & $desync_mark == 0 udp dport { ${
               config.services.zapret.udpPorts
               |> map (port: replaceStrings [ ":" ] [ "-" ] port)
               |> concatStringsSep ", "
