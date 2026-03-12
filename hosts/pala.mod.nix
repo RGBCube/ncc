@@ -17,8 +17,6 @@ in
       ++ singleton (
         { config, ... }:
         {
-          nixpkgs.hostPlatform = "aarch64-darwin";
-
           networking.hostName = "pala";
           networking.knownNetworkServices = [
             "Wi-Fi"
@@ -34,6 +32,7 @@ in
           # homeModules.home is already injected via home.extraModules.
           home.extraModules = attrValues <| removeAttrs self.homeModules [ "home" ];
 
+          nixpkgs.hostPlatform = "aarch64-darwin";
           system.stateVersion = 5;
         }
       );
