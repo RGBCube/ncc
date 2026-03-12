@@ -99,21 +99,28 @@
       programs.nushell.aliases.mosh = "mosh --no-init";
     };
 
-  flake.nixosModules.ssh-server = {
-    programs.mosh = {
-      enable = true;
-      openFirewall = true;
-    };
-
-    services.openssh = {
-      enable = true;
-      ports = [ 2222 ];
-      settings = {
-        KbdInteractiveAuthentication = false;
-        PasswordAuthentication = false;
-
-        AcceptEnv = "SHELLS COLORTERM";
+  flake.nixosModules.ssh-server =
+    { keys, lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      programs.mosh = {
+        enable = true;
+        openFirewall = true;
       };
+
+      services.openssh = {
+        enable = true;
+        ports = singleton 2222;
+        settings = {
+          KbdInteractiveAuthentication = false;
+          PasswordAuthentication = false;
+
+          AcceptEnv = "SHELLS COLORTERM";
+        };
+      };
+
+      users.users.root.openssh.authorizedKeys.keys = keys.admins;
     };
-  };
 }
