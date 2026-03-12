@@ -49,7 +49,7 @@
         enable = true;
 
         listenAddress = "[::]";
-        port = 2222;
+        port = 22;
 
         extraOptions = [
           "-alsologtostderr"
