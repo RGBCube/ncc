@@ -119,6 +119,10 @@
         inherit (lib.strings) hasSuffix;
       in
       {
+        _module.args = {
+          keys = import ./keys.nix;
+        };
+
         systems = [
           "aarch64-darwin"
           "aarch64-linux"
