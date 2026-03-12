@@ -43,7 +43,7 @@
         inputs.hjem-rum.hjemModules.hjem-rum
       ];
 
-      home.clobberFiles = true;
+      home.clobberByDefault = true;
     };
 
   flake.darwinModules.home =
@@ -61,5 +61,7 @@
         self.homeModules.home
         inputs.hjem-rum.hjemModules.hjem-rum
       ];
+
+      home.clobberByDefault = true;
     };
 }
