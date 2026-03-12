@@ -28,17 +28,25 @@ in
     }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.modules) mkIf;
+      inherit (lib.modules) mkAfter mkIf;
     in
     {
       imports = [ commonMagicDnsModule ];
+
+      secrets.tailscaleAuthKey = {
+        file = ./tailscale.secret.age;
+        owner = "root";
+        mode = "0400";
+      };
 
       services.tailscale = {
         enable = true;
 
         interfaceName = "ts0";
         useRoutingFeatures = "both";
-        extraUpFlags = [
+        authKeyFile = config.secrets.tailscaleAuthKey.path;
+        extraUpFlags = mkAfter [
+          "--login-server=https://controlplane.tailscale.com"
           "--accept-dns=false" # hickory-dns handles DNS.
         ];
       };
