@@ -9,13 +9,11 @@
     }:
     let
       inherit (lib.attrsets)
-        attrNames
         attrValues
         filterAttrs
-        getAttr
         mapAttrs
         ;
-      inherit (lib.lists) head remove singleton;
+      inherit (lib.lists) head singleton;
       inherit (lib.modules) mkAfter;
       inherit (lib.strings) concatLines optionalString;
 
@@ -30,24 +28,20 @@
           # sshclientconfig
           ''
             Host ${name}
-              User ${
-                config.users.users
-                |> filterAttrs (_: user: user.isNormalUser)
-                |> attrNames
-                |> remove "backup"
-                |> remove "build"
-                |> remove "root"
-                |> head
+              User root
+              # Tailscale.
+              HostName ${name}
+              ${
+                # TODO:
+                # config.networking.interfaces
+                # |> attrValues
+                # |> head
+                # |> (value: value.ipv4.addresses)
+                # |> head
+                # |> getAttr "address"
+                ""
               }
-              HostName ${
-                config.networking.interfaces
-                |> attrValues
-                |> head
-                |> (value: value.ipv4.addresses)
-                |> head
-                |> getAttr "address"
-              }
-              Port ${head config.services.openssh.ports}
+              Port ${toString <| head config.services.openssh.ports}
           ''
         );
     in
