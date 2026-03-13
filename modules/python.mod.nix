@@ -2,7 +2,7 @@
   flake.homeModules.python =
     { pkgs, ... }:
     let
-      package = pkgs.python314;
+      package = pkgs.python3;
     in
     {
       environment.sessionVariables = {
