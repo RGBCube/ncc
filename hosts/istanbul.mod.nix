@@ -1,138 +1,191 @@
 {
   self,
   inputs,
+  keys,
   lib,
   ...
 }:
 let
   inherit (lib.attrsets) attrValues removeAttrs;
   inherit (lib.lists) singleton;
+
+  modules =
+    attrValues (
+      removeAttrs self.nixosModules [
+        "bluetooth"
+        "file-explorer"
+        "fonts"
+        "helium"
+        "linux-kernel-desktop"
+        "sound"
+        "steam"
+        "sudo-desktop"
+        "theme"
+      ]
+    )
+    ++ singleton {
+      home.extraModules =
+        attrValues
+        <| removeAttrs self.homeModules [
+          "cinny"
+          "darwin-wm"
+          "discord"
+          "ghostty"
+          "helium"
+          "helix-desktop"
+          "keepassxc"
+          "krita"
+          "libreoffice"
+          "obs-studio"
+          "signal-desktop"
+          "ssh-client-desktop"
+          "theme"
+          "thunderbird"
+          "torrent-client"
+          "video-player"
+          "whatsapp"
+          "zen-browser"
+          "zulip"
+        ];
+    };
 in
 {
   flake.nixosConfigurations.istanbul = lib.nixosSystem {
-    specialArgs = { inherit self inputs; };
+    specialArgs = { inherit self inputs keys; };
 
-    modules = singleton (
-      {
-        config,
-        lib,
-        utils,
-        ...
-      }:
-      let
-        inherit (lib.meta) getExe;
-        inherit (lib.modules) mkAfter mkForce;
-        inherit (utils) escapeSystemdPath;
-      in
-      {
-        imports =
-          attrValues
-          <| removeAttrs self.nixosModules [
-            "bluetooth"
-            "file-explorer"
-            "fonts"
-            "helium"
-            "linux-kernel-desktop"
-            "sound"
-            "steam"
-            "sudo-desktop"
-            "theme"
+    modules =
+      modules
+      ++ singleton (
+        {
+          config,
+          lib,
+          utils,
+          ...
+        }:
+        let
+          inherit (lib.meta) getExe;
+          inherit (lib.modules) mkForce;
+          inherit (utils) escapeSystemdPath;
+        in
+        {
+          networking.hostName = "istanbul";
+
+          boot.supportedFilesystems = [
+            "bcachefs"
+            "exfat"
           ];
 
-        home.extraModules =
-          attrValues
-          <| removeAttrs self.homeModules [
-            "cinny"
-            "darwin-wm"
-            "discord"
-            "ghostty"
-            "helium"
-            "helix-desktop"
-            "keepassxc"
-            "krita"
-            "libreoffice"
-            "obs-studio"
-            "signal-desktop"
-            "ssh-client-desktop"
-            "theme"
-            "thunderbird"
-            "torrent-client"
-            "video-player"
-            "whatsapp"
-            "zen-browser"
-            "zulip"
+          boot.initrd.availableKernelModules = [
+            "exfat"
+            "nvme"
+            "sd_mod"
+            "uas"
+            "usb_storage"
+            "xhci_pci"
           ];
+          boot.initrd.systemd.enable = true;
+          boot.initrd.systemd.mounts = singleton {
+            what = "LABEL=fatih";
+            where = "/media/key";
+            type = "exfat";
+            options = "ro,umask=0077";
+          };
 
-        networking.hostName = "istanbul";
-
-        boot.supportedFilesystems = [
-          "bcachefs"
-          "exfat"
-        ];
-
-        boot.initrd.availableKernelModules = [
-          "exfat"
-          "nvme"
-          "sd_mod"
-          "uas"
-          "usb_storage"
-          "xhci_pci"
-        ];
-        boot.initrd.systemd.enable = true;
-        boot.initrd.systemd.mounts = singleton {
-          what = "LABEL=fatih";
-          where = "/media/key";
-          type = "exfat";
-          options = "ro,umask=0077";
-        };
-
-        fileSystems."/".options = mkAfter <| singleton "x-systemd.requires-mounts-for=/media/key";
-        boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/"}".script =
-          mkForce # Force, because by default NixOS will do clevis or interactive authentication.
-          <| /* bash */ ''
+          fileSystems."/".options = singleton "x-systemd.requires-mounts-for=/media/key";
+          boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/"}".script = mkForce /* bash */ ''
             ${getExe config.boot.bcachefs.package} unlock --file /media/key/.bcachefs.key ${config.fileSystems."/".device}
           '';
 
-        disko.devices.disk.default = {
-          device = "/dev/nvme0n1";
-          type = "disk";
-          content = {
-            type = "gpt";
+          disko.devices.disk.default = {
+            device = "/dev/nvme0n1";
+            type = "disk";
+            content = {
+              type = "gpt";
 
-            partitions.boot = {
-              label = "boot";
-              size = "1G";
-              type = "EF00";
+              partitions.boot = {
+                label = "boot";
+                size = "1G";
+                type = "EF00";
 
-              content.type = "filesystem";
-              content.format = "vfat";
-              content.mountpoint = "/boot";
-              content.mountOptions = [
-                "fmask=0022"
-                "dmask=0022"
-              ];
-            };
+                content.type = "filesystem";
+                content.format = "vfat";
+                content.mountpoint = "/boot";
+                content.mountOptions = [
+                  "fmask=0022"
+                  "dmask=0022"
+                ];
+              };
 
-            partitions.root = {
-              label = "root";
-              size = "100%";
+              partitions.root = {
+                label = "root";
+                size = "100%";
 
-              content.type = "filesystem";
-              content.format = "bcachefs";
-              content.mountpoint = "/";
-              content.extraArgs = [
-                "--compression=zstd:9"
-                "--background_compression=zstd:9"
-                "--encrypted"
-                "--passphrase_file=/media/key/.bcachefs.key"
-              ];
+                content.type = "filesystem";
+                content.format = "bcachefs";
+                content.mountpoint = "/";
+                content.extraArgs = [
+                  "--compression=zstd:9"
+                  "--background_compression=zstd:9"
+                  "--encrypted"
+                  "--passphrase_file=/media/key/.bcachefs.key"
+                ];
+              };
             };
           };
-        };
 
-        nixpkgs.hostPlatform = "x86_64-linux";
-        system.stateVersion = "25.11";
-      }
-    );
+          nixpkgs.hostPlatform = "x86_64-linux";
+          system.stateVersion = "25.11";
+        }
+      );
+  };
+
+  flake.nixosConfigurations.istanbul-installer = lib.nixosSystem {
+    specialArgs = { inherit self inputs keys; };
+
+    modules =
+      modules
+      ++ singleton (
+        { pkgs, ... }:
+        let
+          inherit (lib.lists) singleton;
+          inherit (lib.meta) getExe;
+
+          istanbul = self.nixosConfigurations.istanbul;
+          closureInfo = pkgs.closureInfo {
+            rootPaths = [
+              istanbul.config.system.build.toplevel
+              istanbul.config.system.build.diskoScript
+              istanbul.config.system.build.diskoScript.drvPath
+              istanbul.pkgs.stdenv.drvPath
+              istanbul.pkgs.perlPackages.ConfigIniFiles
+              istanbul.pkgs.perlPackages.FileSlurp
+              (istanbul.pkgs.closureInfo { rootPaths = [ ]; }).drvPath
+            ];
+          };
+        in
+        {
+          imports = singleton <| inputs.nixpkgs + /nixos/modules/installer/cd-dvd/installation-cd-minimal.nix;
+
+          boot.supportedFilesystems = [
+            "bcachefs"
+            "exfat"
+          ];
+
+          environment.etc."install-closure".source = "${closureInfo}/store-paths";
+
+          environment.systemPackages =
+            singleton
+            <| pkgs.writeShellScriptBin "install-istanbul" /* bash */ ''
+              set -euo pipefail
+
+              exec ${
+                getExe inputs.disko.packages.${pkgs.system}.disko-install
+              } --flake "${self}#istanbul" --disk default "${istanbul.config.disko.devices.disk.default.device}"
+            '';
+
+          nixpkgs.hostPlatform = "x86_64-linux";
+          system.stateVersion = "25.11";
+        }
+      );
   };
 }
