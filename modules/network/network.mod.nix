@@ -63,6 +63,7 @@
 
       networking.nftables.enable = true;
 
+      # TODO: Fix and use networkmanager with iwd backend.
       networking.wireless.enable = false;
       networking.wireless.iwd.enable = true;
       networking.wireless.iwd.settings.Settings.AutoConnect = true;
