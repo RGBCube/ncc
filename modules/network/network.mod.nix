@@ -64,20 +64,21 @@
       networking.nftables.enable = true;
 
       # TODO: Fix and use networkmanager with iwd backend.
-      networking.wireless.enable = false;
-      networking.wireless.iwd.enable = true;
-      networking.wireless.iwd.settings.Settings.AutoConnect = true;
+      networking.wireless.enable = true;
+      # networking.wireless.enable = false;
+      # networking.wireless.iwd.enable = true;
+      # networking.wireless.iwd.settings.Settings.AutoConnect = true;
 
-      secrets.wifiHome = {
-        file = ./home.psk.age;
-        owner = "root";
-        mode = "0400";
-      };
+      # secrets.wifiHome = {
+      #   file = ./home.psk.age;
+      #   owner = "root";
+      #   mode = "0400";
+      # };
 
-      systemd.tmpfiles.rules = [
-        "d /var/lib/iwd 0700 root root -"
-        "C /var/lib/iwd/PALA.psk 0600 root root - ${config.secrets.wifiHome.path}"
-      ];
+      # systemd.tmpfiles.rules = [
+      #   "d /var/lib/iwd 0700 root root -"
+      #   "C /var/lib/iwd/PALA.psk 0600 root root - ${config.secrets.wifiHome.path}"
+      # ];
 
       services.zapret = {
         enable = true;
