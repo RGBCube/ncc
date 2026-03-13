@@ -50,12 +50,6 @@
         ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBVkWUQ6Z4OK539tore/R5wnueNPPaX532RUAld8UOCo rgbcube
       '';
 
-      files.".ssh/config".text =
-        # sshclientconfig
-        ''
-          Include ${config.xdg.config.directory}/ssh/config
-        '';
-
       xdg.config.files."ssh/config".text =
         concatLines
         <|

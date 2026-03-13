@@ -17,6 +17,12 @@
       xdg.config.files."claude-code".type = "directory";
       environment.sessionVariables.CLAUDE_CONFIG_DIR = "${config.xdg.config.directory}/claude-code";
 
+      files.".ssh/config".text =
+        # sshclientconfig
+        ''
+          Include ${config.xdg.config.directory}/ssh/config
+        '';
+
       xdg.cache.files."zsh".type = "directory";
       environment.sessionVariables.ZDOTDIR = "${config.xdg.config.directory}/zsh";
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
