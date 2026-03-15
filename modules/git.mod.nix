@@ -21,7 +21,7 @@
 
       xdg.config.files."gh/config.yml".generator = toYAML { };
       xdg.config.files."gh/config.yml".value = {
-        git_protocol = "ssh";
+        version = 1;
       };
     };
 
