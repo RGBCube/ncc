@@ -124,11 +124,32 @@ in
     }:
     let
       inherit (lib.lists) singleton;
+      inherit (lib.modules) mkIf;
+      inherit (lib.trivial) const flip;
+      inherit (lib.attrsets) genAttrs;
     in
     {
       inherit (extensions.ublock-origin.filters) warnings;
 
       environment.sessionVariables.BROWSER = "helium";
+
+      xdg.mime-apps.default-applications = mkIf osConfig.nixpkgs.hostPlatform.isLinux
+        <| flip genAttrs (const "helium.desktop") [
+          "application/pdf"
+          "application/rdf+xml"
+          "application/rss+xml"
+          "application/xhtml+xml"
+          "application/xhtml_xml"
+          "application/xml"
+          "image/gif"
+          "image/jpeg"
+          "image/png"
+          "image/webp"
+          "text/html"
+          "text/xml"
+          "x-scheme-handler/http"
+          "x-scheme-handler/https"
+        ];
 
       packages = singleton inputs.helium.packages.${osConfig.nixpkgs.hostPlatform.system}.default;
     };
