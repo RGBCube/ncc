@@ -100,18 +100,28 @@
             policy accept;
 
             # Skip packets already handled by zapret (mark 0x40000000).
-            fib daddr type != local and meta mark & $desync_mark == 0 and tcp dport 443 queue num ${toString config.services.zapret.qnum} bypass
+            fib daddr type != local \
+            # Not marked by zapret.
+            meta mark & $desync_mark == 0 \
+            tcp dport 443 \
+            queue num ${toString config.services.zapret.qnum} bypass;
 
           ${optionalString config.services.zapret.httpSupport ''
-            fib daddr type != local and meta mark & $desync_mark == 0 and tcp dport 80 queue num ${toString config.services.zapret.qnum} bypass
+            fib daddr type != local \
+            meta mark & $desync_mark == 0 \
+            tcp dport 80 \
+            queue num ${toString config.services.zapret.qnum} bypass;
           ''}
 
           ${optionalString config.services.zapret.udpSupport ''
-            fib daddr type != local and meta mark & $desync_mark == 0 and udp dport { ${
+            fib daddr type != local \
+            meta mark & $desync_mark == 0 \
+            udp dport { ${
               config.services.zapret.udpPorts
               |> map (port: replaceStrings [ ":" ] [ "-" ] port)
               |> concatStringsSep ", "
-            } } queue num ${toString config.services.zapret.qnum} bypass
+            } } \
+            queue num ${toString config.services.zapret.qnum} bypass;
           ''}
           }
         }
