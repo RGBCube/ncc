@@ -44,6 +44,8 @@
       ];
 
       home.clobberByDefault = true;
+
+      home.users.root = { };
     };
 
   flake.darwinModules.home =
