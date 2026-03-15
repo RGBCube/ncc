@@ -31,6 +31,9 @@ let
         pkgs.nix-output-monitor
       ];
 
+      # We install `nh` already.
+      system.tools.nixos-rebuild.enable = false;
+
       nix.distributedBuilds = true;
       nix.buildMachines =
         self.nixosConfigurations
