@@ -10,11 +10,14 @@
     let
       inherit (lib.attrsets) mapAttrsToList;
       inherit (lib.modules) mkIf;
+      inherit (lib.lists) singleton;
+      inherit (lib.strings) concatStringsSep;
     in
     {
-      xdg.config.files."xdg-terminals.list".text = mkIf osConfig.nixpkgs.hostPlatform.isLinux ''
-        com.mitchellh.ghostty.desktop
-      '';
+      xdg.config.files."xdg-terminals.list" = mkIf osConfig.nixpkgs.hostPlatform.isLinux {
+        generator = concatStringsSep "\n";
+        value = singleton "com.mitchellh.ghostty.desktop";
+      };
 
       programs.ghostty = {
         enable = true;
