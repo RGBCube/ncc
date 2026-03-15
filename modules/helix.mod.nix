@@ -1,6 +1,11 @@
 {
   flake.homeModules.helix =
-    { lib, pkgs, ... }:
+    {
+      lib,
+      osConfig,
+      pkgs,
+      ...
+    }:
     let
       inherit (lib.attrsets)
         attrValues
@@ -9,9 +14,10 @@
         optionalAttrs
         ;
       inherit (lib.lists) elem;
+      inherit (lib.modules) mkIf;
       inherit (lib.strings) readFile;
       inherit (lib.meta) getExe;
-      inherit (lib.trivial) const;
+      inherit (lib.trivial) const flip;
 
       toTOML = value: readFile <| pkgs.writers.writeTOML "workaround.toml" value;
 
@@ -19,6 +25,26 @@
     in
     {
       environment.sessionVariables.EDITOR = getExe package;
+
+      xdg.mime-apps.default-applications =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux
+        <| flip genAttrs (const "Helix.desktop") [
+          "application/x-shellscript"
+          "text/english"
+          "text/plain"
+          "text/x-c"
+          "text/x-c++"
+          "text/x-c++hdr"
+          "text/x-c++src"
+          "text/x-chdr"
+          "text/x-csrc"
+          "text/x-java"
+          "text/x-makefile"
+          "text/x-moc"
+          "text/x-pascal"
+          "text/x-tcl"
+          "text/x-tex"
+        ];
 
       packages = [
         package
