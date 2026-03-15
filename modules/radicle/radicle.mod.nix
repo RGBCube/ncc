@@ -3,20 +3,21 @@ let
   inherit (lib.generators) toJSON;
   inherit (lib.lists) singleton;
 
+  # TODO: This is useless. Use secret from KeepassXC
   commonModule =
-    { config, ... }:
+    { owner }:
     {
       secrets.radicle = {
         file = ./radicle.age;
-        owner = config.system.primaryUser;
+        inherit owner;
         mode = "0600";
       };
     };
 in
 {
-  flake.darwinModules.radicle = commonModule;
+  flake.darwinModules.radicle = { config, ... }: commonModule { owner = config.system.primaryUser; };
 
-  flake.nixosModules.radicle = commonModule;
+  flake.nixosModules.radicle = commonModule { owner = "root"; };
 
   flake.homeModules.radicle =
     {
