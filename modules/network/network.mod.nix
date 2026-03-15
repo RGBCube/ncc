@@ -53,13 +53,16 @@
     { config, lib, ... }:
     let
       inherit (lib.lists) map;
-      inherit (lib.modules) mkAfter mkDefault;
+      inherit (lib.modules) mkAfter mkDefault mkForce;
       inherit (lib.strings) concatStringsSep optionalString replaceStrings;
     in
     {
       networking.useNetworkd = true;
 
       networking.nftables.enable = true;
+
+      # Force false because the installer module sets this to true.
+      networking.wireless.enable = mkForce false;
       networking.wireless.iwd.enable = true;
 
       secrets.wifiHome = {
