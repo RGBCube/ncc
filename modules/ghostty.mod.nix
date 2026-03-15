@@ -12,10 +12,9 @@
       inherit (lib.modules) mkIf;
     in
     {
-      environment.sessionVariables = {
-        TERMINAL = mkIf osConfig.nixpkgs.hostPlatform.isLinux "ghostty";
-        TERM_PROGRAM = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "ghostty";
-      };
+      xdg.config.files."xdg-terminals.list".text = mkIf osConfig.nixpkgs.hostPlatform.isLinux ''
+        com.mitchellh.ghostty.desktop
+      '';
 
       programs.ghostty = {
         enable = true;
