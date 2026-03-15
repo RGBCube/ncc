@@ -13,7 +13,6 @@ let
     attrValues (
       removeAttrs self.nixosModules [
         "bluetooth"
-        "file-explorer"
         "fonts"
         "helium"
         "linux-kernel-desktop"
@@ -30,6 +29,7 @@ let
           "cinny"
           "darwin-wm"
           "discord"
+          "file-explorer"
           "ghostty"
           "helium"
           "helix-desktop"
