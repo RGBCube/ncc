@@ -1,4 +1,5 @@
 {
+  # TODO: Add vmagent
   flake.nixosModules.metrics-exporter = {
     services.prometheus.exporters.node = {
       enable = true;
@@ -10,5 +11,5 @@
     };
   };
 
-  # TODO: nixosModules.metrics-server (prometheus + grafana)
+  # TODO: nixosModules.metrics-server (victoriametrics, logs + grafana)
 }
