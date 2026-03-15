@@ -58,12 +58,21 @@
             singleton
               # sshclientconfig
               ''
+                Host best
+                  User root
+                  HostName rgbcu.be
+                  Port 2222
+              ''
+          ++
+            singleton
+              # sshclientconfig
+              ''
                 Host *
-                  SetEnv COLORTERM=truecolor TERM=xterm256-color
+                    SetEnv COLORTERM=truecolor TERM=xterm256-color
 
-                  ControlMaster auto
-                  ControlPersist 60m
-                  ControlPath ${config.xdg.cache.directory}/ssh/%r@%n:%p
+                    ControlMaster auto
+                    ControlPersist 60m
+                    ControlPath ${config.xdg.cache.directory}/ssh/%r@%n:%p
               '';
 
       xdg.cache.files."ssh".type = "directory";
