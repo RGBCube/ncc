@@ -10,6 +10,14 @@
       inherit (lib.modules) mkBefore mkIf;
     in
     {
+      xdg.data.files."android".type = "directory";
+      environment.sessionVariables.ANDROID_USER_HOME = "${config.xdg.data.directory}/android";
+      programs.nushell.extraConfig = /* nu */ ''
+        def --wrapped adb [...args] {
+          with-env { HOME: "${config.xdg.data.directory}/android" } { ^adb ...$args }
+        }
+      '';
+
       xdg.config.files."aws".type = "directory";
       environment.sessionVariables.AWS_CONFIG_FILE = "${config.xdg.config.directory}/aws/config";
       environment.sessionVariables.AWS_SHARED_CREDENTIALS_FILE = "${config.xdg.config.directory}/aws/credentials";
