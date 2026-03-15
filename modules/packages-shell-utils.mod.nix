@@ -10,7 +10,7 @@
         pkgs.moreutils
         pkgs.openssl
         pkgs.p7zip
-        pkgs.rsync
+        pkgs.rclone
         pkgs.sd
         pkgs.timg
         pkgs.tokei
