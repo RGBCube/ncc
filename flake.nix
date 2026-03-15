@@ -105,7 +105,6 @@
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.nix-github-actions.follows = "";
     inputs.treefmt-nix.follows = "";
-    inputs.flake-utils.inputs.systems.follows = "hjem/smfh/systems";
     inputs.rust-overlay.follows = "hjem/smfh/rust-overlay";
   };
 
