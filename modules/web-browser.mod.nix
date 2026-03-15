@@ -133,7 +133,8 @@ in
 
       environment.sessionVariables.BROWSER = "helium";
 
-      xdg.mime-apps.default-applications = mkIf osConfig.nixpkgs.hostPlatform.isLinux
+      xdg.mime-apps.default-applications =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux
         <| flip genAttrs (const "helium.desktop") [
           "application/pdf"
           "application/rdf+xml"

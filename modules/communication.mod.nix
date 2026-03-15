@@ -24,7 +24,8 @@
       inherit (lib.lists) optional;
     in
     {
-      xdg.mime-apps.default-applications = mkIf osConfig.nixpkgs.hostPlatform.isLinux
+      xdg.mime-apps.default-applications =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux
         <| flip genAttrs (const "discord.desktop") [
           "x-scheme-handler/discord"
         ];
@@ -71,7 +72,8 @@
       inherit (lib.lists) optional;
     in
     {
-      xdg.mime-apps.default-applications = mkIf osConfig.nixpkgs.hostPlatform.isLinux
+      xdg.mime-apps.default-applications =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux
         <| flip genAttrs (const "signal.desktop") [
           "x-scheme-handler/sgnl"
           "x-scheme-handler/signalcaptcha"
@@ -133,14 +135,20 @@
     };
 
   flake.homeModules.thunderbird =
-    { lib, osConfig, pkgs, ... }:
+    {
+      lib,
+      osConfig,
+      pkgs,
+      ...
+    }:
     let
       inherit (lib.modules) mkIf;
       inherit (lib.trivial) const flip;
       inherit (lib.attrsets) genAttrs;
     in
     {
-      xdg.mime-apps.default-applications = mkIf osConfig.nixpkgs.hostPlatform.isLinux
+      xdg.mime-apps.default-applications =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux
         <| flip genAttrs (const "thunderbird.desktop") [
           "message/rfc822"
           "x-scheme-handler/mailto"

@@ -1,6 +1,11 @@
 {
   flake.homeModules.difftastic =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       inherit (lib.meta) getExe;
       inherit (lib.generators) toGitINI;

@@ -200,29 +200,30 @@ in
       inherit (lib.modules) mkIf;
     in
     {
-      xdg.config.files."karabiner/karabiner.json".generator =
-        mkIf osConfig.nixpkgs.hostPlatform.isDarwin <| toJSON { };
-      xdg.config.files."karabiner/karabiner.json".value = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
-        global.show_in_menu_bar = false;
+      xdg.config.files."karabiner/karabiner.json" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
+        generator = toJSON { };
+        value = {
+          global.show_in_menu_bar = false;
 
-        profiles = [
-          {
-            inherit complex_modifications;
+          profiles = [
+            {
+              inherit complex_modifications;
 
-            name = "Default";
-            selected = true;
+              name = "Default";
+              selected = true;
 
-            virtual_hid_keyboard.keyboard_type_v2 = "ansi";
+              virtual_hid_keyboard.keyboard_type_v2 = "ansi";
 
-            devices = [
-              {
-                inherit simple_modifications;
+              devices = [
+                {
+                  inherit simple_modifications;
 
-                identifiers.is_keyboard = true;
-              }
-            ];
-          }
-        ];
+                  identifiers.is_keyboard = true;
+                }
+              ];
+            }
+          ];
+        };
       };
     };
 }

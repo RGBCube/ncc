@@ -21,7 +21,8 @@
       inherit (lib.attrsets) genAttrs;
     in
     {
-      xdg.mime-apps.default-applications = mkIf osConfig.nixpkgs.hostPlatform.isLinux
+      xdg.mime-apps.default-applications =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux
         <| flip genAttrs (const "org.kde.krita.desktop") [
           "application/x-krita"
           "image/openraster"

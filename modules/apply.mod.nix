@@ -1,7 +1,12 @@
 { self, ... }:
 {
   perSystem =
-    { self', lib, pkgs, ... }:
+    {
+      self',
+      lib,
+      pkgs,
+      ...
+    }:
     {
       packages.default = self'.packages.apply;
       packages.apply =

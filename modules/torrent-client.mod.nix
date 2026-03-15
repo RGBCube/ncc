@@ -12,7 +12,8 @@
       inherit (lib.attrsets) genAttrs;
     in
     {
-      xdg.mime-apps.default-applications = mkIf osConfig.nixpkgs.hostPlatform.isLinux
+      xdg.mime-apps.default-applications =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux
         <| flip genAttrs (const "org.qbittorrent.qBittorrent.desktop") [
           "application/x-bittorrent"
           "x-scheme-handler/magnet"

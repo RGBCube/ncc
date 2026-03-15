@@ -17,6 +17,8 @@
       inherit (lib.modules) mkIf;
     in
     {
-      xdg.config.files."hammerspoon/init.lua".text = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "";
+      xdg.config.files."hammerspoon/init.lua" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
+        text = "";
+      };
     };
 }

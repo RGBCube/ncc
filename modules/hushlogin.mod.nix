@@ -5,6 +5,6 @@
       inherit (lib.modules) mkIf;
     in
     {
-      files.".hushlogin".text = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "";
+      files.".hushlogin" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin { text = ""; };
     };
 }

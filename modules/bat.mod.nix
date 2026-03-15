@@ -41,7 +41,12 @@
     };
 
   flake.darwinModules.bat =
-    { config, pkgs, lib, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
     let
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;

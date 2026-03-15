@@ -27,6 +27,8 @@ let
       home.extraModules =
         attrValues
         <| removeAttrs self.homeModules [
+          # Already added by the home nixosModule.
+          "home"
           "cinny"
           "darwin-wm"
           "discord"
@@ -40,7 +42,6 @@ let
           "obs-studio"
           "signal-desktop"
           "ssh-client-desktop"
-          "theme"
           "thunderbird"
           "torrent-client"
           "video-player"
@@ -70,6 +71,10 @@ in
         in
         {
           networking.hostName = "istanbul";
+
+          boot.loader.systemd-boot.enable = true;
+          boot.loader.systemd-boot.editor = false;
+          boot.loader.efi.canTouchEfiVariables = true;
 
           boot.supportedFilesystems = [
             "bcachefs"
@@ -158,8 +163,6 @@ in
               istanbul.config.system.build.diskoScript
               istanbul.config.system.build.diskoScript.drvPath
               istanbul.pkgs.stdenv.drvPath
-              istanbul.pkgs.perlPackages.ConfigIniFiles
-              istanbul.pkgs.perlPackages.FileSlurp
               (istanbul.pkgs.closureInfo { rootPaths = [ ]; }).drvPath
             ];
           };

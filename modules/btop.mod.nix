@@ -1,9 +1,14 @@
 {
   flake.homeModules.btop =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       inherit (lib.generators) toKeyValue;
-      
+
       color_theme = "base16";
     in
     {
