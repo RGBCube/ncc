@@ -58,8 +58,9 @@ in
         "TS_DEBUG_FIREWALL_MODE=nftables"
       ];
 
+      # TODO
       # UDP GRO FORWARDING OPTIMIZATION
-      services.networkd-dispatcher = {
+      services.networkd-dispatcher = mkIf (config.networking.defaultGateway != null) {
         enable = true;
         rules."50-tailscale-optimizations" = {
           onState = [ "routable" ];
