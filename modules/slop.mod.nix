@@ -123,6 +123,7 @@ in
       inherit (lib.meta) getExe;
     in
     {
+      xdg.config.files."claude-code/settings.json".type = "copy"; # Slop tries to write to the config directory :/.
       xdg.config.files."claude-code/settings.json".generator = toJSON { };
       xdg.config.files."claude-code/settings.json".value = {
         permissions.allow = map (cmd: "Bash(${cmd})") commands.allowed ++ [
