@@ -10,6 +10,9 @@ in {
     path = config.secrets.id.path;
   }];
 
+  secrets.signing-key.file          = ./signing-key.age;
+  nix.settings.secret-key-files     = [ config.secrets.signing-key.path ];
+
   secrets.password.file = ./password.age;
   users.users           = {
     root = {
