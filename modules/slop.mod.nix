@@ -410,6 +410,15 @@ in
           "Splurging"
           "Ignoring GPL"
           "Increasing ram prices"
+          "Making shit up"
+          "Hallucinating"
+          "Slopping"
+          "Doing it"
+          "Fucking shit up crazy style"
+          "Hyprspacing"
+          "Stealing"
+          "Selling your data"
+          "Outsourcing to Mossad"
         ];
       };
 
