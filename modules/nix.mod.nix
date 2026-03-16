@@ -32,7 +32,9 @@ let
       ];
 
       # We install `nh` already.
-      system.tools.nixos-rebuild.enable = false;
+      system = optionalAttrs config.nixpkgs.hostPlatform.isLinux {
+        tools.nixos-rebuild.enable = false;
+      };
 
       nix.distributedBuilds = true;
       nix.buildMachines =
