@@ -419,6 +419,12 @@ in
           "Stealing"
           "Selling your data"
           "Outsourcing to Mossad"
+          "Gemming it up"
+          "Absolute coaling"
+          "Truth nuking"
+          "Fakecelling"
+          "Truecelling"
+          "Mogging"
         ];
       };
 
