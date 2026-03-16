@@ -10,15 +10,15 @@
     let
       inherit (lib.meta) getExe;
 
-      batPager = pkgs.writeScript "bat-pager.sh" /* bash */ ''
+      batPager = pkgs.writeScriptBin "bat-pager" /* bash */ ''
         #!${getExe pkgs.bash}
         ${getExe pkgs.bat} --plain
       '';
     in
     {
       environment.sessionVariables = {
-        MANPAGER = "${batPager}";
-        PAGER = "${batPager}";
+        MANPAGER = "${getExe batPager}";
+        PAGER = "${getExe batPager}";
       };
 
       programs.nushell.aliases = {
