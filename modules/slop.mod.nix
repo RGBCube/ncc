@@ -360,8 +360,8 @@ in
         # LESS SLOPS
         skipWebFetchPreflight = true;
         env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1";
-        env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1";
         env.DISABLE_AUTOUPDATER = "1";
+        env.DISABLE_ERROR_REPORTING = "1";
         env.DISABLE_INSTALLATION_CHECKS = "1";
         env.DISABLE_TELEMETRY = "1";
 
@@ -521,6 +521,7 @@ in
 
             slash_commands: list[tuple[bytes, str]] = [
               (b'name:"btw",description:"Ask a quick side question', "/btw"),
+              (b'name:"bridge-kick",description:"Inject bridge failure states', "/bridge-kick"),
               (b'name:"files",description:"List all files currently in context"', "/files"),
               (b'name:"tag",userFacingName', "/tag"),
             ]
@@ -541,6 +542,17 @@ in
             # --- Bypass thinkback gate (no default arg, different replacement strategy) ---
 
             patch("thinkback gate", W + rb'\("tengu_thinkback"\)', b'!0||"tengu_thinkback"')
+
+            # --- Bypass telemetry gate in feature flag checker ---
+            # _n6 has `if(!pi())return!1` before checking cachedGrowthBookFeatures.
+            # With telemetry off, pi() returns false and cached flags are never read.
+            # Remove that early return so the cache is always consulted.
+
+            patch(
+              "feature flag telemetry gate",
+              rb"if\(!" + W + rb"\(\)\)return!1;if\(" + W + rb"\(\)\." + W + rb"\?\.\[",
+              lambda m: m[0].replace(b"return!1;", b"", 1),
+            )
 
             # --- Fix Deno-compile bridge spawn ---
             # Deno-compiled binaries eat --flags as V8 args, so we route spawns through
@@ -569,13 +581,15 @@ in
             Gate = tuple[bytes, str]
 
             core_gates: list[Gate] = [
-              (b"tengu_cobalt_compass", "1M context window"),
               (b"tengu_ccr_bridge", "remote control"),
+              (b"tengu_bridge_repl_v2", "remote control v2 (envless)"),
               (b"tengu_remote_backend", "remote backend"),
               (b"tengu_keybinding_customization_release", "custom keybindings"),
-              (b"tengu_streaming_text", "token-by-token streaming"),
               (b"tengu_immediate_model_command", "instant /model switching"),
               (b"tengu_fgts", "fine-grained tool streaming"),
+              (b"tengu_auto_background_agents", "background agent timeout"),
+              (b"tengu_pid_based_version_locking", "PID version locking"),
+              (b"tengu_plan_mode_interview_phase", "plan mode interview"),
             ]
 
             memory_gates: list[Gate] = [
@@ -584,17 +598,17 @@ in
               (b"tengu_compact_cache_prefix", "cache-aware compaction"),
               (b"tengu_compact_streaming_retry", "compact stream retry"),
               (b"tengu_pebble_leaf_prune", "message pruning"),
+              (b"tengu_herring_clock", "team memory directory"),
+              (b"tengu_passport_quail", "typed combined memory prompts"),
+              (b"tengu_swinburne_dune", "new memory extraction prompts"),
             ]
 
             ux_gates: list[Gate] = [
               (b"tengu_coral_fern", "grep hints in prompt"),
-              (b"tengu_sotto_voce", "output efficiency"),
               (b"tengu_kairos_brief", "brief output mode"),
-              (b"tengu_bergotte_lantern", "concise polished output"),
               (b"tengu_permission_explainer", "permission explanations"),
               (b"tengu_destructive_command_warning", "destructive command warnings"),
               (b"tengu_pr_status_cli", "PR status footer"),
-              (b"tengu_copper_wren", "edit feedback messages"),
               (b"tengu_quiet_hollow", "thinking summaries"),
               (b"tengu_lean_cast", "lean system prompt"),
               (b"tengu_amber_prism", "permission denial context"),
@@ -607,10 +621,13 @@ in
               (b"tengu_copper_bridge", "chrome bridge context"),
               (b"tengu_system_prompt_global_cache", "global system prompt cache"),
               (b"tengu_tst_hint_m7r", "tool search hints"),
+              (b"tengu_tst_kx7", "auto tool search"),
               (b"tengu_glacier_2xr", "deferred tool improvements"),
               (b"tengu_basalt_3kr", "MCP instruction delta"),
               (b"tengu_cobalt_frost", "voice conversation engine"),
               (b"tengu_scarf_coffee", "API context management"),
+              (b"tengu_granite_whisper", "repo file indexing"),
+              (b"tengu_plum_vx3", "web search reranking"),
               (b"tengu_quartz_lantern", "remote tool use diff"),
               (b"tengu_marble_anvil", "thinking edits"),
               (b"tengu_marble_whisper2", "inline annotations"),
@@ -621,6 +638,14 @@ in
             ]
 
             flip_gates(core_gates + memory_gates + ux_gates + tool_gates)
+
+            # --- Bump background agent timeout from 120s to 240s ---
+
+            patch(
+              "background agent timeout",
+              rb'"tengu_auto_background_agents",![01]\)\)return 120000',
+              lambda m: m[0].replace(b"120000", b"240000"),
+            )
 
             # --- Kill claude-developer-platform bundled skill (this uses ~400 tokens per turn, it's dead weight) ---
 
@@ -656,11 +681,7 @@ in
                 ctx_match[0],
                 b"context_window:{...(" + usage + b"||{}),"
                 b"context_window_size:" + win_size + b",current_usage:" + usage + b","
-                b"used_percentage:"
-                + pct
-                + b".used,remaining_percentage:"
-                + pct
-                + b".remaining,"
+                b"used_percentage:" + pct + b".used,remaining_percentage:" + pct + b".remaining,"
                 b"rate_limit:" + rate_limit + b",s_in:" + inp_tok + b",s_out:" + out_tok + b"}",
               )
               log("context window statusline: patched")
@@ -669,60 +690,53 @@ in
                 f"context window statusline: NOT FOUND (ctx={'yes' if ctx_match else 'no'}, rl={'yes' if rl_match else 'no'})"
               )
 
-            # --- Cache oauth/usage to disk ---
-            # Both /usage and the statusline need usage data but the API rate-limits hard.
-            # We wrap the fetch function with a 60s file cache at /tmp/.claude-usage.json so
-            # only one actual request goes out; everyone else reads the cache.
+            # --- Replace usage fetch with self-contained OAuth implementation ---
+            # The original d3q has auth guards (dA/kG) that fail with DISABLE_TELEMETRY,
+            # and uses FO() which falls back to x-api-key. Replace the entire function
+            # body with a direct OAuth implementation that reads credentials from disk.
 
-            usage_anchor: bytes = b"api/oauth/usage"
-            usage_pos: int = data.find(usage_anchor)
-            if usage_pos >= 0:
-              # Find the enclosing "async function NAME(){" by scanning backwards
-              fn_start: int = data.rfind(b"async function ", max(0, usage_pos - 500), usage_pos)
-              if fn_start >= 0:
-                # Find the function's closing brace by counting braces forward
-                brace_depth: int = 0
-                fn_end: int = fn_start
-                for i in range(fn_start, min(len(data), usage_pos + 500)):
-                  if data[i : i + 1] == b"{":
-                    brace_depth += 1
-                  elif data[i : i + 1] == b"}":
-                    brace_depth -= 1
-                    if brace_depth == 0:
-                      fn_end = i + 1
-                      break
+            usage_fn_pat: bytes = (
+              rb"async function (" + W + rb")\(\)\{"
+              rb"if\(!" + W + rb"\(\)\|\|!" + W + rb"\(\)\)return\{\};"
+              rb"let " + W + rb"=" + W + rb"\(\);if\(" + W + rb"&&" + W + rb"\(" + W + rb"\." + W + rb"\)\)return null;"
+              rb"let " + W + rb"=" + W + rb"\(\);if\(" + W + rb"\.error\)throw Error\(`Auth error: \$\{" + W + rb"\.error\}`\);"
+              rb"let " + W + rb"=\{[^}]+\}," + W + rb"=`\$\{" + W + rb"\(\)\." + W + rb"\}/api/oauth/usage`;"
+              rb"return\(await " + W + rb"\.get\(" + W + rb",\{headers:" + W + rb",timeout:5000\}\)\)\.data\}"
+            )
 
-                original_fn: bytes = data[fn_start:fn_end]
-                # Extract function name from "async function NAME(){"
-                fn_name_match = re.match(rb"async function (" + W + rb")\(\)\{", original_fn)
-                if fn_name_match:
-                  fn_name: bytes = fn_name_match.group(1)
-                  # Rename original to _uc_ORIG, create caching wrapper with the original name
-                  renamed: bytes = b"_uc_" + fn_name
-                  patched_fn: bytes = (
-                    b"async function "
-                    + renamed
-                    + original_fn[len(b"async function " + fn_name) :]
-                    + b"async function "
-                    + fn_name
-                    + b'(){const _fs=require("fs"),'
-                    b'_cp="/tmp/.claude-usage.json";'
-                    b"try{const _s=_fs.statSync(_cp);"
-                    b"if(Date.now()-_s.mtimeMs<60000)"
-                    b'return JSON.parse(_fs.readFileSync(_cp,"utf8"))'
-                    b"}catch{}"
-                    b"const _r=await " + renamed + b"();"
-                    b"try{_fs.writeFileSync(_cp,JSON.stringify(_r))}catch{}"
-                    b"return _r}"
-                  )
-                  data = data[:fn_start] + patched_fn + data[fn_end:]
-                  log("usage cache: patched")
-                else:
-                  log("usage cache: fn name not matched")
-              else:
-                log("usage cache: enclosing function not found")
+            usage_fn_match: re.Match[bytes] | None = re.search(usage_fn_pat, data)
+            if usage_fn_match:
+              fn_name: bytes = usage_fn_match.group(1)
+              replacement: bytes = (
+                b"async function " + fn_name + b"(){"
+                b"const _cd=(process.env.CLAUDE_CONFIG_DIR||"
+                b'(Deno.env.get("HOME")+"/.config/claude"));'
+                b'const _cp="/tmp/.claude-usage-"+_cd.replace(/\\W/g,"_")+".json";'
+                b"try{const _s=Deno.statSync(_cp);"
+                b"if(Date.now()-_s.mtime.getTime()<60000)"
+                b'return JSON.parse(new TextDecoder().decode(Deno.readFileSync(_cp)))}catch{}'
+                b"let _tk;"
+                b'try{const _cr=JSON.parse(new TextDecoder().decode('
+                b'Deno.readFileSync(_cd+"/.credentials.json")));'
+                b"_tk=_cr?.claudeAiOauth?.accessToken}catch{return{}}"
+                b"if(!_tk)return{};"
+                b"const _h={" + b'"Content-Type":"application/json",'
+                b'"Authorization":"Bearer "+_tk,'
+                b'"anthropic-beta":"oauth-2025-04-20"};'
+                b"const _u=`''${" + b"G7().BASE_API_URL}/api/oauth/usage`;"
+                b"const _r=(await H8.get(_u,{headers:_h,timeout:5000})).data;"
+                b'try{Deno.writeTextFileSync(_cp,JSON.stringify(_r))}catch{}'
+                b"return _r}"
+              )
+              data = data.replace(usage_fn_match[0], replacement)
+              log("usage fetch: replaced")
             else:
-              log("usage cache: NOT FOUND")
+              log("usage fetch: pattern NOT FOUND — falling back to simple auth guard removal")
+              patch(
+                "usage auth guard (fallback)",
+                rb"if\(!" + W + rb"\(\)\|\|!" + W + rb"\(\)\)return\{\}",
+                b"if(!1)return{}",
+              )
 
             Path(sys.argv[1]).write_bytes(data)
           '';
