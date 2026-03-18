@@ -33,26 +33,22 @@
           "@+"
         ];
 
-        aliases.f = [ "fetch" ];
-        aliases.fetch = [
+        aliases.f = [
           "git"
           "fetch"
         ];
 
-        aliases.p = [ "push" ];
-        aliases.push = [
+        aliases.p = [
           "git"
           "push"
         ];
 
-        aliases.cl = [ "clone" ];
-        aliases.clone = [
+        aliases.cl = [
           "git"
           "clone"
         ];
 
-        aliases.i = [ "init" ];
-        aliases.init = [
+        aliases.i = [
           "git"
           "init"
         ];
@@ -120,8 +116,6 @@
           ''
             present(@) | present(trunk()) | ancestors(remote_bookmarks().. | @.., 8)
           '';
-
-        ui.default-command = "ls";
 
         ui.diff-editor = ":builtin";
         ui.pager = [
