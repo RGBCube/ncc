@@ -66,7 +66,7 @@ in
         }:
         let
           inherit (lib.meta) getExe;
-          inherit (lib.modules) mkForce;
+          inherit (lib.modules) mkForce mkAfter;
           inherit (utils) escapeSystemdPath;
         in
         {
@@ -76,12 +76,12 @@ in
           boot.loader.systemd-boot.editor = false;
           boot.loader.efi.canTouchEfiVariables = true;
 
-          boot.supportedFilesystems = [
+          boot.supportedFilesystems = mkAfter [
             "bcachefs"
             "exfat"
           ];
 
-          boot.initrd.availableKernelModules = [
+          boot.initrd.availableKernelModules = mkAfter [
             "exfat"
             "nvme"
             "sd_mod"
@@ -155,6 +155,7 @@ in
         let
           inherit (lib.lists) singleton;
           inherit (lib.meta) getExe;
+          inherit (lib.modules) mkAfter;
 
           istanbul = self.nixosConfigurations.istanbul;
           closureInfo = pkgs.closureInfo {
@@ -170,7 +171,7 @@ in
         {
           imports = singleton <| inputs.nixpkgs + /nixos/modules/installer/cd-dvd/installation-cd-minimal.nix;
 
-          boot.supportedFilesystems = [
+          boot.supportedFilesystems = mkAfter [
             "bcachefs"
             "exfat"
           ];
