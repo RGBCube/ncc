@@ -183,7 +183,7 @@ in
               set -euo pipefail
 
               exec ${
-                getExe inputs.disko.packages.${pkgs.system}.disko-install
+                getExe inputs.disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
               } --flake "${self}#istanbul" --disk default "${istanbul.config.disko.devices.disk.default.device}"
             '';
 
