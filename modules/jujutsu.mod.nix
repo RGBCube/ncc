@@ -91,25 +91,11 @@
 
         aliases.sh = [ "show" ];
 
-        aliases.t = [ "tug" ];
-        aliases.tug = [
-          "bookmark"
-          "move"
-          "--from"
-          "closest(@-)"
-          "--to"
-          "closest_pushable(@)"
-        ];
-
         aliases.u = [ "undo" ];
 
-        revset-aliases."closest(to)" = # python
+        revsets.bookmark-advance-to = # python
           ''
-            heads(::to & bookmarks())
-          '';
-        revset-aliases."closest_pushable(to)" = # python
-          ''
-            heads(::to & ~description(exact:"") & (~empty() | merges()))
+            heads(::@ & ~description(exact:"") & (~empty() | merges()))
           '';
 
         revsets.log = # python
