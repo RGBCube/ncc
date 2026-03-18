@@ -134,7 +134,7 @@
         "omfs" # Optimized MPEG Filesystem
         "qnx4" # Extent-based file system used by the QNX4 OS.
         "qnx6" # Extent-based file system used by the QNX6 OS.
-        "squashfs" # compressed read-only file system (used by live CDs)
+        # "squashfs" # compressed read-only file system (used by live CDs) # TODO
         "sysv" # implements all of Xenix FS, SystemV/386 FS and Coherent FS.
         "udf" # https://docs.kernel.org/5.15/filesystems/udf.html
         "vivid" # Virtual Video Test Driver (unnecessary)

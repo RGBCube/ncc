@@ -66,7 +66,7 @@ in
         }:
         let
           inherit (lib.meta) getExe;
-          inherit (lib.modules) mkForce mkAfter;
+          inherit (lib.modules) mkForce;
           inherit (utils) escapeSystemdPath;
         in
         {
@@ -76,33 +76,52 @@ in
           boot.loader.systemd-boot.editor = false;
           boot.loader.efi.canTouchEfiVariables = true;
 
-          boot.supportedFilesystems = mkAfter [
-            "bcachefs"
-            "exfat"
-          ];
-
-          boot.initrd.availableKernelModules = mkAfter [
-            "exfat"
-            "nvme"
-            "sd_mod"
-            "uas"
-            "usb_storage"
-            "xhci_pci"
-          ];
           boot.initrd.systemd.enable = true;
-          boot.initrd.systemd.mounts = singleton {
-            what = "LABEL=fatih";
-            where = "/media/key";
-            type = "exfat";
-            options = "ro,umask=0077";
+
+          boot.supportedFilesystems = {
+            bcachefs = true;
+            exfat = true;
           };
 
-          fileSystems."/".options = singleton "x-systemd.requires-mounts-for=/media/key";
-          boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/"}".script = mkForce /* bash */ ''
-            ${getExe config.boot.bcachefs.package} unlock --file /media/key/.bcachefs.key ${config.fileSystems."/".device}
-          '';
+          boot.initrd.availableKernelModules = {
+            exfat = true;
+            nvme = true;
+            sd_mod = true;
+            uas = true;
+            usb_storage = true;
+            xhci_pci = true;
+          };
 
-          disko.devices.disk.default = {
+          fileSystems."/" = {
+            device = "none";
+            fsType = "tmpfs";
+            options = [
+              "defaults"
+              "size=25%"
+              "mode=755"
+            ];
+          };
+
+          fileSystems."/media/key" = {
+            device = "/dev/disk/by-label/fatih";
+            fsType = "exfat";
+            options = [
+              "ro"
+              "umask=0077"
+            ];
+            neededForBoot = true;
+          };
+
+          fileSystems."/media/persist".options = singleton "x-systemd.requires-mounts-for=/media/key";
+          boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/media/persist"}".script =
+            mkForce
+              /* bash */ ''
+                ${getExe config.boot.bcachefs.package} unlock --file /media/key/.bcachefs.key ${
+                  config.fileSystems."/media/persist".device
+                }
+              '';
+
+          disko.devices.disk."default" = {
             device = "/dev/nvme0n1";
             type = "disk";
             content = {
@@ -126,17 +145,24 @@ in
                 label = "root";
                 size = "100%";
 
-                content.type = "filesystem";
-                content.format = "bcachefs";
-                content.mountpoint = "/";
-                content.extraArgs = [
-                  "--compression=zstd:9"
-                  "--background_compression=zstd:9"
-                  "--encrypted"
-                  "--passphrase_file=/media/key/.bcachefs.key"
-                ];
+                content.type = "bcachefs";
+                content.filesystem = "root";
               };
             };
+          };
+
+          disko.devices.bcachefs_filesystems."root" = {
+            type = "bcachefs_filesystem";
+            extraFormatArgs = [
+              "--compression=zstd:9"
+              "--background_compression=zstd:9"
+              "--block_size=4096"
+            ];
+
+            mountpoint = "/media/persist";
+            passwordFile = "/media/key/.bcachefs.key";
+
+            subvolumes."nix".mountpoint = "/nix";
           };
 
           nixpkgs.hostPlatform = "x86_64-linux";
@@ -155,7 +181,6 @@ in
         let
           inherit (lib.lists) singleton;
           inherit (lib.meta) getExe;
-          inherit (lib.modules) mkAfter;
 
           istanbul = self.nixosConfigurations.istanbul;
           closureInfo = pkgs.closureInfo {
@@ -171,10 +196,21 @@ in
         {
           imports = singleton <| inputs.nixpkgs + /nixos/modules/installer/cd-dvd/installation-cd-minimal.nix;
 
-          boot.supportedFilesystems = mkAfter [
-            "bcachefs"
-            "exfat"
-          ];
+          boot.supportedFilesystems = {
+            bcachefs = true;
+            exfat = true;
+          };
+
+          services.udev.extraRules = ''
+            ACTION=="add", ENV{ID_FS_LABEL}=="fatih", TAG+="systemd", ENV{SYSTEMD_WANTS}="media-key.mount"
+          '';
+
+          systemd.mounts = singleton {
+            what = "LABEL=fatih";
+            where = "/media/key";
+            type = "exfat";
+            options = "ro,umask=0077";
+          };
 
           environment.etc."install-closure".source = "${closureInfo}/store-paths";
 
