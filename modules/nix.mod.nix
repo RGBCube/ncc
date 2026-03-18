@@ -17,7 +17,6 @@ let
         optionalAttrs
         ;
       inherit (lib.lists) filter optional singleton;
-      inherit (lib.modules) mkMerge;
       inherit (lib.strings) concatStringsSep;
       inherit (lib.trivial) const flip id;
       inherit (lib.types) isType;
@@ -60,17 +59,10 @@ let
 
       nix.channel.enable = false;
 
-      nix.gc = mkMerge [
-        {
-          automatic = true;
-          options = "--delete-older-than 3d";
-        }
-
-        (optionalAttrs config.nixpkgs.hostPlatform.isLinux {
-          dates = "weekly";
-          persistent = true;
-        })
-      ];
+      nix.gc = {
+        automatic = true;
+        options = "--delete-older-than 3d";
+      };
 
       nix.nixPath =
         registryMap
@@ -114,6 +106,32 @@ let
 in
 { inputs, ... }:
 {
-  flake.nixosModules.nix = commonModule inputs;
-  flake.darwinModules.nix = commonModule inputs;
+  flake.nixosModules.nix =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      imports = singleton <| commonModule inputs;
+
+      nix.gc = {
+        dates = "weekly";
+        persistent = true;
+      };
+    };
+
+  flake.darwinModules.nix =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      imports = singleton <| commonModule inputs;
+
+      nix.gc.interval = singleton {
+        Hour = 3;
+        Minute = 15;
+        Weekday = 7;
+      };
+    };
 }
