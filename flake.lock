@@ -46,6 +46,31 @@
         "type": "github"
       }
     },
+    "crash": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "hjem",
+          "smfh",
+          "systems"
+        ]
+      },
+      "locked": {
+        "lastModified": 1749314438,
+        "narHash": "sha256-AY93kpqXEWUETx5/doPj4jsf7hCmmyzbJMoudXzoTfA=",
+        "owner": "RGBCube",
+        "repo": "crash",
+        "rev": "db0cf4a08907a97095849143e8b659f777838b1b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "RGBCube",
+        "repo": "crash",
+        "type": "github"
+      }
+    },
     "disko": {
       "inputs": {
         "nixpkgs": [
@@ -281,6 +306,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "crash": "crash",
         "disko": "disko",
         "flake-parts": "flake-parts",
         "helium": "helium",

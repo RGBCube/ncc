@@ -86,6 +86,12 @@
     flake = false;
   };
 
+  inputs.crash = {
+    url = "github:RGBCube/crash";
+    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.systems.follows = "hjem/smfh/systems";
+  };
+
   inputs.themes = {
     url = "github:RGBCube/ThemeNix";
   };

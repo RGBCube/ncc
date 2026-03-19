@@ -1,14 +1,23 @@
 {
   flake.nixosModules.nushell =
-    { lib, pkgs, ... }:
+    {
+      inputs,
+      lib,
+      pkgs,
+      ...
+    }:
     let
-      inherit (lib.modules) mkForce;
-      inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
+      inherit (lib.modules) mkForce;
     in
     {
-      users.defaultUserShell = pkgs.nushell;
-      environment.shells = singleton <| getExe pkgs.nushell;
+      users.defaultUserShell = inputs.crash.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      environment.sessionVariables.SHELLS = "${getExe pkgs.nushell}:${getExe pkgs.bash}";
+
+      environment.shells = map getExe [
+        pkgs.nushell
+        pkgs.bash
+      ];
 
       environment.shellAliases = {
         ls = mkForce null;
