@@ -15,11 +15,8 @@
         ;
       inherit (lib.lists) elem;
       inherit (lib.modules) mkIf;
-      inherit (lib.strings) readFile;
       inherit (lib.meta) getExe;
       inherit (lib.trivial) const flip;
-
-      toTOML = value: readFile <| pkgs.writers.writeTOML "workaround.toml" value;
 
       package = pkgs.helix;
     in
@@ -49,7 +46,7 @@
       packages = [
         package
       ];
-      xdg.config.files."helix/config.toml".generator = toTOML;
+      xdg.config.files."helix/config.toml".generator = pkgs.writers.writeTOML "helix-config.toml";
       xdg.config.files."helix/config.toml".value = {
         theme = "gruvbox_dark_hard";
 
@@ -99,7 +96,7 @@
           };
       };
 
-      xdg.config.files."helix/languages.toml".generator = toTOML;
+      xdg.config.files."helix/languages.toml".generator = pkgs.writers.writeTOML "helix-languages.toml";
       xdg.config.files."helix/languages.toml".value = {
         language-server.deno = {
           command = "deno";

@@ -8,9 +8,6 @@
     }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.strings) readFile;
-
-      toTOML = value: readFile <| pkgs.writers.writeTOML "workaround.toml" value;
     in
     {
       packages = [
@@ -19,7 +16,7 @@
         pkgs.mergiraf
       ];
 
-      xdg.config.files."jj/config.toml".generator = toTOML;
+      xdg.config.files."jj/config.toml".generator = pkgs.writers.writeTOML "jj-config.toml";
       xdg.config.files."jj/config.toml".value = {
         user.name = "RGBCube";
         user.email = "git@rgbcu.be";
