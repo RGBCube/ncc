@@ -3,9 +3,12 @@
     { lib, pkgs, ... }:
     let
       inherit (lib.modules) mkForce;
+      inherit (lib.lists) singleton;
+      inherit (lib.meta) getExe;
     in
     {
       users.defaultUserShell = pkgs.nushell;
+      environment.shells = singleton <| getExe pkgs.nushell;
 
       environment.shellAliases = {
         ls = mkForce null;
