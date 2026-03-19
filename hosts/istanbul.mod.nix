@@ -197,7 +197,6 @@ in
         {
           imports = singleton <| inputs.nixpkgs + /nixos/modules/installer/cd-dvd/installation-cd-minimal.nix;
 
-          users.users.nixos.isNormalUser = mkForce false;
           services.getty.autologinUser = mkForce "root";
 
           boot.supportedFilesystems = {
