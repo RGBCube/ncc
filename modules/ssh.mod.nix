@@ -68,7 +68,7 @@
               # sshclientconfig
               ''
                 Host *
-                    SetEnv COLORTERM=truecolor TERM=xterm256-color
+                    SetEnv COLORTERM=truecolor TERM=xterm-256color
 
                     ControlMaster auto
                     ControlPersist 60m
