@@ -52,7 +52,7 @@ let
     ];
 
   commonModule =
-    { config, ... }:
+    { config, pkgs, ... }:
     let
       inherit (lib.attrsets) getAttr;
       inherit (lib.lists)
@@ -65,6 +65,18 @@ let
     {
       services.hickory-dns = {
         enable = true;
+
+        package = pkgs.hickory-dns.overrideAttrs (old: {
+          cargoBuildFeatures = (old.cargoBuildFeatures or [ ]) ++ [
+            "tls-aws-lc-rs"
+            "https-aws-lc-rs"
+            "quic-aws-lc-rs"
+            "h3-aws-lc-rs"
+          ];
+
+          meta.platforms = old.meta.platforms ++ lib.platforms.darwin;
+        });
+
         settings = {
           listen_port = 53;
           listen_addrs_ipv6 = singleton "::";
@@ -124,12 +136,7 @@ let
 in
 {
   flake.darwinModules.dns =
-    {
-      config,
-      pkgs,
-      lib,
-      ...
-    }:
+    { lib, ... }:
     let
       inherit (lib.lists) singleton;
     in
@@ -138,22 +145,11 @@ in
         commonModule
       ];
 
-      services.hickory-dns.package = pkgs.hickory-dns.overrideAttrs (old: {
-        cargoBuildFeatures = (old.cargoBuildFeatures or [ ]) ++ [
-          "tls-aws-lc-rs"
-          "https-aws-lc-rs"
-          "quic-aws-lc-rs"
-          "h3-aws-lc-rs"
-        ];
-
-        meta.platforms = old.meta.platforms ++ lib.platforms.darwin;
-      });
-
       networking.dns = singleton "::1";
     };
 
   flake.nixosModules.dns =
-    { config, lib, ... }:
+    { lib, ... }:
     let
       inherit (lib.modules) mkForce;
     in
