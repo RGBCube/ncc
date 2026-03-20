@@ -754,9 +754,8 @@ in
 
             let version = do {
               let version_file = $cache | path join "latest-version"
-              let ttl = 6hr
 
-              match (try { (date now) - (ls $version_file | get 0.modified) > $ttl }) {
+              match (try { (date now) - (ls $version_file | get 0.modified) > 6hr }) {
                 # Version older than 6h or doesn't exist.
                 true | null => {
                   let version = try {

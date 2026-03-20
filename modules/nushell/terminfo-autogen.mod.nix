@@ -116,16 +116,30 @@
         }
 
         export def --env main [] {
-          let capabilities = xtgettcap ($CAPABILITIES | columns)
-          if ($capabilities.TN? | is-empty) { return }
-
           let directory = $env.XDG_DATA_HOME? | default ($env.HOME | path join ".local" "share") | path join "terminfo"
-          mkdir $directory
-          build-terminfo-source $capabilities.TN $capabilities | ^${tic} -x -o $directory -
 
-          hide-env --ignore-errors TERMINFO_DIRS TERMINFO TERM
-          $env.TERMINFO = $directory
-          $env.TERM = $capabilities.TN
+          let name = xtgettcap [TN] | get --optional TN
+          if ($name | is-empty) { return }
+
+          match (try { (date now) - (ls ($directory | path join ($name | split chars | first) $name) | get 0.modified) > 6hr }) {
+            # Version older than 6h or doesn't exist.
+            true | null => {
+              let capabilities = xtgettcap ($CAPABILITIES | reject TN | columns)
+
+              mkdir $directory
+              build-terminfo-source $name $capabilities | ^${tic} -x -o $directory -
+
+              hide-env --ignore-errors TERMINFO_DIRS TERMINFO TERM
+              $env.TERMINFO = $directory
+              $env.TERM = $name
+            }
+
+            # Version older than 6h or doesn't exist.
+            false => {
+              hide-env --ignore-errors TERMINFO_DIRS TERMINFO
+              $env.TERMINFO = $directory
+            }
+          }
         }
       '';
     in
