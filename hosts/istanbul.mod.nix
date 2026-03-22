@@ -112,7 +112,10 @@ in
             neededForBoot = true;
           };
 
-          fileSystems."/media/persist".options = singleton "x-systemd.requires-mounts-for=/media/key";
+          fileSystems."/media/persist".options = [
+            "lazytime"
+            "x-systemd.requires-mounts-for=/media/key"
+          ];
           boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/media/persist"}".script =
             mkForce
               /* bash */ ''
