@@ -17,7 +17,7 @@ in
       aliasModule
     ];
 
-    age.identityPaths = [ "/etc/age/id" ];
+    age.identityPaths = [ "/media/key/.secrets.key" ];
   };
 
   flake.darwinModules.secrets =
