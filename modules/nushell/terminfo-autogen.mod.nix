@@ -147,7 +147,7 @@
       programs.nushell.extraConfig = # nu
         ''
           use ${terminfo-autogen}/terminfo-autogen.nu
-          try { terminfo-autogen }
+          # try { terminfo-autogen } # FIXME: Works later but not in-config
         '';
     };
 }
