@@ -127,80 +127,72 @@ in
         #!${getExe pkgs.nushell}
 
         def format-duration [ms: int] {
-            let total_s = $ms // 1000
-            let h = $total_s // 3600
-            let m = ($total_s mod 3600) // 60
-            let s = $total_s mod 60
-            if $h > 0 {
-                $"($h)h($m | fill -a r -w 2 -c '0')m($s | fill -a r -w 2 -c '0')s"
-            } else if $m > 0 {
-                $"($m)m($s | fill -a r -w 2 -c '0')s"
-            } else {
-                $"($s)s"
-            }
+          let total_s = $ms // 1000
+          let h = $total_s // 3600
+          let m = ($total_s mod 3600) // 60
+          let s = $total_s mod 60
+          if $h > 0 {
+            $"($h)h($m | fill -a r -w 2 -c '0')m($s | fill -a r -w 2 -c '0')s"
+          } else if $m > 0 {
+            $"($m)m($s | fill -a r -w 2 -c '0')s"
+          } else {
+            $"($s)s"
+          }
         }
 
         def color-for-pct [pct: number] {
-            let pct_int = $pct | math floor | into int
-            if $pct_int >= 80 {
-                "\e[31m"
-            } else if $pct_int >= 50 {
-                "\e[33m"
-            } else {
-                "\e[32m"
-            }
+          let pct_int = $pct | math floor | into int
+          if $pct_int >= 80 {
+            "\e[31m"
+          } else if $pct_int >= 50 {
+            "\e[33m"
+          } else {
+            "\e[32m"
+          }
         }
 
-        def read-usage [] {
-            # Reads from the shared cache file written by the patched cli.js oauth/usage
-            # fetch function. No direct API calls — cli.js is the single writer.
-            let cache_file = "/tmp/.claude-usage.json"
-            if not ($cache_file | path exists) { return "" }
+        def format-rate-limits [input: record] {
+          let session_pct = try { $input | get rate_limits.five_hour.used_percentage } catch { null }
+          let week_pct = try { $input | get rate_limits.seven_day.used_percentage } catch { null }
 
-            let usage_json = try { open $cache_file } catch { return "" }
+          let session_part = if $session_pct != null {
+            let c = color-for-pct $session_pct
+            let v = $session_pct | math round --precision 0 | into int
+            $"session: ($c)($v)%\e[0m"
+          } else { "" }
+          let week_part = if $week_pct != null {
+            let c = color-for-pct $week_pct
+            let v = $week_pct | math round --precision 0 | into int
+            $"week: ($c)($v)%\e[0m"
+          } else { "" }
 
-            let session_pct = try { $usage_json | get five_hour.utilization } catch { null }
-            let week_pct = try { $usage_json | get seven_day.utilization } catch { null }
-
-            let session_part = if $session_pct != null {
-                let c = color-for-pct $session_pct
-                let v = $session_pct | math round --precision 0 | into int
-                $"session: ($c)($v)%\e[0m"
-            } else { "" }
-            let week_part = if $week_pct != null {
-                let c = color-for-pct $week_pct
-                let v = $week_pct | math round --precision 0 | into int
-                $"week: ($c)($v)%\e[0m"
-            } else { "" }
-
-            [$session_part $week_part] | where {|x| $x | is-not-empty} | str join " "
+          [$session_part $week_part] | where {|x| $x | is-not-empty} | str join " "
         }
 
         def get-jj-info [] {
-            let root_result = do { jj root } | complete
-            if $root_result.exit_code != 0 { return "" }
+          let root_result = do { jj root } | complete
+          if $root_result.exit_code != 0 { return "" }
 
-            let bookmark = (do { jj log -r @ --no-graph -T 'bookmarks.map(|b| b.name()).join(", ")' } | complete | get stdout | str trim)
-            let change = (do { jj log -r @ --no-graph -T 'change_id.shortest(8)' } | complete | get stdout | str trim)
-            let is_empty_str = (do { jj log -r @ --no-graph -T 'empty' } | complete | get stdout | str trim)
-            let dirty = if $is_empty_str == "false" { "*" } else { "" }
-            let has_conflict = (do { jj log -r @ --no-graph -T 'conflict' } | complete | get stdout | str trim)
-            let conflict_marker = if $has_conflict == "true" { " \e[31m!conflict\e[0m" } else { "" }
+          let bookmark = (do { jj log -r @ --no-graph -T 'bookmarks.map(|b| b.name()).join(", ")' } | complete | get stdout | str trim)
+          let change = (do { jj log -r @ --no-graph -T 'change_id.shortest(8)' } | complete | get stdout | str trim)
+          let is_empty_str = (do { jj log -r @ --no-graph -T 'empty' } | complete | get stdout | str trim)
+          let dirty = if $is_empty_str == "false" { "*" } else { "" }
+          let has_conflict = (do { jj log -r @ --no-graph -T 'conflict' } | complete | get stdout | str trim)
+          let conflict_marker = if $has_conflict == "true" { " \e[31m!conflict\e[0m" } else { "" }
 
-            let ref_part = if ($bookmark | is-not-empty) {
-                $" | \e[36m($bookmark)($dirty)\e[0m"
-            } else if ($change | is-not-empty) {
-                $" | \e[35m($change)($dirty)\e[0m"
-            } else { "" }
+          let ref_part = if ($bookmark | is-not-empty) {
+            $" | \e[36m($bookmark)($dirty)\e[0m"
+          } else if ($change | is-not-empty) {
+            $" | \e[35m($change)($dirty)\e[0m"
+          } else { "" }
 
-            $"($ref_part)($conflict_marker)"
+          $"($ref_part)($conflict_marker)"
         }
 
         # --- Main ---
         let input = (^cat | from json)
 
-        # Usage quota (reads shared cache written by cli.js)
-        let usage_info = read-usage
+        let usage_info = format-rate-limits $input
 
         let model_name = ($input | get model?.display_name? | default ($input | get model?.id? | default "unknown"))
         let used_pct = ($input | get context_window?.used_percentage? | default null)
@@ -219,13 +211,13 @@ in
         let total_tokens = $total_input + $total_output
 
         def format-tokens [n: int] {
-            if $n >= 1_000_000 {
-                $"($n / 1_000_000.0 | math round --precision 1)M"
-            } else if $n >= 1_000 {
-                $"($n / 1_000.0 | math round --precision 1)k"
-            } else {
-                $"($n)"
-            }
+          if $n >= 1_000_000 {
+            $"($n / 1_000_000.0 | math round --precision 1)M"
+          } else if $n >= 1_000 {
+            $"($n / 1_000.0 | math round --precision 1)k"
+          } else {
+            $"($n)"
+          }
         }
 
         let in_display = (format-tokens ($total_input | into int))
@@ -234,21 +226,21 @@ in
 
         let cache_total = $cache_read + $cache_create
         let cache_display = if $cache_total > 0 {
-            let cache_pct = ($cache_read * 100 / $cache_total | math round --precision 0 | into int)
-            let cache_color = if $cache_pct >= 70 {
-                "\e[32m"
-            } else if $cache_pct >= 40 {
-                "\e[33m"
-            } else {
-                "\e[31m"
-            }
-            $" cache:($cache_color)($cache_pct)%\e[0m"
+          let cache_pct = ($cache_read * 100 / $cache_total | math round --precision 0 | into int)
+          let cache_color = if $cache_pct >= 70 {
+            "\e[32m"
+          } else if $cache_pct >= 40 {
+            "\e[33m"
+          } else {
+            "\e[31m"
+          }
+          $" cache:($cache_color)($cache_pct)%\e[0m"
         } else { "" }
 
         let context_display = if $used_pct != null {
-            let color = color-for-pct $used_pct
-            let pct_str = $used_pct | math round --precision 1
-            $"($color)($pct_str)%\e[0m"
+          let color = color-for-pct $used_pct
+          let pct_str = $used_pct | math round --precision 1
+          $"($color)($pct_str)%\e[0m"
         } else { "--" }
 
         let cost_cents = ($total_cost * 100 | math round | into int)
@@ -260,59 +252,59 @@ in
         let churn_display = $"\e[32m+($lines_added)\e[0m/\e[31m-($lines_removed)\e[0m"
         let marker_200k = if $exceeds_200k { " | \e[31m!200k\e[0m" } else { "" }
         def format-cwd [dir: string] {
-            if ($dir | is-empty) { return "" }
-            let jj_root = try { do { cd $dir; jj workspace root } | complete } catch { {exit_code: 1, stdout: ""} }
-            if $jj_root.exit_code == 0 {
-                let root = ($jj_root.stdout | str trim)
-                let home = ($env.HOME? | default "")
-                let root_display = if ($home | is-not-empty) and ($root | str starts-with $home) {
-                    let rel = ($root | str replace $home "" | str trim -l -c '/')
-                    $"~/($rel)"
-                } else {
-                    $root
-                }
-                let root_parts = ($root_display | split row "/")
-                let base = if ($root_parts | length) <= 5 {
-                    $root_display
-                } else {
-                    let tail = ($root_parts | last 5 | str join "/")
-                    $"…/($tail)"
-                }
-                let subpath = if ($dir | str starts-with $root) {
-                    $dir | str replace $root "" | str trim -l -c '/'
-                } else { "" }
-                if ($subpath | is-not-empty) {
-                    $"\e[36m($base)\e[0m → \e[34m($subpath)\e[0m"
-                } else {
-                    $"\e[36m($base)\e[0m"
-                }
+          if ($dir | is-empty) { return "" }
+          let jj_root = try { do { cd $dir; jj workspace root } | complete } catch { {exit_code: 1, stdout: ""} }
+          if $jj_root.exit_code == 0 {
+            let root = ($jj_root.stdout | str trim)
+            let home = ($env.HOME? | default "")
+            let root_display = if ($home | is-not-empty) and ($root | str starts-with $home) {
+              let rel = ($root | str replace $home "" | str trim -l -c '/')
+              $"~/($rel)"
             } else {
-                let home = ($env.HOME? | default "")
-                let display = if ($home | is-not-empty) and ($dir | str starts-with $home) {
-                    let rel = ($dir | str replace $home "" | str trim -l -c '/')
-                    $"~/($rel)"
-                } else {
-                    $dir
-                }
-                let parts = ($display | split row "/")
-                let shortened = if ($parts | length) <= 5 {
-                    $display
-                } else {
-                    let tail = ($parts | last 5 | str join "/")
-                    $"…/($tail)"
-                }
-                $shortened
+              $root
             }
+            let root_parts = ($root_display | split row "/")
+            let base = if ($root_parts | length) <= 5 {
+              $root_display
+            } else {
+              let tail = ($root_parts | last 5 | str join "/")
+              $"…/($tail)"
+            }
+            let subpath = if ($dir | str starts-with $root) {
+              $dir | str replace $root "" | str trim -l -c '/'
+            } else { "" }
+            if ($subpath | is-not-empty) {
+              $"\e[36m($base)\e[0m → \e[34m($subpath)\e[0m"
+            } else {
+              $"\e[36m($base)\e[0m"
+            }
+          } else {
+            let home = ($env.HOME? | default "")
+            let display = if ($home | is-not-empty) and ($dir | str starts-with $home) {
+              let rel = ($dir | str replace $home "" | str trim -l -c '/')
+              $"~/($rel)"
+            } else {
+              $dir
+            }
+            let parts = ($display | split row "/")
+            let shortened = if ($parts | length) <= 5 {
+              $display
+            } else {
+              let tail = ($parts | last 5 | str join "/")
+              $"…/($tail)"
+            }
+            $shortened
+          }
         }
 
         let cwd_raw = ($input | get workspace?.current_dir? | default "")
         let cwd_display = if ($cwd_raw | is-not-empty) {
-            let formatted = (format-cwd $cwd_raw)
-            $" | ($formatted)"
+          let formatted = (format-cwd $cwd_raw)
+          $" | ($formatted)"
         } else { "" }
         let jj_info = get-jj-info
         let quota_section = if ($usage_info | is-not-empty) {
-            " | (usage) " + $usage_info
+          " | (usage) " + $usage_info
         } else { "" }
 
         print -n $"($model_name) | Ctx: ($context_display) | ($tok_display)($cache_display) | ($cost_display) | t:($elapsed_display) w:($wait_display) | ($churn_display)($marker_200k)($jj_info)($quota_section)($cwd_display)"
@@ -479,45 +471,35 @@ in
                 log(f"  {labels[key]} [{status}]")
 
 
-            # --- AGENTS.md support: claude can now load AGENTS.md alongside CLAUDE.md for project configs ---
+            # --- AGENTS.md support ---
+            # The CLAUDE.md loader only reads CLAUDE.md. Patch it to also load AGENTS.md
+            # from the same directories. Pattern: let VAR=ME(DIR,"CLAUDE.md");ARR.push(...await XE(VAR,"Project",ARG,BOOL))
 
             agents_pat: bytes = (
               rb"let (" + W + rb")=(" + W + rb")\((" + W + rb'),"CLAUDE\.md"\);'
-              rb"(" + W + rb")\.push\(\.\.\.(" + W + rb')\(\1,"Project",([^)]+)\)\)'
+              rb"(" + W + rb")\.push\(\.\.\.await (" + W + rb")\(\1,\"Project\",(" + W + rb"),(" + W + rb")\)\)"
             )
 
 
             def agents_repl(m: re.Match[bytes]) -> bytes:
-              var, path_join, dir_, arr, load_fn, tail = [m.group(i) for i in range(1, 7)]
+              var, join_fn, dir_, arr, load_fn, arg, flag = [m.group(i) for i in range(1, 8)]
               return (
                 b'for(let _f of["CLAUDE.md","AGENTS.md"]){let '
-                + var
-                + b"="
-                + path_join
-                + b"("
-                + dir_
-                + b",_f);"
-                + arr
-                + b".push(..."
-                + load_fn
-                + b"("
-                + var
-                + b',"Project",'
-                + tail
-                + b"))}"
+                + var + b"=" + join_fn + b"(" + dir_ + b",_f);"
+                + arr + b".push(...await " + load_fn + b"(" + var + b',"Project",' + arg + b"," + flag + b"))}"
               )
 
 
             patch("agents.md loader", agents_pat, agents_repl)
 
-            # --- macOS config path: use /etc/claude-code instead of ~/Library/Application Support because the latter is retarded for cli tools ---
+            # --- macOS config path ---
 
             data = data.replace(
               b'case"macos":return"/Library/Application Support/ClaudeCode"',
               b'case"macos":return"/etc/claude-code"',
             )
 
-            # --- Enable hard-disabled slash commands: /btw, /files, /tag ---
+            # --- Enable hard-disabled slash commands ---
 
             slash_commands: list[tuple[bytes, str]] = [
               (b'name:"btw",description:"Ask a quick side question', "/btw"),
@@ -539,19 +521,16 @@ in
               data = data[:pos] + patched + data[pos + SEARCH_WINDOW :]
               log(f"slash command {label}: enabled")
 
-            # --- Bypass thinkback gate (no default arg, different replacement strategy) ---
-
-            patch("thinkback gate", W + rb'\("tengu_thinkback"\)', b'!0||"tengu_thinkback"')
-
             # --- Bypass telemetry gate in feature flag checker ---
-            # _n6 has `if(!pi())return!1` before checking cachedGrowthBookFeatures.
-            # With telemetry off, pi() returns false and cached flags are never read.
-            # Remove that early return so the cache is always consulted.
+            # With telemetry off, ed() returns false and all 9 call sites bail out,
+            # blocking feature flags, GrowthBook refresh, and the async qc() path
+            # used by remote control. Make ed() always return true so the flag
+            # infrastructure works even with DISABLE_TELEMETRY=1.
 
             patch(
-              "feature flag telemetry gate",
-              rb"if\(!" + W + rb"\(\)\)return!1;if\(" + W + rb"\(\)\." + W + rb"\?\.\[",
-              lambda m: m[0].replace(b"return!1;", b"", 1),
+              "telemetry gate (ed → true)",
+              rb"function ed\(\)\{return " + W + rb"\(\)\}",
+              lambda m: m[0].replace(b"return ", b"return!0||"),
             )
 
             # --- Fix Deno-compile bridge spawn ---
@@ -583,6 +562,7 @@ in
             core_gates: list[Gate] = [
               (b"tengu_ccr_bridge", "remote control"),
               (b"tengu_bridge_repl_v2", "remote control v2 (envless)"),
+              (b"tengu_bridge_system_init", "bridge SDK init on connect"),
               (b"tengu_remote_backend", "remote backend"),
               (b"tengu_keybinding_customization_release", "custom keybindings"),
               (b"tengu_immediate_model_command", "instant /model switching"),
@@ -590,17 +570,18 @@ in
               (b"tengu_auto_background_agents", "background agent timeout"),
               (b"tengu_pid_based_version_locking", "PID version locking"),
               (b"tengu_plan_mode_interview_phase", "plan mode interview"),
+              (b"tengu_surreal_dali", "scheduled agents/cron"),
             ]
 
             memory_gates: list[Gate] = [
-              (b"tengu_session_memory", "session memory"),
+              # (b"tengu_session_memory", "session memory"),  # auto-memory; pollutes unrelated convos
               (b"tengu_sm_compact", "memory survives compaction"),
               (b"tengu_compact_cache_prefix", "cache-aware compaction"),
               (b"tengu_compact_streaming_retry", "compact stream retry"),
               (b"tengu_pebble_leaf_prune", "message pruning"),
               (b"tengu_herring_clock", "team memory directory"),
               (b"tengu_passport_quail", "typed combined memory prompts"),
-              (b"tengu_swinburne_dune", "new memory extraction prompts"),
+              # (b"tengu_swinburne_dune", "new memory extraction prompts"),  # auto-extraction
             ]
 
             ux_gates: list[Gate] = [
@@ -612,6 +593,8 @@ in
               (b"tengu_quiet_hollow", "thinking summaries"),
               (b"tengu_lean_cast", "lean system prompt"),
               (b"tengu_amber_prism", "permission denial context"),
+              (b"tengu_sepia_heron", "token saver (compress tool output)"),
+              (b"tengu_hawthorn_steeple", "context windowing"),
             ]
 
             tool_gates: list[Gate] = [
@@ -623,6 +606,7 @@ in
               (b"tengu_tst_hint_m7r", "tool search hints"),
               (b"tengu_tst_kx7", "auto tool search"),
               (b"tengu_glacier_2xr", "deferred tool improvements"),
+              (b"tengu_defer_caveat_m9k", "deferred tool hint in prompt"),
               (b"tengu_basalt_3kr", "MCP instruction delta"),
               (b"tengu_cobalt_frost", "voice conversation engine"),
               (b"tengu_scarf_coffee", "API context management"),
@@ -630,10 +614,7 @@ in
               (b"tengu_plum_vx3", "web search reranking"),
               (b"tengu_quartz_lantern", "remote tool use diff"),
               (b"tengu_marble_anvil", "thinking edits"),
-              (b"tengu_marble_whisper2", "inline annotations"),
-              (b"tengu_orchid_trellis", "plugin marketplace"),
-              (b"tengu_pewter_gull", "PDF line limiting"),
-              (b"tengu_moth_copse", "relevant memory recall"),
+              # (b"tengu_moth_copse", "relevant memory recall"),  # auto-recall; pollutes unrelated convos
               (b"tengu_cork_m4q", "batch command processing"),
             ]
 
@@ -647,7 +628,7 @@ in
               lambda m: m[0].replace(b"120000", b"240000"),
             )
 
-            # --- Kill claude-developer-platform bundled skill (this uses ~400 tokens per turn, it's dead weight) ---
+            # --- Kill claude-developer-platform bundled skill ---
 
             data = data.replace(
               b'name:"claude-developer-platform",description:`',
@@ -655,88 +636,51 @@ in
             )
             log("killed claude-developer-platform skill")
 
-            # --- Enrich context_window status line data ---
-
-            ctx_pat: bytes = (
-              rb"context_window:\{total_input_tokens:(" + W + rb"\(\)),"
-              rb"total_output_tokens:(" + W + rb"\(\)),"
-              rb"context_window_size:(" + W + rb"),"
-              rb"current_usage:(" + W + rb"),"
-              rb"used_percentage:(" + W + rb")\.used,"
-              rb"remaining_percentage:\5\.remaining\}"
-            )
-            rl_pat: bytes = (
-              rb"("
-              + W
-              + rb')=\{status:"allowed",unifiedRateLimitFallbackAvailable:!1,isUsingOverage:!1\}'
-            )
-
-            rl_match: re.Match[bytes] | None = re.search(rl_pat, data)
-            ctx_match: re.Match[bytes] | None = re.search(ctx_pat, data)
-
-            if ctx_match and rl_match:
-              inp_tok, out_tok, win_size, usage, pct = [ctx_match.group(i) for i in range(1, 6)]
-              rate_limit: bytes = rl_match.group(1)
-              data = data.replace(
-                ctx_match[0],
-                b"context_window:{...(" + usage + b"||{}),"
-                b"context_window_size:" + win_size + b",current_usage:" + usage + b","
-                b"used_percentage:" + pct + b".used,remaining_percentage:" + pct + b".remaining,"
-                b"rate_limit:" + rate_limit + b",s_in:" + inp_tok + b",s_out:" + out_tok + b"}",
-              )
-              log("context window statusline: patched")
-            else:
-              log(
-                f"context window statusline: NOT FOUND (ctx={'yes' if ctx_match else 'no'}, rl={'yes' if rl_match else 'no'})"
-              )
-
             # --- Replace usage fetch with self-contained OAuth implementation ---
-            # The original d3q has auth guards (dA/kG) that fail with DISABLE_TELEMETRY,
-            # and uses FO() which falls back to x-api-key. Replace the entire function
-            # body with a direct OAuth implementation that reads credentials from disk.
+            # FO()/eO() falls back to x-api-key when dA()/nA() returns false (telemetry off),
+            # but /api/oauth/usage requires Bearer + oauth beta header. Replace the entire
+            # function with a Deno-native implementation that reads credentials directly.
 
             usage_fn_pat: bytes = (
               rb"async function (" + W + rb")\(\)\{"
-              rb"if\(!" + W + rb"\(\)\|\|!" + W + rb"\(\)\)return\{\};"
+              rb"(?:if\(!" + W + rb"\(\)\|\|!" + W + rb"\(\)\)return\{\};)?"
               rb"let " + W + rb"=" + W + rb"\(\);if\(" + W + rb"&&" + W + rb"\(" + W + rb"\." + W + rb"\)\)return null;"
-              rb"let " + W + rb"=" + W + rb"\(\);if\(" + W + rb"\.error\)throw Error\(`Auth error: \$\{" + W + rb"\.error\}`\);"
-              rb"let " + W + rb"=\{[^}]+\}," + W + rb"=`\$\{" + W + rb"\(\)\." + W + rb"\}/api/oauth/usage`;"
-              rb"return\(await " + W + rb"\.get\(" + W + rb",\{headers:" + W + rb",timeout:5000\}\)\)\.data\}"
+              rb"let " + W + rb"=" + W + rb"\(\);if\(" + W + rb"\.error\)throw Error\(\x60Auth error: \x24\{" + W + rb"\.error\}\x60\);"
+              rb"let " + W + rb"=\{[^}]+\}," + W + rb"=\x60\x24\{(" + W + rb")\(\)\.(" + W + rb")\}/api/oauth/usage\x60;"
+              rb"return\(await (" + W + rb")\.get\(" + W + rb",\{headers:" + W + rb",timeout:5000\}\)\)\.data\}"
             )
 
             usage_fn_match: re.Match[bytes] | None = re.search(usage_fn_pat, data)
             if usage_fn_match:
               fn_name: bytes = usage_fn_match.group(1)
+              config_fn: bytes = usage_fn_match.group(2)
+              base_url_key: bytes = usage_fn_match.group(3)
+              http_client: bytes = usage_fn_match.group(4)
               replacement: bytes = (
                 b"async function " + fn_name + b"(){"
                 b"const _cd=(process.env.CLAUDE_CONFIG_DIR||"
                 b'(Deno.env.get("HOME")+"/.config/claude"));'
-                b'const _cp="/tmp/.claude-usage-"+_cd.replace(/\\W/g,"_")+".json";'
-                b"try{const _s=Deno.statSync(_cp);"
-                b"if(Date.now()-_s.mtime.getTime()<60000)"
-                b'return JSON.parse(new TextDecoder().decode(Deno.readFileSync(_cp)))}catch{}'
                 b"let _tk;"
                 b'try{const _cr=JSON.parse(new TextDecoder().decode('
                 b'Deno.readFileSync(_cd+"/.credentials.json")));'
                 b"_tk=_cr?.claudeAiOauth?.accessToken}catch{return{}}"
                 b"if(!_tk)return{};"
+                b'const _cp="/tmp/.claude-usage-"+_tk.slice(-8)+".json";'
+                b"try{const _s=Deno.statSync(_cp);"
+                b"if(Date.now()-_s.mtime.getTime()<60000)"
+                b'return JSON.parse(new TextDecoder().decode(Deno.readFileSync(_cp)))}catch{}'
                 b"const _h={" + b'"Content-Type":"application/json",'
                 b'"Authorization":"Bearer "+_tk,'
                 b'"anthropic-beta":"oauth-2025-04-20"};'
-                b"const _u=`''${" + b"G7().BASE_API_URL}/api/oauth/usage`;"
-                b"const _r=(await H8.get(_u,{headers:_h,timeout:5000})).data;"
+                b"const _u=`''${" + config_fn + b"()." + base_url_key + b"}/api/oauth/usage`;"
+                b"const _r=(await " + http_client + b".get(_u,{headers:_h,timeout:5000})).data;"
                 b'try{Deno.writeTextFileSync(_cp,JSON.stringify(_r))}catch{}'
                 b"return _r}"
               )
               data = data.replace(usage_fn_match[0], replacement)
               log("usage fetch: replaced")
             else:
-              log("usage fetch: pattern NOT FOUND — falling back to simple auth guard removal")
-              patch(
-                "usage auth guard (fallback)",
-                rb"if\(!" + W + rb"\(\)\|\|!" + W + rb"\(\)\)return\{\}",
-                b"if(!1)return{}",
-              )
+              log("usage fetch: pattern NOT FOUND")
 
             Path(sys.argv[1]).write_bytes(data)
           '';
