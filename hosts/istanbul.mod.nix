@@ -184,15 +184,6 @@ in
           inherit (lib.modules) mkForce;
 
           istanbul = self.nixosConfigurations.istanbul;
-          closureInfo = pkgs.closureInfo {
-            rootPaths = [
-              istanbul.config.system.build.toplevel
-              istanbul.config.system.build.diskoScript
-              istanbul.config.system.build.diskoScript.drvPath
-              istanbul.pkgs.stdenv.drvPath
-              (istanbul.pkgs.closureInfo { rootPaths = [ ]; }).drvPath
-            ];
-          };
         in
         {
           imports = singleton <| inputs.nixpkgs + /nixos/modules/installer/cd-dvd/installation-cd-minimal.nix;
@@ -204,7 +195,7 @@ in
             exfat = true;
           };
 
-          services.udev.extraRules = ''
+          services.udev.extraRules = /* cpp */ ''
             ACTION=="add", ENV{ID_FS_LABEL}=="fatih", TAG+="systemd", ENV{SYSTEMD_WANTS}="media-key.mount"
           '';
 
@@ -215,7 +206,15 @@ in
             options = "ro,umask=0077";
           };
 
-          environment.etc."install-closure".source = "${closureInfo}/store-paths";
+          environment.etc."install-closure".source = pkgs.closureInfo {
+            rootPaths = [
+              istanbul.config.system.build.toplevel
+              istanbul.config.system.build.diskoScript
+              istanbul.config.system.build.diskoScript.drvPath
+              istanbul.pkgs.stdenv.drvPath
+              (istanbul.pkgs.closureInfo { rootPaths = [ ]; }).drvPath
+            ];
+          };
 
           environment.systemPackages =
             singleton
