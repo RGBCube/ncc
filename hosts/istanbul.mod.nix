@@ -150,6 +150,7 @@ in
 
                 content.type = "bcachefs";
                 content.filesystem = "root";
+                content.label = "root";
               };
             };
           };
