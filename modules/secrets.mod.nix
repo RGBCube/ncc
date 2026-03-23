@@ -10,15 +10,25 @@ let
 in
 { inputs, ... }:
 {
-  flake.nixosModules.secrets = {
-    imports = [
-      inputs.agenix.nixosModules.age
+  flake.nixosModules.secrets =
+    { config, lib, ... }:
+    let
+      inherit (lib.lists) head singleton;
+    in
+    {
+      imports = [
+        inputs.agenix.nixosModules.age
 
-      aliasModule
-    ];
+        aliasModule
+      ];
 
-    age.identityPaths = [ "/media/key/.secrets.key" ];
-  };
+      age.identityPaths = [ "/media/key/.secrets.key" ];
+
+      services.openssh.hostKeys = singleton {
+        type = "ed25519";
+        path = head config.age.identityPaths;
+      };
+    };
 
   flake.darwinModules.secrets =
     { config, ... }:
