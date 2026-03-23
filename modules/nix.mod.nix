@@ -114,6 +114,9 @@ in
     {
       imports = singleton <| commonModule inputs;
 
+      # We have nh.
+      system.switch.enable = false;
+
       nix.gc = {
         dates = "weekly";
         persistent = true;
