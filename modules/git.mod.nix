@@ -28,13 +28,11 @@
   flake.homeModules.git =
     { lib, pkgs, ... }:
     let
+      inherit (lib.lists) singleton;
       inherit (lib.generators) toGitINI;
     in
     {
-      packages = [
-        pkgs.git
-        pkgs.git-absorb
-      ];
+      packages = singleton pkgs.gitMinimal;
 
       xdg.config.files."git/config".generator = toGitINI;
       xdg.config.files."git/config".value = {
