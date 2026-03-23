@@ -30,9 +30,15 @@ let
         pkgs.nix-output-monitor
       ];
 
-      # We install `nh` already.
       system = optionalAttrs config.nixpkgs.hostPlatform.isLinux {
+        # We install `nh` already.
         tools.nixos-rebuild.enable = false;
+
+        # We use facter.
+        tools.nixos-generate-config.enable = false;
+
+        # We have nh.
+        switch.enable = false;
       };
 
       nix.distributedBuilds = true;
@@ -113,9 +119,6 @@ in
     in
     {
       imports = singleton <| commonModule inputs;
-
-      # We have nh.
-      system.switch.enable = false;
 
       nix.gc = {
         dates = "weekly";
