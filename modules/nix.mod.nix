@@ -36,9 +36,6 @@ let
 
         # We use facter.
         tools.nixos-generate-config.enable = false;
-
-        # We have nh.
-        switch.enable = false;
       };
 
       nix.distributedBuilds = true;
