@@ -35,11 +35,16 @@
   inputs.nixpkgs = {
     url = "github:NixOS/nixpkgs/nixos-unstable-small";
   };
+  inputs.nix-darwin = {
+    url = "github:LnL7/nix-darwin";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   inputs.nixos-facter = {
     url = "github:nix-community/nixos-facter-modules";
   };
-  inputs.nix-darwin = {
-    url = "github:LnL7/nix-darwin";
+  inputs.disko = {
+    url = "github:nix-community/disko";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -54,11 +59,6 @@
     inputs.hjem.follows = "hjem";
     inputs.ndg.follows = "";
     inputs.treefmt-nix.follows = "";
-  };
-
-  inputs.disko = {
-    url = "github:nix-community/disko";
-    inputs.nixpkgs.follows = "nixpkgs";
   };
 
   inputs.flake-parts = {
