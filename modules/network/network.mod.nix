@@ -53,7 +53,7 @@
     { config, lib, ... }:
     let
       inherit (lib.lists) map singleton;
-      inherit (lib.modules) mkAfter mkDefault mkForce;
+      inherit (lib.modules) mkAfter mkDefault;
       inherit (lib.strings) concatStringsSep optionalString replaceStrings;
     in
     {
@@ -63,10 +63,9 @@
         mode = "0400";
       };
 
-      persist = singleton "/var/lib/NetworkManager";
+      persist.paths = singleton "/var/lib/NetworkManager";
 
-      # Force false because the installer module sets this to true.
-      networking.wireless.enable = mkForce false;
+      networking.wireless.enable = false;
       networking.networkmanager.wifi.backend = "iwd";
 
       networking.networkmanager = {

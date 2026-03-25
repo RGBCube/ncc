@@ -117,7 +117,7 @@ in
     {
       imports = singleton <| commonModule inputs;
 
-      persist = singleton "/nix";
+      persist.paths = singleton "/nix";
 
       nix.gc = {
         dates = "weekly";

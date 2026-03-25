@@ -5,20 +5,24 @@
       inherit (lib.attrsets) listToAttrs;
       inherit (lib.lists) map;
       inherit (lib.modules) mkIf;
-      inherit (lib.options) mkOption;
+      inherit (lib.options) mkEnableOption mkOption;
       inherit (lib.strings) removePrefix replaceStrings;
       inherit (lib.types) listOf path;
     in
     {
-      options.persist = mkOption {
-        type = listOf path;
-        default = [ ];
-        description = "Paths to persist as bcachefs subvolumes under the root filesystem.";
+      options.persist = {
+        enable = mkEnableOption "bcachefs subvolume persistence";
+
+        paths = mkOption {
+          type = listOf path;
+          default = [ ];
+          description = "Paths to persist as bcachefs subvolumes under the root filesystem.";
+        };
       };
 
-      config = mkIf (config.persist != [ ]) {
+      config = mkIf (config.persist.enable && config.persist.paths != [ ]) {
         disko.devices.bcachefs_filesystems."root".subvolumes =
-          config.persist
+          config.persist.paths
           |> map (mountpoint: {
             name =
               mountpoint

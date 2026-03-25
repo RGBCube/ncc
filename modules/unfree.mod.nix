@@ -4,6 +4,7 @@ let
     let
       inherit (lib.lists) elem;
       inherit (lib.options) mkOption;
+      inherit (lib.strings) getName;
       inherit (lib.types) listOf str;
     in
     {
@@ -18,7 +19,7 @@ let
       };
 
       config.nixpkgs.config.allowUnfreePredicate =
-        package: elem package.pname config.allowedUnfreePackageNames;
+        package: elem (getName package) config.allowedUnfreePackageNames;
     };
 in
 {

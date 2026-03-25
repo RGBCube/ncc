@@ -20,6 +20,7 @@ let
         "sound"
         "steam"
         "sudo-desktop"
+        "iso"
         "theme"
       ]
     )
@@ -72,22 +73,6 @@ in
         {
           networking.hostName = "istanbul";
 
-          boot.loader.systemd-boot.enable = true;
-          boot.loader.systemd-boot.editor = false;
-          boot.loader.efi.canTouchEfiVariables = true;
-
-          boot.initrd.systemd.enable = true;
-
-          boot.supportedFilesystems = {
-            bcachefs = true;
-          };
-
-          boot.initrd.availableKernelModules = {
-            nvme = true;
-            sd_mod = true;
-            xhci_pci = true;
-          };
-
           fileSystems."/" = {
             device = "none";
             fsType = "tmpfs";
@@ -98,6 +83,7 @@ in
             ];
           };
 
+          persist.enable = true;
           fileSystems."/media/persist".options = [
             "lazytime"
             "x-systemd.requires-mounts-for=/media/key"
@@ -105,7 +91,7 @@ in
           boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/media/persist"}".script =
             mkForce
               /* bash */ ''
-                ${getExe config.boot.bcachefs.package} unlock --file /media/key/.bcachefs.key ${
+                ${getExe config.boot.bcachefs.package} unlock --file ${config.disko.devices.bcachefs_filesystems.root.passwordFile} ${
                   config.fileSystems."/media/persist".device
                 }
               '';
@@ -154,7 +140,7 @@ in
 
           };
 
-          nixpkgs.hostPlatform = "x86_64-linux";
+          hardware.report = ./istanbul.report.json;
           system.stateVersion = "25.11";
         }
       );
@@ -170,18 +156,11 @@ in
         let
           inherit (lib.lists) singleton;
           inherit (lib.meta) getExe;
-          inherit (lib.modules) mkForce;
 
           istanbul = self.nixosConfigurations.istanbul;
         in
         {
-          imports = singleton <| inputs.nixpkgs + /nixos/modules/installer/cd-dvd/installation-cd-minimal.nix;
-
-          services.getty.autologinUser = mkForce "root";
-
-          boot.supportedFilesystems = {
-            bcachefs = true;
-          };
+          imports = singleton self.nixosModules.iso;
 
           environment.etc."install-closure".source = pkgs.closureInfo {
             rootPaths = [
@@ -193,15 +172,21 @@ in
             ];
           };
 
-          environment.systemPackages =
-            singleton
-            <| pkgs.writeShellScriptBin "install-istanbul" /* bash */ ''
+          environment.systemPackages = [
+            (pkgs.writeShellScriptBin "install-istanbul" /* bash */ ''
               set -euo pipefail
 
               exec ${
                 getExe inputs.disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
               } --flake "${self}#istanbul" --disk default "${istanbul.config.disko.devices.disk.default.device}"
-            '';
+            '')
+
+            (pkgs.writeShellScriptBin "generate-facter-report" /* bash */ ''
+              set -euo pipefail
+
+              exec ${getExe pkgs.nixos-facter}
+            '')
+          ];
 
           nixpkgs.hostPlatform = "x86_64-linux";
           system.stateVersion = "25.11";

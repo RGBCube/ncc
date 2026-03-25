@@ -34,7 +34,7 @@ in
     {
       imports = [ commonMagicDnsModule ];
 
-      persist = singleton "/var/lib/tailscale";
+      persist.paths = singleton "/var/lib/tailscale";
 
       secrets.tailscaleAuthKey = {
         file = ./tailscale.secret.age;

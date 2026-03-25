@@ -1,15 +1,21 @@
 {
-  flake.nixosModules.sound = {
-    security.rtkit.enable = true;
+  flake.nixosModules.sound =
+    { config, lib, ... }:
+    let
+      inherit (lib.modules) mkIf;
+    in
+    {
+      config = mkIf (config.hardware.report.hardware.sound or [] != []) {
+        security.rtkit.enable = true;
 
-    services.pipewire = {
-      enable = true;
+        services.pipewire = {
+          enable = true;
 
-      alsa.enable = true;
-      alsa.support32Bit = true;
+          alsa.enable = true;
+          alsa.support32Bit = true;
 
-      pulse.enable = true;
+          pulse.enable = true;
+        };
+      };
     };
-  };
-
 }

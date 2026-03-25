@@ -14,7 +14,7 @@
       inherit (lib.lists) singleton;
     in
     {
-      persist = singleton "/var/lib/syncthing";
+      persist.paths = singleton "/var/lib/syncthing";
 
       services.syncthing.enable = true;
     };
