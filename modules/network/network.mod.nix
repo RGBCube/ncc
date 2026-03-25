@@ -52,28 +52,42 @@
   flake.nixosModules.network =
     { config, lib, ... }:
     let
-      inherit (lib.lists) map;
+      inherit (lib.lists) map singleton;
       inherit (lib.modules) mkAfter mkDefault mkForce;
       inherit (lib.strings) concatStringsSep optionalString replaceStrings;
     in
     {
-      networking.useNetworkd = true;
-
-      networking.nftables.enable = true;
-
-      # Force false because the installer module sets this to true.
-      networking.wireless.enable = mkForce false;
-      networking.wireless.iwd.enable = true;
-
-      secrets.wifiHome = {
-        file = ./home.psk.age;
+      secrets.wifiEnv = {
+        file = ./password.env.age;
         owner = "root";
         mode = "0400";
       };
-      systemd.tmpfiles.rules = [
-        "d /var/lib/iwd 0700 root root -"
-        "C /var/lib/iwd/PALA.psk 0600 root root - ${config.secrets.wifiHome.path}"
-      ];
+
+      persist = singleton "/var/lib/NetworkManager";
+
+      # Force false because the installer module sets this to true.
+      networking.wireless.enable = mkForce false;
+      networking.networkmanager.wifi.backend = "iwd";
+
+      networking.networkmanager = {
+        enable = true;
+        dns = "none";
+
+        ensureProfiles = {
+          environmentFiles = singleton config.secrets.wifiEnv.path;
+
+          profiles.home = {
+            connection.id = "home";
+            connection.type = "wifi";
+
+            wifi.ssid = "PALA";
+            wifi-security.key-mgmt = "wpa-psk";
+            wifi-security.psk = "$WIFI_PSK";
+          };
+        };
+      };
+
+      networking.nftables.enable = true;
 
       services.zapret = {
         enable = true;
