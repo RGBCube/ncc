@@ -22,6 +22,16 @@ in
         aliasModule
       ];
 
+      boot.initrd.availableKernelModules = {
+        exfat = true;
+        usb_storage = true;
+        uas = true;
+      };
+
+      boot.supportedFilesystems = {
+        exfat = true;
+      };
+
       fileSystems."/media/key" = {
         device = "/dev/disk/by-label/fatih";
         fsType = "exfat";

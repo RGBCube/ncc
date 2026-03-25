@@ -80,15 +80,11 @@ in
 
           boot.supportedFilesystems = {
             bcachefs = true;
-            exfat = true;
           };
 
           boot.initrd.availableKernelModules = {
-            exfat = true;
             nvme = true;
             sd_mod = true;
-            uas = true;
-            usb_storage = true;
             xhci_pci = true;
           };
 
@@ -185,7 +181,6 @@ in
 
           boot.supportedFilesystems = {
             bcachefs = true;
-            exfat = true;
           };
 
           environment.etc."install-closure".source = pkgs.closureInfo {
