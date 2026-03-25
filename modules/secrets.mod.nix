@@ -22,6 +22,16 @@ in
         aliasModule
       ];
 
+      fileSystems."/media/key" = {
+        device = "/dev/disk/by-label/fatih";
+        fsType = "exfat";
+        options = [
+          "ro"
+          "umask=0077"
+        ];
+        neededForBoot = true;
+      };
+
       age.identityPaths = [ "/media/key/.secrets.key" ];
 
       services.openssh.hostKeys = singleton {

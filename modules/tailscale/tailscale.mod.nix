@@ -27,11 +27,14 @@ in
       ...
     }:
     let
+      inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter mkIf;
     in
     {
       imports = [ commonMagicDnsModule ];
+
+      persist = singleton "/var/lib/tailscale";
 
       secrets.tailscaleAuthKey = {
         file = ./tailscale.secret.age;

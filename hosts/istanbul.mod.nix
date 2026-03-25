@@ -102,16 +102,6 @@ in
             ];
           };
 
-          fileSystems."/media/key" = {
-            device = "/dev/disk/by-label/fatih";
-            fsType = "exfat";
-            options = [
-              "ro"
-              "umask=0077"
-            ];
-            neededForBoot = true;
-          };
-
           fileSystems."/media/persist".options = [
             "lazytime"
             "x-systemd.requires-mounts-for=/media/key"
@@ -139,8 +129,8 @@ in
                 content.format = "vfat";
                 content.mountpoint = "/boot";
                 content.mountOptions = [
-                  "fmask=0022"
-                  "dmask=0022"
+                  "fmask=0077"
+                  "dmask=0077"
                 ];
               };
 
@@ -166,7 +156,6 @@ in
             mountpoint = "/media/persist";
             passwordFile = "/media/key/.bcachefs.key";
 
-            subvolumes."nix".mountpoint = "/nix";
           };
 
           nixpkgs.hostPlatform = "x86_64-linux";
@@ -197,17 +186,6 @@ in
           boot.supportedFilesystems = {
             bcachefs = true;
             exfat = true;
-          };
-
-          services.udev.extraRules = /* cpp */ ''
-            ACTION=="add", ENV{ID_FS_LABEL}=="fatih", TAG+="systemd", ENV{SYSTEMD_WANTS}="media-key.mount"
-          '';
-
-          systemd.mounts = singleton {
-            what = "LABEL=fatih";
-            where = "/media/key";
-            type = "exfat";
-            options = "ro,umask=0077";
           };
 
           environment.etc."install-closure".source = pkgs.closureInfo {
