@@ -8,28 +8,29 @@
 let
   inherit (lib.attrsets) attrValues removeAttrs;
   inherit (lib.lists) singleton;
+  inherit (lib.trivial) flip;
 
   modules =
-    attrValues (
-      removeAttrs self.nixosModules [
+    attrValues self.commonModules
+    ++ (
+      self.nixosModules
+      |> flip removeAttrs [
         "bluetooth-gui"
-        "packages-debugging-gui"
         "fonts"
         "helium"
+        "iso"
         "linux-kernel-desktop"
+        "packages-debugging-gui"
         "sound"
         "steam"
         "sudo-desktop"
-        "iso"
-        "theme"
       ]
+      |> attrValues
     )
     ++ singleton {
       home.extraModules =
-        attrValues
-        <| removeAttrs self.homeModules [
-          # Already added by the home nixosModule.
-          "home"
+        self.homeModules
+        |> flip removeAttrs [
           "cinny"
           "darwin-wm"
           "discord"
@@ -49,148 +50,147 @@ let
           "whatsapp"
           "zen-browser"
           "zulip"
-        ];
+        ]
+        |> attrValues;
     };
 in
 {
   flake.nixosConfigurations.istanbul = lib.nixosSystem {
     specialArgs = { inherit self inputs keys; };
 
-    modules =
-      modules
-      ++ singleton (
-        {
-          config,
-          lib,
-          utils,
-          ...
-        }:
-        let
-          inherit (lib.meta) getExe;
-          inherit (lib.modules) mkForce;
-          inherit (utils) escapeSystemdPath;
-        in
-        {
-          networking.hostName = "istanbul";
+    modules = singleton (
+      {
+        config,
+        lib,
+        utils,
+        ...
+      }:
+      let
+        inherit (lib.meta) getExe;
+        inherit (lib.modules) mkForce;
+        inherit (utils) escapeSystemdPath;
+      in
+      {
+        imports = modules;
 
-          fileSystems."/" = {
-            device = "none";
-            fsType = "tmpfs";
-            options = [
-              "defaults"
-              "size=25%"
-              "mode=755"
-            ];
-          };
+        networking.hostName = "istanbul";
 
-          persist.enable = true;
-          fileSystems."/media/persist".options = [
-            "lazytime"
-            "x-systemd.requires-mounts-for=/media/key"
+        fileSystems."/" = {
+          device = "none";
+          fsType = "tmpfs";
+          options = [
+            "defaults"
+            "size=25%"
+            "mode=755"
           ];
-          boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/media/persist"}".script =
-            mkForce
-              /* bash */ ''
-                ${getExe config.boot.bcachefs.package} unlock --file ${config.disko.devices.bcachefs_filesystems.root.passwordFile} ${
-                  config.fileSystems."/media/persist".device
-                }
-              '';
+        };
 
-          disko.devices.disk."default" = {
-            device = "/dev/nvme0n1";
-            type = "disk";
-            content = {
-              type = "gpt";
+        persist.enable = true;
+        fileSystems."/media/persist".options = [
+          "lazytime"
+          "x-systemd.requires-mounts-for=/media/key"
+        ];
+        boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/media/persist"}".script =
+          mkForce
+            /* bash */ ''
+              ${getExe config.boot.bcachefs.package} unlock --file ${config.disko.devices.bcachefs_filesystems.root.passwordFile} ${
+                config.fileSystems."/media/persist".device
+              }
+            '';
 
-              partitions.boot = {
-                label = "boot";
-                size = "1G";
-                type = "EF00";
+        disko.devices.disk."default" = {
+          device = "/dev/nvme0n1";
+          type = "disk";
+          content = {
+            type = "gpt";
 
-                content.type = "filesystem";
-                content.format = "vfat";
-                content.mountpoint = "/boot";
-                content.mountOptions = [
-                  "fmask=0077"
-                  "dmask=0077"
-                ];
-              };
+            partitions.boot = {
+              label = "boot";
+              size = "1G";
+              type = "EF00";
 
-              partitions.root = {
-                label = "root";
-                size = "100%";
+              content.type = "filesystem";
+              content.format = "vfat";
+              content.mountpoint = "/boot";
+              content.mountOptions = [
+                "fmask=0077"
+                "dmask=0077"
+              ];
+            };
 
-                content.type = "bcachefs";
-                content.filesystem = "root";
-                content.label = "root";
-              };
+            partitions.root = {
+              label = "root";
+              size = "100%";
+
+              content.type = "bcachefs";
+              content.filesystem = "root";
+              content.label = "root";
             };
           };
+        };
 
-          disko.devices.bcachefs_filesystems."root" = {
-            type = "bcachefs_filesystem";
-            extraFormatArgs = [
-              "--compression=zstd:9"
-              "--background_compression=zstd:9"
-              "--block_size=4096"
-            ];
+        disko.devices.bcachefs_filesystems."root" = {
+          type = "bcachefs_filesystem";
+          extraFormatArgs = [
+            "--compression=zstd:9"
+            "--background_compression=zstd:9"
+            "--block_size=4096"
+          ];
 
-            mountpoint = "/media/persist";
-            passwordFile = "/media/key/.bcachefs.key";
+          mountpoint = "/media/persist";
+          passwordFile = "/media/key/.bcachefs.key";
 
-          };
+        };
 
-          hardware.report = ./istanbul.report.json;
-          system.stateVersion = "25.11";
-        }
-      );
+        hardware.report = ./istanbul.report.json;
+        system.stateVersion = "25.11";
+      }
+    );
   };
 
   flake.nixosConfigurations.istanbul-installer = lib.nixosSystem {
     specialArgs = { inherit self inputs keys; };
 
-    modules =
-      modules
-      ++ singleton (
-        { pkgs, ... }:
-        let
-          inherit (lib.lists) singleton;
-          inherit (lib.meta) getExe;
+    modules = singleton (
+      { pkgs, ... }:
+      let
+        inherit (lib.lists) singleton;
+        inherit (lib.meta) getExe;
 
-          istanbul = self.nixosConfigurations.istanbul;
-        in
-        {
-          imports = singleton self.nixosModules.iso;
+        istanbul = self.nixosConfigurations.istanbul;
+      in
+      {
+        imports = modules ++ singleton self.nixosModules.iso;
 
-          environment.etc."install-closure".source = pkgs.closureInfo {
-            rootPaths = [
-              istanbul.config.system.build.toplevel
-              istanbul.config.system.build.diskoScript
-              istanbul.config.system.build.diskoScript.drvPath
-              istanbul.pkgs.stdenv.drvPath
-              (istanbul.pkgs.closureInfo { rootPaths = [ ]; }).drvPath
-            ];
-          };
-
-          environment.systemPackages = [
-            (pkgs.writeShellScriptBin "install-istanbul" /* bash */ ''
-              set -euo pipefail
-
-              exec ${
-                getExe inputs.disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
-              } --flake "${self}#istanbul" --disk default "${istanbul.config.disko.devices.disk.default.device}"
-            '')
-
-            (pkgs.writeShellScriptBin "generate-facter-report" /* bash */ ''
-              set -euo pipefail
-
-              exec ${getExe pkgs.nixos-facter}
-            '')
+        environment.etc."install-closure".source = pkgs.closureInfo {
+          rootPaths = [
+            istanbul.config.system.build.toplevel
+            istanbul.config.system.build.diskoScript
+            istanbul.config.system.build.diskoScript.drvPath
+            istanbul.pkgs.stdenv.drvPath
+            (istanbul.pkgs.closureInfo { rootPaths = [ ]; }).drvPath
           ];
+        };
 
-          nixpkgs.hostPlatform = "x86_64-linux";
-          system.stateVersion = "25.11";
-        }
-      );
+        environment.systemPackages = [
+          (pkgs.writeShellScriptBin "install-istanbul" /* bash */ ''
+            set -euo pipefail
+
+            exec ${
+              getExe inputs.disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
+            } --flake "${self}#istanbul" --disk default "${istanbul.config.disko.devices.disk.default.device}"
+          '')
+
+          (pkgs.writeShellScriptBin "generate-facter-report" /* bash */ ''
+            set -euo pipefail
+
+            exec ${getExe pkgs.nixos-facter}
+          '')
+        ];
+
+        nixpkgs.hostPlatform = "x86_64-linux";
+        system.stateVersion = "25.11";
+      }
+    );
   };
 }

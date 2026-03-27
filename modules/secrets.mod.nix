@@ -1,26 +1,22 @@
-let
-  aliasModule =
+{ inputs, ... }:
+{
+  flake.commonModules.secrets =
     { lib, ... }:
     let
+      inherit (lib.lists) singleton;
       inherit (lib.modules) mkAliasOptionModule;
     in
     {
-      imports = [ (mkAliasOptionModule [ "secrets" ] [ "age" "secrets" ]) ];
+      imports = singleton <| mkAliasOptionModule [ "secrets" ] [ "age" "secrets" ];
     };
-in
-{ inputs, ... }:
-{
+
   flake.nixosModules.secrets =
     { config, lib, ... }:
     let
       inherit (lib.lists) head singleton;
     in
     {
-      imports = [
-        inputs.agenix.nixosModules.age
-
-        aliasModule
-      ];
+      imports = singleton inputs.agenix.nixosModules.age;
 
       boot.initrd.availableKernelModules = {
         exfat = true;
@@ -42,7 +38,7 @@ in
         neededForBoot = true;
       };
 
-      age.identityPaths = [ "/media/key/.secrets.key" ];
+      age.identityPaths = singleton "/media/key/.secrets.key";
 
       services.openssh.hostKeys = singleton {
         type = "ed25519";
@@ -51,25 +47,22 @@ in
     };
 
   flake.darwinModules.secrets =
-    { config, ... }:
+    { config, lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
     {
-      imports = [
-        inputs.agenix.darwinModules.age
+      imports = singleton inputs.agenix.darwinModules.age;
 
-        aliasModule
-      ];
-
-      age.identityPaths = [ "/Users/${config.system.primaryUser}/.ssh/id" ]; # FIXME: This path shouldn't exist, but does because of agenix (sigh)
+      age.identityPaths = singleton "/Users/${config.system.primaryUser}/.ssh/id"; # FIXME: This path shouldn't exist, but does because of agenix (sigh)
     };
 
   flake.homeModules.secrets-manager =
+    { pkgs, lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
     {
-      pkgs,
-      ...
-    }:
-    {
-      packages = [
-        pkgs.ragenix
-      ];
+      packages = singleton pkgs.ragenix;
     };
 }

@@ -1,9 +1,12 @@
 { inputs, ... }:
 {
   flake.darwinModules.homebrew =
-    { config, ... }:
+    { config, lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
     {
-      imports = [ inputs.homebrew.darwinModules.nix-homebrew ];
+      imports = singleton inputs.homebrew.darwinModules.nix-homebrew;
 
       homebrew.enable = true;
 

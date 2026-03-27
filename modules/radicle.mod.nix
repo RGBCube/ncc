@@ -1,31 +1,16 @@
-{ lib, ... }:
-let
-  inherit (lib.generators) toJSON;
-  inherit (lib.lists) singleton;
-
-  # TODO: This is useless. Use secret from KeepassXC
-  commonModule =
-    { owner }:
-    {
-      secrets.radicle = {
-        file = ./radicle.age;
-        inherit owner;
-        mode = "0600";
-      };
-    };
-in
 {
-  flake.darwinModules.radicle = { config, ... }: commonModule { owner = config.system.primaryUser; };
-
-  flake.nixosModules.radicle = commonModule { owner = "root"; };
-
   flake.homeModules.radicle =
     {
       config,
       osConfig,
       pkgs,
+      lib,
       ...
     }:
+    let
+      inherit (lib.generators) toJSON;
+      inherit (lib.lists) singleton;
+    in
     {
       environment.sessionVariables.RAD_HOME = "${config.xdg.data.directory}/radicle";
 

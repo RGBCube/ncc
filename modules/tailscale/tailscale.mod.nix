@@ -1,5 +1,5 @@
-let
-  commonMagicDnsModule =
+{
+  flake.commonModules.tailscale =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;
@@ -17,8 +17,7 @@ let
         };
       };
     };
-in
-{
+
   flake.nixosModules.tailscale =
     {
       config,
@@ -32,8 +31,6 @@ in
       inherit (lib.modules) mkAfter mkIf;
     in
     {
-      imports = [ commonMagicDnsModule ];
-
       persist.paths = singleton "/var/lib/tailscale";
 
       secrets.tailscaleAuthKey = {
@@ -84,8 +81,6 @@ in
       inherit (lib.lists) singleton;
     in
     {
-      imports = [ commonMagicDnsModule ];
-
       homebrew.casks = singleton "tailscale-app";
     };
 

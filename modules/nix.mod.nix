@@ -1,6 +1,6 @@
-let
-  commonModule =
-    inputs:
+{ inputs, ... }:
+{
+  flake.commonModules.nix =
     {
       self,
       config,
@@ -106,17 +106,13 @@ let
           '';
       };
     };
-in
-{ inputs, ... }:
-{
+
   flake.nixosModules.nix =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;
     in
     {
-      imports = singleton <| commonModule inputs;
-
       persist.paths = singleton "/nix";
 
       nix.gc = {
@@ -131,8 +127,6 @@ in
       inherit (lib.lists) singleton;
     in
     {
-      imports = singleton <| commonModule inputs;
-
       nix.gc.interval = singleton {
         Hour = 3;
         Minute = 15;

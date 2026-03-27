@@ -1,4 +1,4 @@
-{ self, inputs, ... }:
+{ inputs, ... }:
 {
   flake.homeModules.sudo-run0-shim =
     { osConfig, lib, ... }:
@@ -11,17 +11,10 @@
       ];
     };
 
-  flake.nixosModules.sudo =
-    { lib, ... }:
-    let
-      inherit (lib.lists) singleton;
-    in
-    {
-      security.sudo.enable = false;
-      security.polkit.enable = true;
-
-      home.extraModules = singleton self.homeModules.sudo-run0-shim;
-    };
+  flake.nixosModules.sudo = {
+    security.sudo.enable = false;
+    security.polkit.enable = true;
+  };
 
   flake.nixosModules.sudo-desktop = {
     security.polkit.extraConfig = # js

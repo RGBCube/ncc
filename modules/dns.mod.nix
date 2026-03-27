@@ -1,57 +1,6 @@
 { self, lib, ... }:
-let
-  inherit (lib.strings) hasInfix substring;
-
-  mkSocketAddr =
-    { ip, port }: if hasInfix ":" ip then "[${ip}]:${toString port}" else "${ip}:${toString port}";
-
-  id = "7f2bf8";
-  idv6 = "${substring 0 2 id}:${substring 2 4 id}";
-
-  mkNextDnsServers =
-    { ip, hostName }:
-    [
-      {
-        socket_addr = mkSocketAddr {
-          inherit ip;
-          port = 443;
-        };
-        protocol = "h3";
-        tls_dns_name = "dns.nextdns.io";
-        http_endpoint = "/${id}/${hostName}";
-        trust_negative_responses = true;
-      }
-      {
-        socket_addr = mkSocketAddr {
-          inherit ip;
-          port = 853;
-        };
-        protocol = "quic";
-        tls_dns_name = "${hostName}-${id}.dns.nextdns.io";
-        trust_negative_responses = true;
-      }
-      {
-        socket_addr = mkSocketAddr {
-          inherit ip;
-          port = 443;
-        };
-        protocol = "https";
-        tls_dns_name = "dns.nextdns.io";
-        http_endpoint = "/${id}/${hostName}";
-        trust_negative_responses = true;
-      }
-      {
-        socket_addr = mkSocketAddr {
-          inherit ip;
-          port = 853;
-        };
-        protocol = "tls";
-        tls_dns_name = "${hostName}-${id}.dns.nextdns.io";
-        trust_negative_responses = true;
-      }
-    ];
-
-  commonModule =
+{
+  flake.commonModules.dns =
     { config, pkgs, ... }:
     let
       inherit (lib.attrsets) getAttr;
@@ -61,6 +10,56 @@ let
         singleton
         sort
         ;
+      inherit (lib.strings) hasInfix substring;
+
+      mkSocketAddr =
+        { ip, port }: if hasInfix ":" ip then "[${ip}]:${toString port}" else "${ip}:${toString port}";
+
+      id = "7f2bf8";
+      idv6 = "${substring 0 2 id}:${substring 2 4 id}";
+
+      mkNextDnsServers =
+        { ip, hostName }:
+        [
+          {
+            socket_addr = mkSocketAddr {
+              inherit ip;
+              port = 443;
+            };
+            protocol = "h3";
+            tls_dns_name = "dns.nextdns.io";
+            http_endpoint = "/${id}/${hostName}";
+            trust_negative_responses = true;
+          }
+          {
+            socket_addr = mkSocketAddr {
+              inherit ip;
+              port = 853;
+            };
+            protocol = "quic";
+            tls_dns_name = "${hostName}-${id}.dns.nextdns.io";
+            trust_negative_responses = true;
+          }
+          {
+            socket_addr = mkSocketAddr {
+              inherit ip;
+              port = 443;
+            };
+            protocol = "https";
+            tls_dns_name = "dns.nextdns.io";
+            http_endpoint = "/${id}/${hostName}";
+            trust_negative_responses = true;
+          }
+          {
+            socket_addr = mkSocketAddr {
+              inherit ip;
+              port = 853;
+            };
+            protocol = "tls";
+            tls_dns_name = "${hostName}-${id}.dns.nextdns.io";
+            trust_negative_responses = true;
+          }
+        ];
     in
     {
       services.hickory-dns = {
@@ -133,18 +132,13 @@ let
         };
       };
     };
-in
-{
+
   flake.darwinModules.dns =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;
     in
     {
-      imports = [
-        commonModule
-      ];
-
       networking.dns = singleton "::1";
     };
 
@@ -154,8 +148,6 @@ in
       inherit (lib.modules) mkForce;
     in
     {
-      imports = [ commonModule ];
-
       services.resolved.enable = false;
 
       environment.etc."resolv.conf".text = mkForce /* resolvconf */ ''

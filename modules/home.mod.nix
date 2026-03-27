@@ -1,4 +1,4 @@
-{ self, inputs, ... }:
+{ inputs, ... }:
 {
   flake.homeModules.home =
     {
@@ -7,12 +7,11 @@
       ...
     }:
     let
+      inherit (lib.lists) singleton;
       inherit (lib.modules) mkAliasOptionModule;
     in
     {
-      imports = [
-        (mkAliasOptionModule [ "programs" ] [ "rum" "programs" ])
-      ];
+      imports = singleton <| mkAliasOptionModule [ "programs" ] [ "rum" "programs" ];
 
       # FORCE XDG ENV VARS
       # hjem only exports XDG_*_HOME when config value != option default.
@@ -27,43 +26,30 @@
       };
     };
 
-  flake.nixosModules.home =
+  flake.commonModules.home =
     { lib, ... }:
     let
+      inherit (lib.lists) singleton;
       inherit (lib.modules) mkAliasOptionModule;
     in
     {
-      imports = [
-        inputs.hjem.nixosModules.hjem
-        (mkAliasOptionModule [ "home" ] [ "hjem" ])
-      ];
+      imports = singleton <| mkAliasOptionModule [ "home" ] [ "hjem" ];
 
-      home.extraModules = [
-        self.homeModules.home
-        inputs.hjem-rum.hjemModules.hjem-rum
-      ];
+      home.extraModules = singleton inputs.hjem-rum.hjemModules.hjem-rum;
 
       home.clobberByDefault = true;
+    };
+
+  flake.nixosModules.home =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      imports = singleton inputs.hjem.nixosModules.hjem;
 
       home.users.root = { };
     };
 
-  flake.darwinModules.home =
-    { lib, ... }:
-    let
-      inherit (lib.modules) mkAliasOptionModule;
-    in
-    {
-      imports = [
-        inputs.hjem.darwinModules.hjem
-        (mkAliasOptionModule [ "home" ] [ "hjem" ])
-      ];
-
-      home.extraModules = [
-        self.homeModules.home
-        inputs.hjem-rum.hjemModules.hjem-rum
-      ];
-
-      home.clobberByDefault = true;
-    };
+  flake.darwinModules.home = inputs.hjem.darwinModules.hjem;
 }

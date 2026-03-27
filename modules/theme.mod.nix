@@ -1,6 +1,6 @@
-{ inputs, ... }:
-let
-  commonModule =
+{ self, inputs, ... }:
+{
+  flake.commonModules.theme =
     { lib, pkgs, ... }:
     let
       inherit (lib.modules) mkDefault;
@@ -39,9 +39,6 @@ let
             icons.package = pkgs.gruvbox-plus-icons;
           };
     };
-in
-{
-  flake.nixosModules.theme = commonModule;
-  flake.darwinModules.theme = commonModule;
-  flake.homeModules.theme = commonModule;
+
+  flake.homeModules.theme = self.commonModules.theme;
 }
