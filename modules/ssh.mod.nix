@@ -97,9 +97,16 @@
     };
 
   flake.nixosModules.ssh-server =
-    { keys, lib, ... }:
+    {
+      config,
+      keys,
+      lib,
+      pkgs,
+      ...
+    }:
     let
-      inherit (lib.lists) singleton;
+      inherit (lib.lists) head singleton;
+      inherit (lib.strings) concatLines;
     in
     {
       programs.mosh = {
@@ -119,9 +126,18 @@
             "COLORTERM"
           ];
         };
+
+        authorizedKeysFiles = singleton "${pkgs.writeText "admin-keys" <| concatLines keys.admins}";
       };
 
+      # Satisfy NixOS lockout assertion.
       users.users.root.openssh.authorizedKeys.keys = keys.admins;
+
+      boot.initrd.network.ssh = {
+        enable = true;
+        port = head config.services.openssh.ports;
+        authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
+      };
     };
 
   flake.nixosModules.endlessh-go =
