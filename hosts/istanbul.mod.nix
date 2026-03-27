@@ -13,7 +13,7 @@ let
     attrValues (
       removeAttrs self.nixosModules [
         "bluetooth-gui"
-        "debugging-gui"
+        "packages-debugging-gui"
         "fonts"
         "helium"
         "linux-kernel-desktop"
