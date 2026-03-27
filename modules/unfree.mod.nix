@@ -1,5 +1,5 @@
-let
-  commonModule =
+{
+  flake.commonModules.unfree =
     { config, lib, ... }:
     let
       inherit (lib.lists) elem;
@@ -21,8 +21,4 @@ let
       config.nixpkgs.config.allowUnfreePredicate =
         package: elem (getName package) config.allowedUnfreePackageNames;
     };
-in
-{
-  flake.darwinModules.unfree = commonModule;
-  flake.nixosModules.unfree = commonModule;
 }
