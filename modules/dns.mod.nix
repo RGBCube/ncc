@@ -73,6 +73,7 @@
             "h3-aws-lc-rs"
           ];
 
+          meta.mainProgram = "hickory-dns"; # upstream does not seem to believe in mainProgram
           meta.platforms = old.meta.platforms ++ lib.platforms.darwin;
         });
 
