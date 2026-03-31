@@ -46,10 +46,6 @@
         );
     in
     {
-      xdg.config.files."ssh/key.pub".text = /* ssh */ ''
-        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBVkWUQ6Z4OK539tore/R5wnueNPPaX532RUAld8UOCo rgbcube
-      '';
-
       xdg.config.files."ssh/config".text =
         concatLines
         <|
@@ -99,7 +95,6 @@
   flake.nixosModules.ssh-server =
     {
       config,
-      keys,
       lib,
       pkgs,
       ...
@@ -127,11 +122,11 @@
           ];
         };
 
-        authorizedKeysFiles = singleton "${pkgs.writeText "admin-keys" <| concatLines keys.admins}";
+        authorizedKeysFiles = singleton "${pkgs.writeText "admin-keys" <| concatLines self.keys-admin}";
       };
 
       # Satisfy NixOS lockout assertion.
-      users.users.root.openssh.authorizedKeys.keys = keys.admins;
+      users.users.root.openssh.authorizedKeys.keys = self.keys-admin;
 
       boot.initrd.network.ssh = {
         enable = true;

@@ -66,27 +66,6 @@
         fetch.fsckObjects = true;
         receive.fsckObjects = true;
         transfer.fsckobjects = true;
-
-        alias.recent = # sh
-          ''! git branch --sort=-committerdate --format="%(committerdate:relative)%09%(refname:short)" | head -10'';
-      };
-    };
-
-  flake.homeModules.git-sign =
-    { config, lib, ... }:
-    let
-      inherit (lib.generators) toGitINI;
-    in
-    {
-      # xdg.config.files."git/config".generator = toGitINI; # FIXME
-      xdg.config.files."git/config".value = {
-        url."ssh://git@github.com/".insteadOf = "https://github.com/";
-
-        commit.gpgSign = true;
-        tag.gpgSign = true;
-
-        gpg.format = "ssh";
-        user.signingKey = "${config.xdg.config.directory}/ssh/key.pub";
       };
     };
 
@@ -233,7 +212,7 @@
 
         signing.backend = "ssh";
         signing.behavior = "own";
-        signing.key = "${config.xdg.config.directory}/ssh/key.pub";
+        signing.key = self.keys.rgbcube;
       };
     };
 }

@@ -1,11 +1,13 @@
 let
   inherit (builtins)
     attrNames
+    attrValues
     concatMap
     elem
     filter
     foldl'
     listToAttrs
+    match
     readDir
     readFileType
     ;
@@ -34,9 +36,15 @@ let
           [ ]
       );
 
-  isAge = name: builtins.match ".*\\.age$" name != null;
+  isAge = name: match ".*\\.age$" name != null;
 
-  keys = import ./keys.nix;
+  keysModule =
+    (import ./modules/keys.mod.nix {
+      self = keysModule;
+      lib.lists = { inherit singleton; };
+    }).flake;
+
+  inherit (keysModule) keys keys-admin;
 
   hostSecrets =
     attrNames (readDir ./hosts)
@@ -46,7 +54,7 @@ let
       |> filter isAge
       |> map (path: {
         name = path;
-        value.publicKeys = uniq <| optional (keys ? ${host}) keys.${host} ++ keys.admins;
+        value.publicKeys = uniq <| optional (keys ? ${host}) keys.${host} ++ keys-admin;
       })
     );
 
@@ -55,10 +63,10 @@ let
     |> filter isAge
     |> map (path: {
       name = path;
-      value.publicKeys = uniq <| keys.all;
+      value.publicKeys = uniq <| attrValues keys;
     });
 in
 listToAttrs (hostSecrets ++ moduleSecrets)
 // {
-  "bootstrap.age".publicKeys = keys.all;
+  "bootstrap.age".publicKeys = uniq <| attrValues keys;
 }

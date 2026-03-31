@@ -1,7 +1,7 @@
+{ inputs, ... }:
 {
   flake.nixosModules.nushell =
     {
-      inputs,
       lib,
       pkgs,
       ...

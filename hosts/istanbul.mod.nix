@@ -1,7 +1,6 @@
 {
   self,
   inputs,
-  keys,
   lib,
   ...
 }:
@@ -56,8 +55,6 @@ let
 in
 {
   flake.nixosConfigurations.istanbul = lib.nixosSystem {
-    specialArgs = { inherit self inputs keys; };
-
     modules = singleton (
       {
         config,
@@ -149,8 +146,6 @@ in
   };
 
   flake.nixosConfigurations.istanbul-installer = lib.nixosSystem {
-    specialArgs = { inherit self inputs keys; };
-
     modules = singleton (
       { pkgs, ... }:
       let
