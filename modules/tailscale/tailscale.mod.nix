@@ -51,7 +51,7 @@
         ];
       };
 
-      networking.firewall.trustedInterfaces = [ config.services.tailscale.interfaceName ];
+      networking.firewall.trustedInterfaces = singleton config.services.tailscale.interfaceName;
 
       # NFTABLES
       systemd.services.tailscaled.serviceConfig.Environment = mkIf config.networking.nftables.enable [
