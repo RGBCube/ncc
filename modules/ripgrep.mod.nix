@@ -7,8 +7,8 @@
         pkgs.ripgrep
       ];
 
-      xdg.config.files."ripgrep/ripgreprc".generator = self.lib.generators.toCliFlagList;
-      xdg.config.files."ripgrep/ripgreprc".value = {
+      xdg.config.files."ripgrep/config".generator = self.lib.generators.toCliFlagList;
+      xdg.config.files."ripgrep/config".value = {
         line-number = true;
         smart-case = true;
       };

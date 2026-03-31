@@ -51,6 +51,9 @@
       xdg.data.files."go".type = "directory";
       environment.sessionVariables.GOPATH = "${config.xdg.data.directory}/go";
 
+      xdg.config.files."ripgrep".type = "directory";
+      environment.sessionVariables.RIPGREP_CONFIG_PATH = "${config.xdg.config.directory}/ripgrep/config";
+
       xdg.state.files."sqlite".type = "directory";
       environment.sessionVariables.SQLITE_HISTORY = "${config.xdg.state.directory}/sqlite/history";
 
