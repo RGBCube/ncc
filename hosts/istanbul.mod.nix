@@ -87,10 +87,17 @@ in
           "lazytime"
           "x-systemd.requires-mounts-for=/media/key"
         ];
+
+        # bcachefs-tools defaults to `--keyring user` (@u), but the kernel's
+        # `request_key()` searches thread -> process -> session keyrings. @u is
+        # only reachable via the user-session keyring (@us) fallback, which is
+        # skipped when a session keyring (@s) exists, which is the case in
+        # initrd systemd and SSH. Without `--keyring session` mount fails with
+        # ENOKEY ("Required key not available").
         boot.initrd.systemd.services."unlock-bcachefs-${escapeSystemdPath "/media/persist"}".script =
           mkForce
             /* bash */ ''
-              ${getExe config.boot.bcachefs.package} unlock --file ${config.disko.devices.bcachefs_filesystems.root.passwordFile} ${
+              ${getExe config.boot.bcachefs.package} unlock --keyring session --file ${config.disko.devices.bcachefs_filesystems.root.passwordFile} ${
                 config.fileSystems."/media/persist".device
               }
             '';
