@@ -21,13 +21,10 @@
       };
 
       config = mkIf (config.persist.enable && config.persist.paths != [ ]) {
-        disko.devices.bcachefs_filesystems."root".subvolumes =
+        disko.devices.bcachefs_filesystems."persist".subvolumes =
           config.persist.paths
           |> map (mountpoint: {
-            name =
-              mountpoint
-              |> removePrefix "/"
-              |> replaceStrings [ "/" ] [ "-" ];
+            name = mountpoint |> removePrefix "/" |> replaceStrings [ "/" ] [ "-" ];
             value.mountpoint = mountpoint;
           })
           |> listToAttrs;
