@@ -374,7 +374,6 @@ in
         enabledPlugins."clangd-lsp@claude-plugins-official" = true;
         enabledPlugins."code-review@claude-plugins-official" = true;
         enabledPlugins."code-simplifier@claude-plugins-official" = true;
-        enabledPlugins."context7@claude-plugins-official" = true;
         enabledPlugins."kotlin-lsp@claude-plugins-official" = true;
         enabledPlugins."ralph-loop@claude-plugins-official" = true;
         enabledPlugins."rust-analyzer-lsp@claude-plugins-official" = true;
