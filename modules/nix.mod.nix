@@ -30,11 +30,8 @@
       ];
 
       system = optionalAttrs config.nixpkgs.hostPlatform.isLinux {
-        # We install `nh` already.
-        tools.nixos-rebuild.enable = false;
-
-        # We use facter.
-        tools.nixos-generate-config.enable = false;
+        # We use `nh` and don't need nixos-rebuild, nixos-generate-config, etc.
+        disableInstallerTools = true;
       };
 
       nix.distributedBuilds = true;
