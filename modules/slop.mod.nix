@@ -450,6 +450,16 @@ in
               log(f"{label} ({n})")
 
 
+            def replace(label: str, old: bytes, new: bytes) -> None:
+              global data
+              n: int = data.count(old)
+              if n == 0:
+                log(f"{label}: NOT FOUND")
+                return
+              data = data.replace(old, new)
+              log(f"{label} ({n})")
+
+
             def flip_gates(gates: list[tuple[bytes, str]]) -> None:
               """Flip all gate defaults from false to true in a single regex pass."""
               global data
@@ -493,7 +503,8 @@ in
 
             # --- macOS config path ---
 
-            data = data.replace(
+            replace(
+              "macOS config path",
               b'case"macos":return"/Library/Application Support/ClaudeCode"',
               b'case"macos":return"/etc/claude-code"',
             )
@@ -504,7 +515,6 @@ in
               (b'name:"btw",description:"Ask a quick side question', "/btw"),
               (b'name:"bridge-kick",description:"Inject bridge failure states', "/bridge-kick"),
               (b'name:"files",description:"List all files currently in context"', "/files"),
-              (b'name:"tag",userFacingName', "/tag"),
             ]
 
             for anchor, label in slash_commands:
@@ -521,15 +531,38 @@ in
               log(f"slash command {label}: enabled")
 
             # --- Bypass telemetry gate in feature flag checker ---
-            # With telemetry off, ed() returns false and all 9 call sites bail out,
-            # blocking feature flags, GrowthBook refresh, and the async qc() path
-            # used by remote control. Make ed() always return true so the flag
-            # infrastructure works even with DISABLE_TELEMETRY=1.
+            # The chain is: h8(featureGate) bails to default if !Qo(); Qo()=Ew6();
+            # Ew6()=!Cq6(); Cq6() returns true when on bedrock/vertex/foundry OR when
+            # user-facing telemetry is disabled (s_1()/equivalent). Drop the trailing
+            # telemetry-disabled check so feature gates still resolve with
+            # DISABLE_TELEMETRY=1 while preserving the bedrock/vertex/foundry detection.
+            # Anchor on the stable env-var literal CLAUDE_CODE_USE_BEDROCK; the obfuscated
+            # function name (Cq6) and the trailing wrapper name (s_1) both rotate.
 
             patch(
-              "telemetry gate (ed → true)",
-              rb"function ed\(\)\{return " + W + rb"\(\)\}",
-              lambda m: m[0].replace(b"return ", b"return!0||"),
+              "telemetry gate (drop telemetry-disabled check)",
+              (
+                rb"function (" + W + rb")\(\)\{return F6\(process\.env\.CLAUDE_CODE_USE_BEDROCK\)"
+                rb"\|\|F6\(process\.env\.CLAUDE_CODE_USE_VERTEX\)"
+                rb"\|\|F6\(process\.env\.CLAUDE_CODE_USE_FOUNDRY\)"
+                rb"\|\|" + W + rb"\(\)\}"
+              ),
+              lambda m: re.sub(rb"\|\|" + W + rb"\(\)\}$", b"||!1}", m[0]),
+            )
+
+            # --- Restore 1h prompt cache TTL when telemetry is off ---
+            # https://github.com/anthropics/claude-code/issues/45381
+            # maY() gates the "ttl":"1h" cache_control on a GrowthBook allowlist
+            # (tengu_prompt_cache_1h_config). With telemetry off the lookup falls
+            # through to the {} default, so .allowlist is undefined and the ??[]
+            # fallback produces an empty array — every querySource fails the .some()
+            # match and falls back to 5min TTL. Replace the empty fallback with ["*"]
+            # so any defined querySource matches.
+
+            patch(
+              "1h prompt cache TTL fallback",
+              rb'h8\("tengu_prompt_cache_1h_config",\{\}\)\.allowlist\?\?\[\]',
+              b'h8("tengu_prompt_cache_1h_config",{}).allowlist??["*"]',
             )
 
             # --- Fix Deno-compile bridge spawn ---
@@ -560,59 +593,34 @@ in
 
             core_gates: list[Gate] = [
               (b"tengu_ccr_bridge", "remote control"),
-              (b"tengu_bridge_repl_v2", "remote control v2 (envless)"),
               (b"tengu_bridge_system_init", "bridge SDK init on connect"),
               (b"tengu_remote_backend", "remote backend"),
-              (b"tengu_keybinding_customization_release", "custom keybindings"),
               (b"tengu_immediate_model_command", "instant /model switching"),
               (b"tengu_fgts", "fine-grained tool streaming"),
               (b"tengu_auto_background_agents", "background agent timeout"),
-              (b"tengu_pid_based_version_locking", "PID version locking"),
               (b"tengu_plan_mode_interview_phase", "plan mode interview"),
               (b"tengu_surreal_dali", "scheduled agents/cron"),
             ]
 
             memory_gates: list[Gate] = [
               # (b"tengu_session_memory", "session memory"),  # auto-memory; pollutes unrelated convos
-              (b"tengu_sm_compact", "memory survives compaction"),
-              (b"tengu_compact_cache_prefix", "cache-aware compaction"),
-              (b"tengu_compact_streaming_retry", "compact stream retry"),
               (b"tengu_pebble_leaf_prune", "message pruning"),
               (b"tengu_herring_clock", "team memory directory"),
               (b"tengu_passport_quail", "typed combined memory prompts"),
-              # (b"tengu_swinburne_dune", "new memory extraction prompts"),  # auto-extraction
             ]
 
             ux_gates: list[Gate] = [
               (b"tengu_coral_fern", "grep hints in prompt"),
               (b"tengu_kairos_brief", "brief output mode"),
-              (b"tengu_permission_explainer", "permission explanations"),
               (b"tengu_destructive_command_warning", "destructive command warnings"),
-              (b"tengu_pr_status_cli", "PR status footer"),
-              (b"tengu_quiet_hollow", "thinking summaries"),
-              (b"tengu_lean_cast", "lean system prompt"),
               (b"tengu_amber_prism", "permission denial context"),
-              (b"tengu_sepia_heron", "token saver (compress tool output)"),
               (b"tengu_hawthorn_steeple", "context windowing"),
             ]
 
             tool_gates: list[Gate] = [
-              (b"tengu_mcp_elicitation", "MCP tool prompting"),
-              (b"tengu_tool_input_aliasing", "param alias resolution"),
               (b"tengu_chrome_auto_enable", "auto-enable chrome devtools"),
-              (b"tengu_copper_bridge", "chrome bridge context"),
-              (b"tengu_system_prompt_global_cache", "global system prompt cache"),
-              (b"tengu_tst_hint_m7r", "tool search hints"),
-              (b"tengu_tst_kx7", "auto tool search"),
               (b"tengu_glacier_2xr", "deferred tool improvements"),
-              (b"tengu_defer_caveat_m9k", "deferred tool hint in prompt"),
-              (b"tengu_basalt_3kr", "MCP instruction delta"),
-              (b"tengu_cobalt_frost", "voice conversation engine"),
-              (b"tengu_scarf_coffee", "API context management"),
-              (b"tengu_granite_whisper", "repo file indexing"),
               (b"tengu_plum_vx3", "web search reranking"),
-              (b"tengu_quartz_lantern", "remote tool use diff"),
-              (b"tengu_marble_anvil", "thinking edits"),
               # (b"tengu_moth_copse", "relevant memory recall"),  # auto-recall; pollutes unrelated convos
               (b"tengu_cork_m4q", "batch command processing"),
             ]
@@ -626,14 +634,6 @@ in
               rb'"tengu_auto_background_agents",![01]\)\)return 120000',
               lambda m: m[0].replace(b"120000", b"240000"),
             )
-
-            # --- Kill claude-developer-platform bundled skill ---
-
-            data = data.replace(
-              b'name:"claude-developer-platform",description:`',
-              b'name:"claude-developer-platform",isEnabled:()=>!1,description:`',
-            )
-            log("killed claude-developer-platform skill")
 
             # --- Replace usage fetch with self-contained OAuth implementation ---
             # FO()/eO() falls back to x-api-key when dA()/nA() returns false (telemetry off),
