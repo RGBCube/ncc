@@ -178,9 +178,10 @@
           "rad"
         ];
         git.push = "origin";
+        git.sign-on-push = true;
 
         signing.backend = "ssh";
-        signing.behavior = "own";
+        signing.behavior = "drop"; # To not error on leftover signatures from the past.
         signing.key = self.keys.rgbcube;
       };
     };
