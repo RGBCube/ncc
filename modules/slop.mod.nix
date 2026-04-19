@@ -118,6 +118,7 @@ in
       ...
     }:
     let
+      inherit (lib) strings;
       inherit (lib.generators) toJSON;
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
@@ -422,6 +423,80 @@ in
       packages =
         let
           # This is 100% slop but it doesn't matter.
+          lift = pkgs.writeScriptBin "lift-claude-bun" /* py */ ''
+            #!${getExe pkgs.python3}
+            from __future__ import annotations
+
+            import sys
+            from pathlib import Path
+
+            SCAN_FROM: int = 0x6000000
+
+            HEADERS: list[bytes] = [
+                b"// @bun @bytecode @bun-cjs\n(function(exports, require, module, __filename, __dirname) {",
+                b"// @bun @bun-cjs\n(function(exports, require, module, __filename, __dirname) {",
+            ]
+
+            CJS_OPEN: bytes = b"(function(exports, require, module, __filename, __dirname) {"
+            CJS_END: bytes = b"})\n\x00"
+
+
+            def find_main_module(data: bytes) -> tuple[int, int]:
+                for header in HEADERS:
+                    start = data.find(header, SCAN_FROM)
+                    if start >= 0:
+                        break
+                else:
+                    sys.exit("lift: no bun CJS module header found past 0x6000000")
+
+                end = data.find(CJS_END, start)
+                if end < 0:
+                    sys.exit("lift: could not find module terminator (})\\n\\x00)")
+                return start, end + 3
+
+
+            def unwrap(mod: bytes) -> bytes:
+                nl = mod.find(b"\n")
+                if nl < 0:
+                    sys.exit("lift: module has no header newline")
+                body = mod[nl + 1 :]
+                if not body.startswith(CJS_OPEN):
+                    sys.exit("lift: module does not open with expected CJS wrapper")
+                body = body[len(CJS_OPEN) :]
+                if body.endswith(b"})\n"):
+                    body = body[:-3]
+                elif body.endswith(b"})"):
+                    body = body[:-2]
+                else:
+                    sys.exit("lift: module does not end with `})` wrapper close")
+                return body
+
+
+            def main() -> None:
+                if len(sys.argv) != 3:
+                    sys.exit("usage: lift-claude-bun <claude-binary> <output.cjs>")
+
+                binary = Path(sys.argv[1])
+                output = Path(sys.argv[2])
+
+                data = binary.read_bytes()
+                start, end = find_main_module(data)
+                body = unwrap(data[start:end])
+
+                if b"Anthropic" not in body[:4096]:
+                    sys.exit("lift: extracted body is missing Anthropic banner — layout changed?")
+
+                output.write_bytes(body)
+                sys.stderr.write(
+                    f"lifted {len(body):,} bytes from {binary.name} "
+                    f"(module @ {start:#x}..{end:#x}) -> {output}\n"
+                )
+
+
+            if __name__ == "__main__":
+                main()
+          '';
+
           patch = pkgs.writeScriptBin "patch-claude-code-src" /* py */ ''
             #!${getExe pkgs.python3}
             from __future__ import annotations
@@ -435,6 +510,9 @@ in
             type Replacement = Union[bytes, Callable[[re.Match[bytes]], bytes]]
 
             W: bytes = rb"[\w$]+"
+            # Qualified name: matches `FN` and also `NS.FN` (e.g. `Lf.join`, `Oc7.spawn`).
+            # Since 2.1.113 bun's bundler emits more member-style calls for path/spawn helpers.
+            Q: bytes = rb"[\w$]+(?:\.[\w$]+)*"
             data: bytes = Path(sys.argv[1]).read_bytes()
 
             SEARCH_WINDOW: int = 500
@@ -485,7 +563,7 @@ in
             # from the same directories. Pattern: let VAR=ME(DIR,"CLAUDE.md");ARR.push(...await XE(VAR,"Project",ARG,BOOL))
 
             agents_pat: bytes = (
-              rb"let (" + W + rb")=(" + W + rb")\((" + W + rb'),"CLAUDE\.md"\);'
+              rb"let (" + W + rb")=(" + Q + rb")\((" + W + rb'),"CLAUDE\.md"\);'
               rb"(" + W + rb")\.push\(\.\.\.await (" + W + rb")\(\1,\"Project\",(" + W + rb"),(" + W + rb")\)\)"
             )
 
@@ -542,27 +620,51 @@ in
             patch(
               "telemetry gate (drop telemetry-disabled check)",
               (
-                rb"function (" + W + rb")\(\)\{return F6\(process\.env\.CLAUDE_CODE_USE_BEDROCK\)"
-                rb"\|\|F6\(process\.env\.CLAUDE_CODE_USE_VERTEX\)"
-                rb"\|\|F6\(process\.env\.CLAUDE_CODE_USE_FOUNDRY\)"
+                rb"function (" + W + rb")\(\)\{return (" + W + rb")\(process\.env\.CLAUDE_CODE_USE_BEDROCK\)"
+                rb"\|\|\2\(process\.env\.CLAUDE_CODE_USE_VERTEX\)"
+                rb"\|\|\2\(process\.env\.CLAUDE_CODE_USE_FOUNDRY\)"
                 rb"\|\|" + W + rb"\(\)\}"
               ),
               lambda m: re.sub(rb"\|\|" + W + rb"\(\)\}$", b"||!1}", m[0]),
             )
 
+            # --- Force Av() async-gate to always resolve true ---
+            # Av(flag) is the ASYNC feature-gate resolver. It short-circuits to its default
+            # in two places when telemetry is off: an inline `if(!va())return!1;` AND the
+            # same check inside Irq() which it delegates to. Since Av() hardcodes !1 as the
+            # default passed to Irq, dropping only the inline guard leaves Irq returning
+            # false anyway.
+            #
+            # Every Av() call-site in 2.1.113 targets a gate we intentionally want enabled:
+            #  - tengu_ccr_bridge          → Qr8() → initReplBridge() auto-connect
+            #  - tengu_ccr_bridge_multi_session → multi-session remote control
+            #  - tengu_ccr_bundle_seed_enabled  → CCR bundle seed
+            #  - tengu_harbor             → plugin marketplace
+            # None of these are things we want off. Replace the whole body to return !0.
+            # Safe because Av() never writes telemetry — it only reads cached flag state.
+
+            patch(
+              "Av() force-true for telemetry-off builds",
+              # Negative lookahead keeps the body match from extending past the end of Av
+              # into the next function definition (a previous version matched `async
+              # function Bb8(...)` and spanned through Av's tail, obliterating both).
+              rb"async function (" + W + rb")\(H\)\{(?:(?!async function ).){60,400}?return Irq\(H,!1,!0\)\}",
+              lambda m: b"async function " + m[1] + b"(H){return !0}",
+            )
+
             # --- Restore 1h prompt cache TTL when telemetry is off ---
             # https://github.com/anthropics/claude-code/issues/45381
-            # maY() gates the "ttl":"1h" cache_control on a GrowthBook allowlist
-            # (tengu_prompt_cache_1h_config). With telemetry off the lookup falls
-            # through to the {} default, so .allowlist is undefined and the ??[]
-            # fallback produces an empty array — every querySource fails the .some()
-            # match and falls back to 5min TTL. Replace the empty fallback with ["*"]
-            # so any defined querySource matches.
+            # The GrowthBook allowlist for "ttl":"1h" cache_control falls back to the
+            # default object when telemetry is off. Anthropic now ships
+            # {allowlist:["repl_main_thread*","sdk","auto_mode"]} as the default (up
+            # from the broken {} in earlier versions), so the TUI and SDK already get
+            # 1h TTL — but batch agents and less-common query sources still miss.
+            # Widen the default to ["*"] so everything matches.
 
             patch(
               "1h prompt cache TTL fallback",
-              rb'h8\("tengu_prompt_cache_1h_config",\{\}\)\.allowlist\?\?\[\]',
-              b'h8("tengu_prompt_cache_1h_config",{}).allowlist??["*"]',
+              rb'(' + W + rb')\("tengu_prompt_cache_1h_config",\{allowlist:\[[^\]]+\]\}\)\.allowlist\?\?\[\]',
+              lambda m: m[1] + b'("tengu_prompt_cache_1h_config",{allowlist:["*"]}).allowlist??[]',
             )
 
             # --- Fix Deno-compile bridge spawn ---
@@ -571,7 +673,7 @@ in
 
             patch(
               "deno bridge spawn fix",
-              rb"let (" + W + rb")=(" + W + rb")\((" + W + rb")\.execPath,(" + W + rb"),",
+              rb"let (" + W + rb")=(" + Q + rb")\((" + W + rb")\.execPath,(" + W + rb"),",
               lambda m: (
                 b"let "
                 + m[1]
@@ -594,6 +696,8 @@ in
             core_gates: list[Gate] = [
               (b"tengu_ccr_bridge", "remote control"),
               (b"tengu_bridge_system_init", "bridge SDK init on connect"),
+              (b"tengu_bridge_client_presence_enabled", "bridge presence heartbeats"),
+              (b"tengu_bridge_requires_action_details", "bridge rich tool-use payloads"),
               (b"tengu_remote_backend", "remote backend"),
               (b"tengu_immediate_model_command", "instant /model switching"),
               (b"tengu_fgts", "fine-grained tool streaming"),
@@ -607,6 +711,7 @@ in
               (b"tengu_pebble_leaf_prune", "message pruning"),
               (b"tengu_herring_clock", "team memory directory"),
               (b"tengu_passport_quail", "typed combined memory prompts"),
+              (b"tengu_paper_halyard", "memory dedup in nested dirs"),
             ]
 
             ux_gates: list[Gate] = [
@@ -615,14 +720,31 @@ in
               (b"tengu_destructive_command_warning", "destructive command warnings"),
               (b"tengu_amber_prism", "permission denial context"),
               (b"tengu_hawthorn_steeple", "context windowing"),
+              (b"tengu_loud_sugary_rock", "Opus 4.7 terse output guidance"),
+              (b"tengu_verified_vs_assumed", "verified-vs-assumed reporting"),
+              (b"tengu_birch_compass", "/usage 'What's contributing' breakdown block"),
+              # tengu_pewter_brook (fullscreen TUI default) disabled — Ink fullscreen
+              # rendering drops memoized Text children in nested Box columns (/usage
+              # loses its "What's contributing..." bold header, big vertical gaps).
+              # Re-enable by setting `tui: "fullscreen"` in settings.json if desired.
             ]
 
             tool_gates: list[Gate] = [
               (b"tengu_chrome_auto_enable", "auto-enable chrome devtools"),
-              (b"tengu_glacier_2xr", "deferred tool improvements"),
               (b"tengu_plum_vx3", "web search reranking"),
               # (b"tengu_moth_copse", "relevant memory recall"),  # auto-recall; pollutes unrelated convos
               (b"tengu_cork_m4q", "batch command processing"),
+              (b"tengu_harbor", "plugin marketplace"),
+              (b"tengu_harbor_permissions", "plugin permissions"),
+              (b"tengu_relay_chain_v1", "parallel command chaining guidance"),
+              (b"tengu_edit_minimalanchor_jrn", "Edit tool minimal-anchor instructions"),
+              (b"tengu_slate_reef", "Read tool clearer offset/limit docs"),
+              (b"tengu_otk_slot_v1", "output-token escalation for complex tasks"),
+              (b"tengu_onyx_basin_m1k", "subagent tool-result truncation"),
+              (b"tengu_sub_nomdrep_q7k", "block subagent report .md writes"),
+              (b"tengu_amber_sentinel", "Monitor tool for streaming bg scripts"),
+              (b"tengu_miraculo_the_bard", "skip penguin-mode startup prefetch"),
+              (b"tengu_noreread_q7m_velvet", "sharper 'wasted read' feedback"),
             ]
 
             flip_gates(core_gates + memory_gates + ux_gates + tool_gates)
@@ -633,6 +755,19 @@ in
               "background agent timeout",
               rb'"tengu_auto_background_agents",![01]\)\)return 120000',
               lambda m: m[0].replace(b"120000", b"240000"),
+            )
+
+            # --- Disable the claude-api bundled skill ---
+            # Registered via vA({name:"claude-api",description:v4_,...}) at bundle-load
+            # time. The description (v4_) is a ~200-token SDK/Bedrock usage matrix with
+            # TRIGGER/SKIP rules that gets injected into every system prompt. We don't
+            # write Anthropic SDK code in this environment, so cut it. Renamed from
+            # `claude-developer-platform` in an earlier release — match on current name.
+
+            replace(
+              "disable claude-api skill",
+              b'vA({name:"claude-api",description:',
+              b'vA({name:"claude-api",isEnabled:()=>!1,description:',
             )
 
             # --- Replace usage fetch with self-contained OAuth implementation ---
@@ -688,68 +823,145 @@ in
         <| pkgs.writeScriptBin "claude" /* nu */ ''
           #!${getExe pkgs.nushell}
 
-          def --wrapped main [--rebuild, ...arguments] {
-            let cache_global = $env
-            | get --optional "XDG_CACHE_HOME"
-            | default ($env.HOME | path join ".cache")
-
-            let cache = $cache_global | path join "claude-code"
-
-            let version = do {
-              let version_file = $cache | path join "latest-version"
-
-              match (try { (date now) - (ls $version_file | get 0.modified) > 6hr }) {
-                # Version older than 6h or doesn't exist.
-                true | null => {
-                  let version = try {
-                    http get --max-time 5sec https://registry.npmjs.org/@anthropic-ai/claude-code/latest | get version
-                  } catch {
-                    print --stderr $"(ansi yellow_bold)warn:(ansi reset) fetched version older than 6hr, but can't re-fetch"
-                    return ""
-                  }
-
-                  try {
-                    $version_file | path parse | get parent | mkdir $in
-                    $version | save --force $version_file
-                  } catch {
-                    print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to save latest fetched version"
-                  }
-
-                  $version
-                },
-
-                # Version fetched within 6h.
-                false => { try {
-                  open $version_file
-                } catch {
-                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to read latest fetched version"
-                  ""
-                } },
-              }
-            }
-
-            let binary_path = if ($version | is-empty) {
-              print --stderr $"(ansi yellow_bold)warn:(ansi reset) falling back to latest binary"
-
-              try {
-                glob ($cache)/claude-code-* | last
-              } catch {
-                print --stderr $"(ansi red_bold)error:(ansi reset) no binary found"
+          def detect-platform []: nothing -> string {
+            let arch = match ($nu.os-info.arch | str downcase) {
+              "x86_64" | "x64" | "amd64" => "x64"
+              "aarch64" | "arm64" => "arm64"
+              $arch => {
+                print --stderr $"(ansi red_bold)error:(ansi reset) unsupported arch: ($arch)"
                 exit 67
               }
-            } else {
-              $cache | path join $"claude-code-($version)"
             }
+
+            match ($nu.os-info.name | str downcase) {
+              "linux" => $"linux-($arch)"
+              "macos" | "darwin" => $"darwin-($arch)"
+              $os => {
+                print --stderr $"(ansi red_bold)error:(ansi reset) unsupported os: ($os)"
+                exit 67
+              }
+            }
+          }
+
+          def detect-version [--cache: directory]: nothing -> string {
+            let version_file = $cache | path join "latest-version"
+
+            match (try { (date now) - (ls $version_file | get 0.modified) > 6hr }) {
+              # Version older than 6h or doesn't exist.
+              true | null => {
+                let version = try {
+                  http get --max-time 5sec https://registry.npmjs.org/@anthropic-ai/claude-code/latest | get version
+                } catch {
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) fetched version older than 6hr, but can't re-fetch"
+                  return ""
+                }
+
+                try {
+                  $version_file | path parse | get parent | mkdir $in
+                  $version | save --force $version_file
+                } catch {
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to save latest fetched version"
+                }
+
+                $version
+              },
+
+              # Version fetched within 6h.
+              false => { try {
+                open $version_file
+              } catch {
+                print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to read latest fetched version"
+                ""
+              } },
+            }
+          }
+
+          def run-latest [--cache: directory, ...arguments] {
+            print --stderr $"(ansi yellow_bold)warn:(ansi reset) falling back to latest binary"
+
+            try {
+              let latest = ls --long ($cache | path join "claude-code-*")
+              | where { $in.type == "file" and ($in.mode | str substring 2..<3) == "x" }
+              | sort-by modified
+              | last
+              | get name
+              exec $latest ...$arguments
+            } catch {
+              print --stderr $"(ansi red_bold)error:(ansi reset) no binary found"
+              exit 67
+            }
+          }
+
+          def --wrapped main [--rebuild, ...arguments] {
+            let cache = $env
+            | get --optional "XDG_CACHE_HOME"
+            | default ($env.HOME | path join ".cache")
+            | path join "claude-code"
+
+            let version = detect-version --cache $cache
+            if ($version | is-empty) { run-latest --cache $cache ...$arguments }
+
+            let binary_path = $cache | path join $"claude-code-($version)"
 
             if not ($binary_path | path exists) or $rebuild {
-              ${getExe pkgs.deno} cache $"npm:@anthropic-ai/claude-code@($version)"
-              ${getExe patch} ($cache_global | path join "deno" "npm" "registry.npmjs.org" "@anthropic-ai" "claude-code" $version "cli.js")
-              ${getExe pkgs.deno} compile --allow-all --output $binary_path $"npm:@anthropic-ai/claude-code@($version)"
+              let archive = $"($binary_path).tar.gz"
+
+              if not ($archive | path exists) {
+                let platform = detect-platform
+
+                try {
+                  http get --raw $"https://registry.npmjs.org/@anthropic-ai/claude-code-($platform)/-/claude-code-($platform)-($version).tgz"
+                  | save --force --raw $archive
+                } catch {
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to download tarball"
+                  run-latest --cache $cache ...$arguments
+                }
+              }
+
+              let workdir = $cache | path join $"claude-code-($version)-workdir"
+              rm --recursive --force $workdir
+              mkdir $workdir
+
+              ^${getExe pkgs.gnutar} --extract --gzip --file $archive --directory $workdir
+              rm $archive
+
+              let cli = $workdir | path join "cli.cjs"
+              ^${getExe lift} ($workdir | path join "package" "claude") $cli
+              ^${getExe patch} $cli
+
+              r#'${
+                strings.toJSON {
+                  name = "claude-code-lifted";
+                  type = "commonjs";
+                  dependencies = {
+                    ws = "^8";
+                    undici = "^6";
+                    node-fetch = "^3";
+                    ajv = "^8";
+                    ajv-formats = "^3";
+                    yaml = "^2";
+                  };
+                }
+              }'# | save --force ($workdir | path join "package.json")
+
+              $env.DENO_DIR = ($workdir | path join ".deno")
+              (^"${getExe pkgs.deno}" install
+                --quiet
+                --node-modules-dir=auto
+                --entrypoint $cli)
+              (^"${getExe pkgs.deno}" compile
+                --quiet
+                --allow-all
+                --node-modules-dir=auto
+                --include ($workdir | path join "node_modules")
+                --output $binary_path
+                $cli)
+
+              rm --recursive --force $workdir
             }
 
-            $env.PATH ++= [ "${pkgs.ripgrep}/bin" ]
             r#'${
-              lib.strings.toJSON config.xdg.config.files."claude-code/settings.json".value.env
+              strings.toJSON config.xdg.config.files."claude-code/settings.json".value.env
             }'# | from json | load-env
 
             exec $binary_path ...$arguments
