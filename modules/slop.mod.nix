@@ -843,10 +843,10 @@ in
             }
           }
 
-          def detect-version [--cache: directory]: nothing -> string {
+          def detect-version [--cache: directory, --rebuild]: nothing -> string {
             let version_file = $cache | path join "latest-version"
 
-            match (try { (date now) - (ls $version_file | get 0.modified) > 6hr }) {
+            match ($rebuild or (try { (date now) - (ls $version_file | get 0.modified) > 6hr })) {
               # Version older than 6h or doesn't exist.
               true | null => {
                 let version = try {
@@ -898,7 +898,7 @@ in
             | default ($env.HOME | path join ".cache")
             | path join "claude-code"
 
-            let version = detect-version --cache $cache
+            let version = detect-version --cache $cache --rebuild=($rebuild)
             if ($version | is-empty) { run-latest --cache $cache ...$arguments }
 
             let binary_path = $cache | path join $"claude-code-($version)"
