@@ -101,7 +101,6 @@
     }:
     let
       inherit (lib.lists) head singleton;
-      inherit (lib.strings) concatLines;
     in
     {
       programs.mosh = {
@@ -121,16 +120,24 @@
             "COLORTERM"
           ];
         };
-
-        authorizedKeysFiles = singleton "${pkgs.writeText "admin-keys" <| concatLines self.keys-admin}";
       };
 
-      # Satisfy NixOS lockout assertion.
       users.users.root.openssh.authorizedKeys.keys = self.keys-admin;
+
+      boot.initrd.systemd.network = {
+        enable = true;
+        networks."10-wired" = {
+          matchConfig.Type = "ether";
+          networkConfig.DHCP = "yes";
+        };
+      };
 
       boot.initrd.network.ssh = {
         enable = true;
         port = head config.services.openssh.ports;
+
+        ignoreEmptyHostKeys = true; # Create new keys.
+
         authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
       };
     };

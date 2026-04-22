@@ -72,6 +72,8 @@ in
 
         networking.hostName = "istanbul";
 
+        boot.initrd.availableKernelModules.e1000e = true;
+
         disko.devices.disk."persist" = {
           device = "/dev/nvme0n1";
           type = "disk";
