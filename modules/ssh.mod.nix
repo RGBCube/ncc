@@ -31,16 +31,6 @@
               User root
               # Tailscale.
               HostName ${name}
-              ${
-                # TODO:
-                # config.networking.interfaces
-                # |> attrValues
-                # |> head
-                # |> (value: value.ipv4.addresses)
-                # |> head
-                # |> getAttr "address"
-                ""
-              }
               Port ${toString <| head config.services.openssh.ports}
           ''
         );
