@@ -164,11 +164,11 @@
 
         templates.git_push_bookmark = # python
           ''
-            "change-rgbcube-" ++ change_id.short()
+            "rgbcube/change-" ++ change_id.short()
           '';
 
         remotes."*" = {
-          auto-track-bookmarks = "glob:*";
+          auto-track-bookmarks = "rgbcube/*";
           push-new-bookmarks = true;
         };
 
