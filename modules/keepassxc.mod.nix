@@ -31,17 +31,17 @@
 
       keepassConfig.generator = toINI { };
       keepassConfig.value = {
-        Browser.Enabled = true;
+        General.ConfigVersion = 2;
 
         General.BackupBeforeSave = true;
-
-        Messages.NoLegacyKeyFileWarning = true;
 
         General.UpdateCheckMessageShown = true;
         GUI.CheckForUpdates = false;
         GUI.CheckForUpdatesIncludeBetas = false;
 
         GUI.ToolButtonStyle = 4; # Follows platform style.
+        General.MinimizeAfterUnlock = true;
+        Security.HideTotpPreviewPanel = true;
 
         Security.ClearSearch = true;
         Security.ClearSearchTimeout = 5; # 5 minutes.
@@ -49,9 +49,7 @@
         Security.LockDatabaseIdle = true;
         Security.LockDatabaseIdleSeconds = 3 * 60 * 60; # 3 hours.
 
-        General.MinimizeAfterUnlock = true;
-        Security.HideTotpPreviewPanel = true;
-
+        Browser.Enabled = true;
         SSHAgent.Enabled = true;
       }
       // optionalAttrs osConfig.nixpkgs.hostPlatform.isLinux {
