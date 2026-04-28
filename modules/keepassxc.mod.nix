@@ -19,8 +19,12 @@
       inherit (lib.modules) mkIf;
       inherit (lib.trivial) const flip;
       inherit (lib.attrsets) genAttrs;
+      inherit (lib.generators) toINI;
 
       # TODO: Re-enable package override after upstream darwin YubiKey build is fixed.
+      #
+      # Also remove the config that disables update checking, as nixpkgs compiles that out.
+      #
       # package = pkgs.keepassxc.override {
       #   withKeePassYubiKey = true;
       # };
@@ -35,5 +39,15 @@
       packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
         pkgs.keepassxc
       ];
+
+      files."Library/Application Support/KeePassXC/keepassxc.ini" =
+        mkIf osConfig.nixpkgs.hostPlatform.isDarwin
+          {
+            generator = toINI { };
+            value = {
+              GUI.CheckForUpdates = false;
+              GUI.CheckForUpdatesIncludeBetas = false;
+            };
+          };
     };
 }
