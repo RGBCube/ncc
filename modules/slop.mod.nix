@@ -858,38 +858,86 @@ in
               log("usage fetch: pattern NOT FOUND")
 
             # --- grep/find/rg shim: delegate to absolute Nix store paths ---
-            # claude-code ships a shell shim (o45/i45 → a38) that redefines
-            # `grep`/`find`/`rg` as bash functions which re-exec the claude binary
-            # with argv[0]=ugrep/bfs/rg. In Bun "ant-native" builds this dispatches
-            # to bundled native tools. The Deno repack drops those, so invocations
-            # fail with `error: unknown option '-G'`. Rewrite a38's emitted bash to
-            # call the real tools directly via their Nix store paths (resolved at
-            # build time), so the shim works regardless of PATH and whether the
-            # cached binary is launched through the wrapper or standalone.
+            # claude-code ships a shell shim factory that emits bash functions
+            # which redefine `grep`/`find`/`rg` to re-exec the claude binary
+            # with argv[0]=ugrep/bfs/rg. In Bun "ant-native" builds this
+            # dispatches to bundled native tools. The Deno repack drops those,
+            # so invocations fail with `error: unknown option '-G'`. Replace the
+            # factory's body so it emits bash that calls the real tools directly
+            # via their Nix store paths.
+            #
+            # Anchor on (a) the (H,_,q=[]) signature — stable API contract with
+            # the three call sites — and (b) the `\x60function ''${H} {` bash
+            # header that this function MUST emit to do its job. Two other
+            # functions share the signature so the bash header disambiguates.
+            # Use brace-balanced parsing for the body end so internal restructures
+            # (2.1.113→2.1.121 added windows-path branches and chained more lets)
+            # don't break us.
 
-            a38_pat: bytes = (
-              rb"function (" + W + rb")\(H,_,q=\[\]\)\{"
-              rb"let (" + W + rb")=q\.length>0\?\x60\$\{q\.join\(\" \"\)\} \"\$@\"\x60:'\"\$@\"';"
-              rb"return\[[\s\S]*?\]\.join\(\x60\n\x60\)\}"
-            )
+            def scan_js_block(blob: bytes, pos: int) -> int:
+              """Return the offset just past the `}` closing the `{` at pos-1.
+              Tracks '...' / "..." / `...` (with ''${...} interpolations) so
+              braces inside strings don't count. Bun output has no comments or
+              regex literals in this region, so we don't track those."""
+              depth: int = 1
+              while pos < len(blob):
+                c: bytes = blob[pos:pos + 1]
+                if c == b"{":
+                  depth += 1
+                elif c == b"}":
+                  depth -= 1
+                  if depth == 0:
+                    return pos + 1
+                elif c in (b"'", b'"'):
+                  pos += 1
+                  while pos < len(blob) and blob[pos:pos + 1] != c:
+                    pos += 2 if blob[pos:pos + 1] == b"\\" else 1
+                elif c == b"\x60":
+                  pos += 1
+                  while pos < len(blob) and blob[pos:pos + 1] != b"\x60":
+                    if blob[pos:pos + 1] == b"\\":
+                      pos += 2
+                    elif blob[pos:pos + 2] == b"''${":
+                      pos += 2
+                      inner: int = 1
+                      while pos < len(blob) and inner > 0:
+                        ic: bytes = blob[pos:pos + 1]
+                        if ic == b"{":
+                          inner += 1
+                        elif ic == b"}":
+                          inner -= 1
+                        pos += 1
+                      continue
+                    else:
+                      pos += 1
+                pos += 1
+              sys.exit("a38 shim: unbalanced braces")
 
 
-            def a38_repl(m: re.Match[bytes]) -> bytes:
-              fn_name: bytes = m.group(1)
-              loc: bytes = m.group(2)
-              return (
+            a38_sig: bytes = rb"function (" + W + rb")\(H,_,q=\[\]\)\{"
+            a38_match: re.Match[bytes] | None = None
+            for cand in re.finditer(a38_sig, data):
+              if b"\x60function ''${H} {" in data[cand.end():cand.end() + 400]:
+                a38_match = cand
+                break
+
+            if a38_match is None:
+              log("grep/find/rg shim: NOT FOUND")
+            else:
+              fn_name: bytes = a38_match.group(1)
+              body_end: int = scan_js_block(data, a38_match.end())
+              a38_new: bytes = (
                 b"function " + fn_name + b"(H,_,q=[]){"
-                b"let " + loc + b'=q.length>0?\x60''${q.join(" ")} "$@"\x60:\'"$@"\';'
+                b'let K=q.length>0?\x60''${q.join(" ")} "$@"\x60:\'"$@"\';'
                 b'let P=({ugrep:"${getExe' pkgs.ugrep "ugrep"}",'
                 b'bfs:"${getExe pkgs.bfs}",'
                 b'rg:"${getExe pkgs.ripgrep}"})[_]||_;'
                 b"return\x60function ''${H} { "
                 b'if ! [ -x ''${P} ]; then command ''${H} "$@"; return; fi; '
-                b"''${P} ''${" + loc + b"}; }\x60}"
+                b"''${P} ''${K}; }\x60}"
               )
-
-
-            patch("grep/find/rg shim: use absolute store paths", a38_pat, a38_repl)
+              data = data[:a38_match.start()] + a38_new + data[body_end:]
+              log(f"grep/find/rg shim: replaced {fn_name.decode()}")
 
             Path(sys.argv[1]).write_bytes(data)
           '';
