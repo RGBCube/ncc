@@ -18,7 +18,7 @@
     let
       inherit (lib.modules) mkIf;
       inherit (lib.trivial) const flip;
-      inherit (lib.attrsets) genAttrs;
+      inherit (lib.attrsets) genAttrs optionalAttrs;
       inherit (lib.generators) toINI;
 
       # TODO: Re-enable package override after upstream darwin YubiKey build is fixed.
@@ -33,15 +33,15 @@
       keepassConfig.value = {
         Browser.Enabled = true;
 
-        General.MinimizeAfterUnlock = true;
         General.BackupBeforeSave = true;
 
+        Messages.NoLegacyKeyFileWarning = true;
+
+        General.UpdateCheckMessageShown = true;
         GUI.CheckForUpdates = false;
         GUI.CheckForUpdatesIncludeBetas = false;
 
         GUI.ToolButtonStyle = 4; # Follows platform style.
-
-        KeeShare.QuietSuccess = true;
 
         Security.ClearSearch = true;
         Security.ClearSearchTimeout = 5; # 5 minutes.
@@ -49,12 +49,17 @@
         Security.LockDatabaseIdle = true;
         Security.LockDatabaseIdleSeconds = 3 * 60 * 60; # 3 hours.
 
+        General.MinimizeAfterUnlock = true;
         Security.HideTotpPreviewPanel = true;
 
-        # No Keeshare.
-        KeeShare.Active = /* xml */ ''<?xml version="1.0"?><KeeShare><Active/></KeeShare>'';
-
         SSHAgent.Enabled = true;
+      }
+      // optionalAttrs osConfig.nixpkgs.hostPlatform.isLinux {
+        FdoSecrets.Enabled = true;
+        FdoSecrets.ShowNotification = false;
+        FdoSecrets.ConfirmDeleteItem = true;
+        FdoSecrets.ConfirmAccessItem = true;
+        FdoSecrets.UnlockBeforeSearch = true;
       };
     in
     {
