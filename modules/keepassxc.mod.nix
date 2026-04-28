@@ -28,6 +28,34 @@
       # package = pkgs.keepassxc.override {
       #   withKeePassYubiKey = true;
       # };
+
+      keepassConfig.generator = toINI { };
+      keepassConfig.value = {
+        Browser.Enabled = true;
+
+        General.MinimizeAfterUnlock = true;
+        General.BackupBeforeSave = true;
+
+        GUI.CheckForUpdates = false;
+        GUI.CheckForUpdatesIncludeBetas = false;
+
+        GUI.ToolButtonStyle = 4; # Follows platform style.
+
+        KeeShare.QuietSuccess = true;
+
+        Security.ClearSearch = true;
+        Security.ClearSearchTimeout = 5; # 5 minutes.
+
+        Security.LockDatabaseIdle = true;
+        Security.LockDatabaseIdleSeconds = 3 * 60 * 60; # 3 hours.
+
+        Security.HideTotpPreviewPanel = true;
+
+        # No Keeshare.
+        KeeShare.Active = /* xml */ ''<?xml version="1.0"?><KeeShare><Active/></KeeShare>'';
+
+        SSHAgent.Enabled = true;
+      };
     in
     {
       xdg.mime-apps.default-applications =
@@ -41,13 +69,9 @@
       ];
 
       files."Library/Application Support/KeePassXC/keepassxc.ini" =
-        mkIf osConfig.nixpkgs.hostPlatform.isDarwin
-          {
-            generator = toINI { };
-            value = {
-              GUI.CheckForUpdates = false;
-              GUI.CheckForUpdatesIncludeBetas = false;
-            };
-          };
+        mkIf osConfig.nixpkgs.hostPlatform.isDarwin keepassConfig;
+
+      xdg.config.files."keepassxc/keepassxc.ini" =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux keepassConfig;
     };
 }
