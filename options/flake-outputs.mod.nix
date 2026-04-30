@@ -5,44 +5,41 @@
 }:
 let
   inherit (lib.attrsets) mapAttrs;
+  inherit (lib.attrsets) optionalAttrs;
+  inherit (lib.lists) singleton;
   inherit (lib.options) mkOption;
   inherit (lib.types) deferredModule lazyAttrsOf;
+
+  wrap =
+    kind: name: value:
+    {
+      _file = "${toString moduleLocation}#${kind}.${name}";
+      imports = singleton value;
+    }
+    # Preserve meta.
+    // optionalAttrs (value ? meta) {
+      inherit (value) meta;
+    };
 in
 {
-
   options.flake.commonModules = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
-    apply = mapAttrs (
-      name: value: {
-        _file = "${toString moduleLocation}#commonModules.${name}";
-        imports = lib.singleton value;
-      }
-    );
+    apply = mapAttrs (wrap "commonModules");
     description = "Modules shared between NixOS and Darwin.";
   };
 
   options.flake.darwinModules = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
-    apply = mapAttrs (
-      name: value: {
-        _file = "${toString moduleLocation}#darwinModules.${name}";
-        imports = lib.singleton value;
-      }
-    );
+    apply = mapAttrs (wrap "darwinModules");
     description = "Darwin modules.";
   };
 
   options.flake.homeModules = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
-    apply = mapAttrs (
-      name: value: {
-        _file = "${toString moduleLocation}#homeModules.${name}";
-        imports = lib.singleton value;
-      }
-    );
+    apply = mapAttrs (wrap "homeModules");
     description = "Home modules.";
   };
 }
