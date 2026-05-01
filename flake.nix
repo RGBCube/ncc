@@ -71,7 +71,7 @@
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.darwin.follows = "nix-darwin";
     inputs.home-manager.follows = "";
-    inputs.systems.follows = "hjem/smfh/systems";
+    inputs.systems.follows = "crash/systems";
   };
 
   inputs.homebrew = {
@@ -89,7 +89,6 @@
   inputs.crash = {
     url = "github:RGBCube/crash";
     inputs.nixpkgs.follows = "nixpkgs";
-    inputs.systems.follows = "hjem/smfh/systems";
   };
 
   inputs.themes = {
@@ -111,7 +110,7 @@
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.nix-github-actions.follows = "";
     inputs.treefmt-nix.follows = "";
-    inputs.rust-overlay.follows = "hjem/smfh/rust-overlay";
+    inputs.flake-utils.inputs.systems.follows = "crash/systems";
   };
 
   inputs.zmk-nix = {
