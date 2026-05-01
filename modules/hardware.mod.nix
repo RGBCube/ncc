@@ -19,7 +19,7 @@
       inherit (lib.modules) mkIf;
     in
     {
-      services.blueman.enable = mkIf (config.hardware.report.hardware.bluetooth or [] != []) true;
+      services.blueman.enable = mkIf (config.hardware.report.hardware.bluetooth or [ ] != [ ]) true;
     };
 
   # hardware.bluetooth.enable is set by nixos-facter.
@@ -29,7 +29,9 @@
       inherit (lib.modules) mkIf;
     in
     {
-      hardware.bluetooth.powerOnBoot = mkIf (config.hardware.report.hardware.bluetooth or [] != []) true;
+      hardware.bluetooth.powerOnBoot = mkIf (
+        config.hardware.report.hardware.bluetooth or [ ] != [ ]
+      ) true;
     };
 
   flake.nixosModules.sound =
@@ -38,7 +40,7 @@
       inherit (lib.modules) mkIf;
     in
     {
-      config = mkIf (config.hardware.report.hardware.sound or [] != []) {
+      config = mkIf (config.hardware.report.hardware.sound or [ ] != [ ]) {
         security.rtkit.enable = true;
 
         services.pipewire = {
