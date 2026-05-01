@@ -91,7 +91,7 @@
       services.zapret = {
         enable = true;
 
-        # This configures iptables, we use ntfables.
+        # This configures iptables, we use nftables.
         configureFirewall = false;
 
         # Troll packets on port 80 too.

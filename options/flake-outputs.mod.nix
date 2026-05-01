@@ -4,8 +4,7 @@
   ...
 }:
 let
-  inherit (lib.attrsets) mapAttrs;
-  inherit (lib.attrsets) optionalAttrs;
+  inherit (lib.attrsets) mapAttrs optionalAttrs;
   inherit (lib.lists) singleton;
   inherit (lib.options) mkOption;
   inherit (lib.types) deferredModule lazyAttrsOf;

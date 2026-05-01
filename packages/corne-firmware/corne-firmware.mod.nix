@@ -35,7 +35,7 @@ in
       };
 
       packages.corne-flash = inputs.zmk-nix.packages.${system}.flash.override {
-        inherit (self'.packages) firmware;
+        firmware = self'.packages.corne-firmware;
       };
 
       packages.corne-update = inputs.zmk-nix.packages.${system}.update;
