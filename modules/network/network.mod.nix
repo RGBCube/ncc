@@ -131,7 +131,7 @@
             meta mark & $desync_mark == 0 \
             udp dport { ${
               config.services.zapret.udpPorts
-              |> map (port: replaceStrings [ ":" ] [ "-" ] port)
+              |> map (replaceStrings [ ":" ] [ "-" ])
               |> concatStringsSep ", "
             } } \
             queue num ${toString config.services.zapret.qnum} bypass;

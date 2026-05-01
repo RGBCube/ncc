@@ -1,7 +1,12 @@
 { inputs, lib, ... }:
 let
   inherit (lib) fix;
-  inherit (lib.attrsets) attrNames mapAttrsToList;
+  inherit (lib.attrsets)
+    attrNames
+    attrValues
+    catAttrs
+    mapAttrsToList
+    ;
   inherit (lib.lists)
     elem
     filter
@@ -60,7 +65,7 @@ let
     # EXTENSIONS
     ExtensionInstallForcelist =
       extensions |> mapAttrsToList (_name: { id, ... }: "${id};https://services.helium.imput.net/ext");
-    ExtensionInstallAllowlist = extensions |> mapAttrsToList (_name: { id, ... }: id);
+    ExtensionInstallAllowlist = extensions |> attrValues |> catAttrs "id";
     ExtensionInstallSources = singleton "https://services.helium.imput.net/*";
 
     # UBLOCK ORIGIN

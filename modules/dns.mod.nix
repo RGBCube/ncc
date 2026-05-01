@@ -3,7 +3,7 @@
   flake.commonModules.dns =
     { config, pkgs, ... }:
     let
-      inherit (lib.attrsets) getAttr;
+      inherit (lib.attrsets) getAttr catAttrs;
       inherit (lib.lists)
         concatMap
         imap0
@@ -128,7 +128,7 @@
                 in
                 if aPriority == bPriority then a.index < b.index else aPriority < bPriority
               )
-              |> map (getAttr "server");
+              |> catAttrs "server";
           };
         };
       };
