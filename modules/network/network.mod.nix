@@ -130,9 +130,7 @@
             fib daddr type != local \
             meta mark & $desync_mark == 0 \
             udp dport { ${
-              config.services.zapret.udpPorts
-              |> map (replaceStrings [ ":" ] [ "-" ])
-              |> concatStringsSep ", "
+              config.services.zapret.udpPorts |> map (replaceStrings [ ":" ] [ "-" ]) |> concatStringsSep ", "
             } } \
             queue num ${toString config.services.zapret.qnum} bypass;
           ''}
