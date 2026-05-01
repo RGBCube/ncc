@@ -130,8 +130,10 @@ in
     modules = singleton (
       { pkgs, ... }:
       let
-        inherit (lib.lists) singleton;
+        inherit (lib.attrsets) attrValues;
+        inherit (lib.lists) elem foldl' singleton;
         inherit (lib.meta) getExe;
+        inherit (lib.trivial) flip;
 
         istanbul = self.nixosConfigurations.istanbul;
       in
@@ -139,13 +141,24 @@ in
         imports = modules ++ singleton self.nixosModules.iso;
 
         environment.etc."install-closure".source = pkgs.closureInfo {
-          rootPaths = [
-            istanbul.config.system.build.toplevel
-            istanbul.config.system.build.diskoScript
-            istanbul.config.system.build.diskoScript.drvPath
-            istanbul.pkgs.stdenv.drvPath
-            (istanbul.pkgs.closureInfo { rootPaths = [ ]; }).drvPath
-          ];
+          rootPaths =
+            (
+              let
+                collect =
+                  collected: parent:
+                  (parent.inputs or { })
+                  |> attrValues
+                  |> flip foldl' collected (
+                    collected: child:
+                    if elem "${child}" collected then collected else collect (singleton "${child}" ++ collected) child
+                  );
+              in
+              collect [ ] self
+            )
+            ++ [
+              istanbul.config.system.build.toplevel
+              istanbul.config.system.build.diskoScript
+            ];
         };
 
         environment.systemPackages = [
