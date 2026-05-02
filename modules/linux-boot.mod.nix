@@ -8,9 +8,5 @@
     };
 
     boot.loader.efi.canTouchEfiVariables = true;
-
-    boot.supportedFilesystems = {
-      bcachefs = true;
-    };
   };
 }

@@ -24,10 +24,6 @@
         uas = true;
       };
 
-      boot.supportedFilesystems = {
-        exfat = true;
-      };
-
       fileSystems."/media/key" = {
         device = "/dev/disk/by-label/fatih";
         fsType = "exfat";

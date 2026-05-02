@@ -93,10 +93,7 @@
       inherit (lib.lists) head singleton;
     in
     {
-      programs.mosh = {
-        enable = true;
-        openFirewall = true;
-      };
+      programs.mosh.enable = true;
 
       services.openssh = {
         enable = true;
