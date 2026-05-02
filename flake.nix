@@ -33,7 +33,7 @@
   };
 
   inputs.nixpkgs = {
-    url = "github:NixOS/nixpkgs/nixos-unstable-small";
+    url = "github:NixOS/nixpkgs/nixos-unstable";
   };
   inputs.nix-darwin = {
     url = "github:LnL7/nix-darwin";

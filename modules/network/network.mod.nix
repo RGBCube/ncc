@@ -14,7 +14,6 @@
         (pkgs.curl.override {
           gnutlsSupport = false;
           opensslSupport = true; # OpenSSL supports QUIC.
-          wolfsslSupport = false;
           rustlsSupport = false;
 
           brotliSupport = true;

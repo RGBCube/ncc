@@ -8,7 +8,8 @@
     }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.modules) mkForce;
+      inherit (lib.trivial) const;
+      inherit (lib.attrsets) genAttrs;
     in
     {
       users.defaultUserShell = inputs.crash.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -19,10 +20,7 @@
         pkgs.bash
       ];
 
-      environment.shellAliases = {
-        ls = mkForce null;
-        l = mkForce null;
-      };
+      environment.shellAliases = genAttrs [ "ls" "ll" "l" ] (const null);
     };
 
   flake.homeModules.nushell =
