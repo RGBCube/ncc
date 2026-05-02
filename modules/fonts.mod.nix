@@ -1,11 +1,14 @@
 {
   flake.nixosModules.fonts =
-    { config, pkgs, ... }:
+    { config, lib, pkgs, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
     {
       console = {
         earlySetup = true;
         font = "Lat2-Terminus16";
-        packages = [ pkgs.terminus_font ];
+        packages = singleton pkgs.terminus_font;
       };
 
       fonts.packages = [

@@ -139,6 +139,7 @@
     let
       inherit (lib.options) mkEnableOption mkOption;
       inherit (lib.types) str port;
+      inherit (lib.lists) singleton;
     in
     {
       # And yes, I've tried lib.mkAliasOptionModule.
@@ -173,7 +174,7 @@
       # `services.endlessh-go.openFirewall` exposes both the Prometheus
       # exporters port and the SSH port, and we don't want the metrics
       # to leak, so we manually expose this like so.
-      config.networking.firewall.allowedTCPPorts = [ config.services.endlessh-go.port ];
+      config.networking.firewall.allowedTCPPorts = singleton config.services.endlessh-go.port;
 
       config.services.endlessh-go = {
         enable = true;

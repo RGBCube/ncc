@@ -129,9 +129,12 @@
     };
 
   flake.homeModules.cinny =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
     {
-      packages = [ pkgs.cinny-desktop ];
+      packages = singleton pkgs.cinny-desktop;
     };
 
   flake.homeModules.thunderbird =
@@ -145,6 +148,7 @@
       inherit (lib.modules) mkIf;
       inherit (lib.trivial) const flip;
       inherit (lib.attrsets) genAttrs;
+      inherit (lib.lists) singleton;
     in
     {
       xdg.mime-apps.default-applications =
@@ -156,6 +160,6 @@
           "text/x-vcard"
         ];
 
-      packages = [ pkgs.thunderbird ];
+      packages = singleton pkgs.thunderbird;
     };
 }
