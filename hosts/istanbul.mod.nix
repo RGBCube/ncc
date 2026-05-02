@@ -113,11 +113,6 @@ in
         ];
 
         mountpoint = "/media/persist";
-        mountOptions = [
-          "lazytime"
-          "x-systemd.requires-mounts-for=/media/key"
-        ];
-
         passwordFile = "/media/key/.bcachefs.key";
       };
 
