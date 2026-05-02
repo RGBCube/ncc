@@ -35,14 +35,13 @@
       inherit (lib.attrsets)
         attrNames
         attrValues
+        concatMapAttrs
         filterAttrs
         mapAttrs
         mapAttrsToList
         ;
-      inherit (lib.attrsets) listToAttrs;
       inherit (lib.lists)
         filter
-        flatten
         last
         ;
       inherit (lib.meta) getExe;
@@ -66,20 +65,10 @@
           XDG_DATA_HOME = config.xdg.data.directory;
           XDG_STATE_HOME = config.xdg.state.directory;
         }
-        |> mapAttrsToList (
-          name: value: [
-            {
-              name = "\$${name}";
-              inherit value;
-            }
-            {
-              name = "\${${name}}";
-              inherit value;
-            }
-          ]
-        )
-        |> flatten
-        |> listToAttrs;
+        |> concatMapAttrs (name: value: {
+          "\$${name}" = value;
+          "\${${name}}" = value;
+        });
 
       nuVariables =
         osConfig.environment.variables
