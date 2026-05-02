@@ -118,13 +118,14 @@
     };
 
   flake.nixosModules.packages-debugging-gui =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
     {
-      environment.systemPackages = [
-        self.packages.x86_64-linux.ida-pro
-      ];
+      allowedUnfreePackageNames = singleton "ida-pro";
 
-      allowedUnfreePackageNames = [ "ida-pro" ];
+      environment.systemPackages = singleton self.packages.x86_64-linux.ida-pro;
     };
 
   flake.nixosModules.packages-debugging =

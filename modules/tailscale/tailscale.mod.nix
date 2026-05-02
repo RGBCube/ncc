@@ -63,7 +63,7 @@
       services.networkd-dispatcher = mkIf (config.networking.defaultGateway != null) {
         enable = true;
         rules."50-tailscale-optimizations" = {
-          onState = [ "routable" ];
+          onState = singleton "routable";
           script = /* sh */ ''
             ${getExe pkgs.ethtool} --features ${config.networking.defaultGateway.interface} rx-udp-gro-forwarding on rx-gro-list off
           '';

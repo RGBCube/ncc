@@ -1,7 +1,12 @@
 {
-  flake.nixosModules.steam = {
-    allowedUnfreePackageNames = [ "steam" ];
+  flake.nixosModules.steam =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      allowedUnfreePackageNames = singleton "steam";
 
-    programs.steam.enable = true;
-  };
+      programs.steam.enable = true;
+    };
 }

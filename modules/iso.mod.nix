@@ -18,7 +18,6 @@
 
       hardware.enableAllHardware = true;
 
-      hardware.enableAllFirmware = true;
       allowedUnfreePackageNames = [
         "broadcom-bt-firmware"
         "b43-firmware"
@@ -26,6 +25,8 @@
         "facetimehd-calibration"
         "facetimehd-firmware"
       ];
+
+      hardware.enableAllFirmware = true;
 
       users.users.root.initialHashedPassword = "";
       services.getty.autologinUser = "root";
