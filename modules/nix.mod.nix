@@ -111,6 +111,12 @@
     {
       persist.paths = singleton "/nix";
 
+      fileSystems."/nix/var/nix/profiles/per-user" = {
+        device = "nullfs";
+        fsType = "nullfs";
+        options = singleton "X-mount.mkdir";
+      };
+
       nix.gc = {
         dates = "weekly";
         persistent = true;
