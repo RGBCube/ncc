@@ -115,8 +115,10 @@ in
     modules = singleton (
       { pkgs, ... }:
       let
+        inherit (lib.attrsets) mapAttrsToList;
         inherit (lib.lists) singleton;
         inherit (lib.meta) getExe;
+        inherit (lib.strings) concatStringsSep;
 
         istanbul = self.nixosConfigurations.istanbul;
       in
@@ -136,7 +138,11 @@ in
 
             exec ${
               getExe inputs.disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
-            } --flake "${self}#istanbul" --disk persist "${istanbul.config.disko.devices.disk.persist.device}"
+            } --flake "${self}#istanbul" ${
+              istanbul.config.disko.devices.disk
+              |> mapAttrsToList (name: disk: ''--disk ${name} "${disk.device}"'')
+              |> concatStringsSep " "
+            }
           '')
 
           (pkgs.writeShellScriptBin "generate-facter-report" /* bash */ ''
