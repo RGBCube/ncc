@@ -64,16 +64,6 @@ in
 
         boot.initrd.availableKernelModules.e1000e = true;
 
-        disko.devices.nodev."root" = {
-          fsType = "tmpfs";
-          mountpoint = "/";
-          mountOptions = [
-            "defaults"
-            "size=25%"
-            "mode=755"
-          ];
-        };
-
         persist.enable = true;
         persist.passwordFile = "/media/key/.bcachefs.key";
 

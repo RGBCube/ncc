@@ -32,6 +32,22 @@
           description = "Name of the filesystem.";
         };
 
+        passwordFile = mkOption {
+          type = nullOr path;
+          default = null;
+          description = "Path to the passphrase file.";
+        };
+
+        extraFormatArgs = mkOption {
+          type = listOf str;
+          default = [
+            "--compression=zstd:9"
+            "--background_compression=zstd:9"
+            "--block_size=4096"
+          ];
+          description = "Extra arguments passed to bcachefs format.";
+        };
+
         mountpoint = mkOption {
           type = path;
           default = "/media/${config.persist.filesystemName}";
@@ -49,22 +65,6 @@
           description = "Mount options applied to the filesystem and every subvolume.";
         };
 
-        passwordFile = mkOption {
-          type = nullOr path;
-          default = null;
-          description = "Path to the passphrase file.";
-        };
-
-        extraFormatArgs = mkOption {
-          type = listOf str;
-          default = [
-            "--compression=zstd:9"
-            "--background_compression=zstd:9"
-            "--block_size=4096"
-          ];
-          description = "Extra arguments passed to bcachefs format.";
-        };
-
         paths = mkOption {
           type = listOf path;
           default = [ ];
@@ -73,6 +73,16 @@
       };
 
       config = mkIf config.persist.enable {
+        disko.devices.nodev."root" = {
+          fsType = "tmpfs";
+          mountpoint = "/";
+          mountOptions = [
+            "defaults"
+            "size=25%"
+            "mode=755"
+          ];
+        };
+
         disko.devices.bcachefs_filesystems.${config.persist.filesystemName} = {
           type = "bcachefs_filesystem";
 
