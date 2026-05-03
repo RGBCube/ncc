@@ -1,8 +1,19 @@
 {
   flake.nixosModules.linux-kernel =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
     {
       boot.kernelPackages = pkgs.linuxPackages_latest;
+
+      boot.supportedFilesystems.bcachefs = true;
+
+      boot.kernelPatches = singleton {
+        name = "enable-nullfs";
+        patch = null;
+        extraStructuredConfig.NULLFS_FS = lib.kernel.module;
+      };
 
       # security.lockKernelModules = true; # TODO
 
