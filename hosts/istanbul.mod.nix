@@ -55,21 +55,35 @@ let
 in
 {
   flake.nixosConfigurations.istanbul = lib.nixosSystem {
-    modules = singleton {
-      imports = modules;
+    modules = singleton (
+      { config, ... }:
+      {
+        imports = modules;
 
-      networking.hostName = "istanbul";
+        networking.hostName = "istanbul";
 
-      boot.initrd.availableKernelModules.e1000e = true;
+        boot.initrd.availableKernelModules.e1000e = true;
 
-      disko.devices.disk."persist" = {
-        device = "/dev/nvme0n1";
-        type = "disk";
-        content = {
-          type = "gpt";
+        disko.devices.nodev."root" = {
+          fsType = "tmpfs";
+          mountpoint = "/";
+          mountOptions = [
+            "defaults"
+            "size=25%"
+            "mode=755"
+          ];
+        };
 
-          partitions."boot" = {
-            label = "boot";
+        persist.enable = true;
+        persist.passwordFile = "/media/key/.bcachefs.key";
+
+        disko.devices.disk."nvme0n1" = disk: {
+          device = "/dev/${disk.config.name}";
+          type = "disk";
+
+          content.type = "gpt";
+
+          content.partitions."boot" = {
             size = "1G";
             type = "EF00";
 
@@ -82,43 +96,19 @@ in
             ];
           };
 
-          partitions."persist" = {
-            label = "persist";
+          content.partitions."bcachefs" = {
             size = "100%";
 
             content.type = "bcachefs";
-            content.filesystem = "persist";
-            content.label = "persist";
+            content.filesystem = config.persist.filesystemName;
+            content.label = "nvme.nvme0";
           };
         };
-      };
 
-      disko.devices.nodev."root" = {
-        fsType = "tmpfs";
-        mountpoint = "/";
-        mountOptions = [
-          "defaults"
-          "size=25%"
-          "mode=755"
-        ];
-      };
-
-      persist.enable = true;
-      disko.devices.bcachefs_filesystems."persist" = {
-        type = "bcachefs_filesystem";
-        extraFormatArgs = [
-          "--compression=zstd:9"
-          "--background_compression=zstd:9"
-          "--block_size=4096"
-        ];
-
-        mountpoint = "/media/persist";
-        passwordFile = "/media/key/.bcachefs.key";
-      };
-
-      hardware.report = ./istanbul.report.json;
-      system.stateVersion = "25.11";
-    };
+        hardware.report = ./istanbul.report.json;
+        system.stateVersion = "25.11";
+      }
+    );
   };
 
   flake.nixosConfigurations.istanbul-installer = lib.nixosSystem {
