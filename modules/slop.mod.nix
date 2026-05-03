@@ -126,7 +126,7 @@ in
       # Also 100% slop.
       statusLine = pkgs.writeScriptBin "claude-code-statusline" /* nu */ ''
         #!${getExe pkgs.nushell}
-
+        #
         def format-duration [ms: int] {
           let total_s = $ms // 1000
           let h = $total_s // 3600

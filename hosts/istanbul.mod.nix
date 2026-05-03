@@ -74,24 +74,25 @@ in
           content.type = "gpt";
 
           content.partitions."boot" = {
+            priority = 100;
             size = "1G";
             type = "EF00";
 
             content.type = "filesystem";
-            content.format = "vfat";
-            content.mountpoint = "/boot";
-            content.mountOptions = [
-              "fmask=0077"
-              "dmask=0077"
-            ];
+            content = {
+              format = "vfat";
+            };
           };
 
           content.partitions."bcachefs" = {
+            priority = 200;
             size = "100%";
 
             content.type = "bcachefs";
-            content.filesystem = config.persist.filesystemName;
-            content.label = "nvme.nvme0";
+            content = {
+              filesystem = config.persist.filesystemName;
+              label = "nvme.nvme0";
+            };
           };
         };
 
@@ -130,7 +131,7 @@ in
               getExe inputs.disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
             } --flake "${self}#istanbul" ${
               istanbul.config.disko.devices.disk
-              |> mapAttrsToList (name: disk: ''--disk ${name} "${disk.device}"'')
+              |> mapAttrsToList (name: { device, ... }: ''--disk ${name} "${device}"'')
               |> concatStringsSep " "
             }
           '')
