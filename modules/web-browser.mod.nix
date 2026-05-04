@@ -3,90 +3,137 @@ let
   inherit (lib) fix;
   inherit (lib.attrsets)
     attrNames
-    attrValues
-    catAttrs
+    filterAttrs
+    getAttr
+    hasAttr
     mapAttrsToList
     ;
   inherit (lib.lists)
-    elem
     filter
     singleton
     ;
-  inherit (lib.trivial) importJSON;
+  inherit (lib.trivial) const importJSON;
   inherit (lib.strings) hasInfix;
 
   extensions = {
-    clearurls.id = "lckanjgmijmafbedllaakclkaicjfmnk";
-    dark-reader.id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";
-    dearrow.id = "enamippconapkdmgfgjchkhakpfinmaj";
-    floccus.id = "fnaicdffflnofjppbagibeoednhnbjhg";
-    i-still-dont-care-about-cookies.id = "edibdbjcniadpccecjdfdjjppcpchdlm";
-    kagi.id = "cdglnehniifkbagbbombnjghhcihifij";
-    old-reddit-redirect.id = "dneaehbmnbhcippjikoajpoabadpodje";
-    refined-github.id = "hlepfoohegkhhmjieoechaddaejaokhf";
-    sponsorblock.id = "mnjggcdmjocbbbhaepdhchncahnbgone";
-    stylus.id = "clngdbkpkpeebahjckkjfobafhncgmne";
+    consent-o-matic.id = "mdjildafknihdffpkfmmpnpoiajfjnjd";
     ublock-origin = fix (self: {
-      id = "cjpalhdlnbpafiamejdnhcphjbkeiagm";
+      id = "blockjmkbacgjkknlgpkjjiijinjdanf";
+      preinstalled = true;
 
-      filters.internal = attrNames <| importJSON "${inputs.ublock}/assets/assets.json";
+      filters.assets = importJSON "${inputs.ublock}/assets/assets.json";
 
-      filters.wanted = [
-        "user-filters"
-        "ublock-filters"
-        "ublock-badware"
-        "ublock-privacy"
-        "ublock-abuse"
-        "ublock-unbreak"
-        "easylist"
-        "easyprivacy"
-        "urlhaus-1"
-        "plowe-0"
+      filters.wanted =
+        (
+          self.filters.assets
+          |> filterAttrs (_: spec: (spec.content or null) == "filters" && (spec.group or null) != "regions")
+          |> attrNames
+          |> filter (name: name != "ublock-experimental")
+        )
+        ++ [
+          "TUR-0"
+          "user-filters"
 
-        "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/ClearURLs%20for%20uBo/clear_urls_uboified.txt"
-        "https://raw.githubusercontent.com/yokoffing/filterlists/refs/heads/main/privacy_essentials.txt"
-        "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/LegitimateURLShortener.txt"
-        "https://raw.githubusercontent.com/yokoffing/filterlists/refs/heads/main/annoyance_list.txt"
-        "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/BrowseWebsitesWithoutLoggingIn.txt"
-      ];
+          "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/ClearURLs%20for%20uBo/clear_urls_uboified.txt"
+          "https://raw.githubusercontent.com/yokoffing/filterlists/refs/heads/main/privacy_essentials.txt"
+          "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/LegitimateURLShortener.txt"
+          "https://raw.githubusercontent.com/yokoffing/filterlists/refs/heads/main/annoyance_list.txt"
+          "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/BrowseWebsitesWithoutLoggingIn.txt"
+        ];
 
       filters.warnings =
         self.filters.wanted
-        # Not external and not in internal list.
-        |> filter (name: !(hasInfix "://" name || elem name self.filters.internal))
+        |> filter (
+          name: !(hasInfix "://" name || name == "user-filters" || hasAttr name self.filters.assets)
+        )
         |> map (invalid: "helium: unknown ublock filter list: ${invalid}");
+
+      filters.user = [
+        "@@||reddit.com/media$document"
+        "@@||reddit.com/mod$document"
+        "@@||reddit.com/poll$document"
+        "@@||reddit.com/settings$document"
+        "@@||reddit.com/topics$document"
+        "@@||reddit.com/community-points$document"
+        "@@||reddit.com/appeal$document"
+        "@@||reddit.com/appeals$document"
+        "@@||reddit.com/notifications$document"
+        "@@||reddit.com/message/compose/$document"
+        "@@||reddit.com/mail^$document"
+        "@@||reddit.com/answers^$document"
+        "@@||reddit.com/r/subreddit^$document"
+        ''@@/^https:\/\/\w*\.?reddit\.com\/r\/[A-Za-z0-9_]+\/s\//$document''
+        ''@@/^https:\/\/\w*\.?reddit\.com\/.*[?&]new_reddit=true(?:$|[&#])/$document''
+
+        ''||reddit.com/gallery/$document,uritransform=/^https:\/\/(?:www\.|np\.|amp\.|i\.)?reddit\.com\/gallery\/(.*)/https:\/\/old.reddit.com\/comments\/\$1/''
+        ''||reddit.com^$document,uritransform=/^https:\/\/(?:www\.|np\.|amp\.|i\.)?reddit\.com\/(?!gallery\/)/https:\/\/old.reddit.com\//''
+
+        "old.reddit.com##:is(#eu-cookie-policy, #redesign-beta-optin-btn)"
+      ];
     });
-    vimium-c.id = "hfjbmagddngcpeloejdejnfgbamkjaeg";
+
+    # YOUTUBE
+    dearrow.id = "enamippconapkdmgfgjchkhakpfinmaj";
+    sponsorblock.id = "mnjggcdmjocbbbhaepdhchncahnbgone";
+
+    # VISUALS
+    dark-reader.id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";
+    stylus.id = "clngdbkpkpeebahjckkjfobafhncgmne";
+    refined-github.id = "hlepfoohegkhhmjieoechaddaejaokhf";
+
+    # NAVIGATION
     violentmonkey.id = "jinjaccalgkegednnccohejagnlnfdag";
+    vimium-c.id = "hfjbmagddngcpeloejdejnfgbamkjaeg";
     web-archives.id = "hkligngkgcpcolhcnkgccglchdafcnao";
+
+    # SERVICES
+    floccus.id = "fnaicdffflnofjppbagibeoednhnbjhg";
+    kagi.id = "cdglnehniifkbagbbombnjghhcihifij";
   };
 
-  policy = {
-    # EXTENSIONS
-    ExtensionInstallForcelist =
-      extensions |> mapAttrsToList (_name: { id, ... }: "${id};https://services.helium.imput.net/ext");
-    ExtensionInstallAllowlist = extensions |> attrValues |> catAttrs "id";
-    ExtensionInstallSources = singleton "https://services.helium.imput.net/*";
+  policy =
+    let
+      installableIds =
+        extensions
+        |> filterAttrs (_: extension: !(extension.preinstalled or false))
+        |> mapAttrsToList (const <| getAttr "id");
+    in
+    {
+      # EXTENSIONS
+      ExtensionInstallForcelist = installableIds;
+      ExtensionInstallAllowlist = installableIds;
+      ExtensionInstallSources = singleton "https://services.helium.imput.net/*";
 
-    # UBLOCK ORIGIN
-    "3rdparty".extensions.${extensions.ublock-origin.id}.toOverwrite.filterLists =
-      extensions.ublock-origin.filters.wanted;
+      # UBLOCK ORIGIN
+      "3rdparty".extensions.${extensions.ublock-origin.id} = {
+        toOverwrite.filterLists = extensions.ublock-origin.filters.wanted;
+        toOverwrite.filters = extensions.ublock-origin.filters.user;
+        userSettings = [
+          [
+            "userFiltersTrusted"
+            "true"
+          ]
+        ];
+      };
 
-    # # Setting the policy to False stops Chrome from ever checking if
-    # # it's the default and turns user controls off for this option.
-    # DefaultBrowserSettingEnabled = true;
+      DefaultBrowserSettingEnabled = false;
 
-    # SEARCH
-    DefaultSearchProviderEnabled = true;
-    DefaultSearchProviderName = "Kagi";
-    DefaultSearchProviderSearchURL = "https://kagi.com/search?q={searchTerms}";
-    DefaultSearchProviderSuggestURL = "https://kagi.com/api/autosuggest?q={searchTerms}";
-    SearchSuggestEnabled = true;
-  };
+      # SEARCH
+      DefaultSearchProviderEnabled = true;
+      DefaultSearchProviderName = "Kagi";
+      DefaultSearchProviderSearchURL = "https://kagi.com/search?q={searchTerms}";
+      DefaultSearchProviderSuggestURL = "https://kagi.com/api/autosuggest?q={searchTerms}";
+      SearchSuggestEnabled = true;
+    };
 in
 {
   flake.darwinModules.helium =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       inherit (lib.generators) toPlist;
       inherit (lib.modules) mkAfter;
@@ -100,6 +147,7 @@ in
         ${config.system.activationScripts.helium.text}
       '';
       system.activationScripts.helium.text = /* bash */ ''
+        # TODO: Rewrite in nu.
         echo "setting up helium policy..."
         /usr/bin/install -d -m 755 "/Library/Managed Preferences"
         /bin/cat > "/Library/Managed Preferences/net.imput.helium.plist" <<'PLIST_EOF'
@@ -107,6 +155,9 @@ in
         PLIST_EOF
         /usr/sbin/chown root:wheel "/Library/Managed Preferences/net.imput.helium.plist"
         /bin/chmod 0644 "/Library/Managed Preferences/net.imput.helium.plist"
+
+        console_user=$(/usr/bin/stat -f%Su /dev/console)
+        /usr/bin/sudo -u "$console_user" ${pkgs.defaultbrowser}/bin/defaultbrowser helium
       '';
     };
 
@@ -135,8 +186,6 @@ in
     in
     {
       inherit (extensions.ublock-origin.filters) warnings;
-
-      environment.sessionVariables.BROWSER = "helium";
 
       xdg.mime-apps.default-applications =
         mkIf osConfig.nixpkgs.hostPlatform.isLinux
