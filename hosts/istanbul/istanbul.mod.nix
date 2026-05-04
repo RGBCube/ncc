@@ -1,6 +1,5 @@
 {
   self,
-  inputs,
   lib,
   ...
 }:
@@ -64,6 +63,9 @@ in
 
         boot.initrd.availableKernelModules.e1000e = true;
 
+        secrets.password.file = ./password.age;
+        users.users.root.hashedPasswordFile = config.secrets.password.path;
+
         persist.enable = true;
         persist.passwordFile = "/media/key/.bcachefs.key";
 
@@ -96,7 +98,7 @@ in
           };
         };
 
-        hardware.report = ./istanbul.report.json;
+        hardware.report = ./report.json;
         system.stateVersion = "25.11";
       }
     );
@@ -106,33 +108,43 @@ in
     modules = singleton (
       { pkgs, ... }:
       let
-        inherit (lib.attrsets) mapAttrsToList;
         inherit (lib.lists) singleton;
         inherit (lib.meta) getExe;
-        inherit (lib.strings) concatStringsSep;
 
         istanbul = self.nixosConfigurations.istanbul;
+
+        toplevel = istanbul.config.system.build.toplevel;
       in
       {
         imports = modules ++ singleton self.nixosModules.iso;
 
-        environment.etc."install-closure".source = pkgs.closureInfo {
-          rootPaths = [
-            istanbul.config.system.build.toplevel
-            istanbul.config.system.build.diskoScript
-          ];
-        };
-
         environment.systemPackages = [
-          (pkgs.writeShellScriptBin "install-istanbul" /* bash */ ''
-            set -euo pipefail
+          (pkgs.writeScriptBin "install-istanbul" /* nu */ ''
+            #!${getExe pkgs.nushell}
 
-            exec ${
-              getExe inputs.disko.packages.${pkgs.stdenv.hostPlatform.system}.disko-install
-            } --flake "${self}#istanbul" ${
-              istanbul.config.disko.devices.disk
-              |> mapAttrsToList (name: { device, ... }: ''--disk ${name} "${device}"'')
-              |> concatStringsSep " "
+            def main [] {
+              if (^id --user | into int) != 0 {
+                error make { msg: "install-istanbul must run as root" }
+              }
+
+              let mountpoint = "/mnt"
+
+              mkdir $mountpoint
+              # bcachefs format refuses unless the mount-point parent is 0755.
+              ^chmod 755 $mountpoint
+
+              DISKO_SKIP_SWAP=1 ^${istanbul.config.system.build.diskoScript}
+
+              (^nix copy
+                --no-check-sigs
+                --to $"local?root=($mountpoint)"
+                ${toplevel})
+
+              (^nixos-install
+                --no-channel-copy
+                --no-root-password
+                --system ${toplevel}
+                --root $mountpoint)
             }
           '')
 
