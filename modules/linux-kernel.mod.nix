@@ -12,7 +12,7 @@
       boot.kernelPatches = singleton {
         name = "enable-nullfs";
         patch = null;
-        extraStructuredConfig.NULLFS_FS = lib.kernel.module;
+        structuredExtraConfig.NULLFS_FS = lib.kernel.module;
       };
 
       # security.lockKernelModules = true; # TODO
