@@ -118,6 +118,8 @@ in
       {
         imports = modules ++ singleton self.nixosModules.iso;
 
+        boot.supportedFilesystems = istanbul.config.boot.supportedFilesystems;
+
         environment.systemPackages = [
           (pkgs.writeScriptBin "install-istanbul" /* nu */ ''
             #!${getExe pkgs.nushell}
