@@ -1,65 +1,48 @@
-{ self, lib, ... }:
+{ lib, ... }:
 {
   flake.commonModules.dns =
     { config, pkgs, ... }:
     let
-      inherit (lib.attrsets) getAttr catAttrs;
-      inherit (lib.lists)
-        concatMap
-        imap0
-        singleton
-        sort
-        ;
-      inherit (lib.strings) hasInfix substring;
-
-      mkSocketAddr =
-        { ip, port }: if hasInfix ":" ip then "[${ip}]:${toString port}" else "${ip}:${toString port}";
+      inherit (lib.lists) map singleton;
+      inherit (lib.strings) substring;
 
       id = "7f2bf8";
       idv6 = "${substring 0 2 id}:${substring 2 4 id}";
 
-      mkNextDnsServers =
+      mkNextDnsServer =
         { ip, hostName }:
-        [
-          {
-            socket_addr = mkSocketAddr {
-              inherit ip;
-              port = 443;
-            };
-            protocol = "h3";
-            tls_dns_name = "dns.nextdns.io";
-            http_endpoint = "/${id}/${hostName}";
-            trust_negative_responses = true;
-          }
-          {
-            socket_addr = mkSocketAddr {
-              inherit ip;
-              port = 853;
-            };
-            protocol = "quic";
-            tls_dns_name = "${hostName}-${id}.dns.nextdns.io";
-            trust_negative_responses = true;
-          }
-          {
-            socket_addr = mkSocketAddr {
-              inherit ip;
-              port = 443;
-            };
-            protocol = "https";
-            tls_dns_name = "dns.nextdns.io";
-            http_endpoint = "/${id}/${hostName}";
-            trust_negative_responses = true;
-          }
-          {
-            socket_addr = mkSocketAddr {
-              inherit ip;
-              port = 853;
-            };
-            protocol = "tls";
-            tls_dns_name = "${hostName}-${id}.dns.nextdns.io";
-            trust_negative_responses = true;
-          }
-        ];
+        {
+          inherit ip;
+          trust_negative_responses = true;
+          connections = [
+            {
+              protocol = {
+                type = "h3";
+                server_name = "dns.nextdns.io";
+                path = "/${id}/${hostName}";
+              };
+            }
+            {
+              protocol = {
+                type = "quic";
+                server_name = "${hostName}-${id}.dns.nextdns.io";
+              };
+            }
+            {
+              protocol = {
+                type = "https";
+                server_name = "dns.nextdns.io";
+                path = "/${id}/${hostName}";
+              };
+            }
+            {
+              protocol = {
+                type = "tls";
+                server_name = "${hostName}-${id}.dns.nextdns.io";
+              };
+            }
+          ];
+        };
     in
     {
       services.hickory-dns = {
@@ -96,39 +79,16 @@
                 #   inherit (config.networking) hostName;
                 #   ip = "2a07:a8c1::${idv6}";
                 # }
-                # {
-                #   inherit (config.networking) hostName;
-                #   ip = "45.90.28.0";
-                # }
+                {
+                  inherit (config.networking) hostName;
+                  ip = "45.90.28.0";
+                }
                 {
                   inherit (config.networking) hostName;
                   ip = "45.90.30.0";
                 }
               ]
-              |> concatMap mkNextDnsServers
-              |> imap0 (index: server: { inherit index server; })
-              |> sort (
-                a: b:
-                let
-                  protocolPriority =
-                    protocol:
-                    if protocol == "h3" then
-                      0
-                    else if protocol == "quic" then
-                      1
-                    else if protocol == "https" then
-                      2
-                    else if protocol == "tls" then
-                      3
-                    else
-                      67;
-
-                  aPriority = protocolPriority a.server.protocol;
-                  bPriority = protocolPriority b.server.protocol;
-                in
-                if aPriority == bPriority then a.index < b.index else aPriority < bPriority
-              )
-              |> catAttrs "server";
+              |> map mkNextDnsServer;
           };
         };
       };

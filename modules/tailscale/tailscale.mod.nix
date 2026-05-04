@@ -11,9 +11,12 @@
 
         stores.type = "forward";
         stores.name_servers = singleton {
-          socket_addr = "100.100.100.100:53";
-          protocol = "udp";
+          ip = "100.100.100.100";
           trust_negative_responses = true;
+          connections = singleton {
+            port = 53;
+            protocol.type = "udp";
+          };
         };
       };
     };
