@@ -139,6 +139,8 @@
             present(@) | present(trunk()) | ancestors(remote_bookmarks().. | @.., 8)
           '';
 
+        ui.default-command = "log";
+
         ui.diff-editor = ":builtin";
         ui.pager = [
           (getExe pkgs.bash)
