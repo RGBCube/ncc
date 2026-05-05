@@ -14,7 +14,12 @@ let
     foldr
     singleton
     ;
-  inherit (lib.trivial) const importJSON warn;
+  inherit (lib.trivial)
+    const
+    importJSON
+    warn
+    ;
+  inherit (lib.fixedPoints) fix;
   inherit (lib.strings) hasInfix;
 
   extensions.consent-o-matic.id = "mdjildafknihdffpkfmmpnpoiajfjnjd";
@@ -99,7 +104,22 @@ let
   # SERVICES
   extensions.floccus.id = "fnaicdffflnofjppbagibeoednhnbjhg";
   extensions.kagi.id = "cdglnehniifkbagbbombnjghhcihifij";
-  extensions.keepassxc-browser.id = "oboonakemofpalcgghocfoadofidjkkk";
+  extensions.keepassxc-browser = {
+    id = "oboonakemofpalcgghocfoadofidjkkk";
+    policy.settings = fix (settings: {
+      autoFillRelevantCredential = true;
+
+      defaultGroup = "Web";
+      defaultPasskeyGroup = settings.defaultGroup;
+
+      downloadFaviconAfterSave = true;
+      passkeys = true;
+
+      useCompactMode = true;
+      useMonochromeToolbarIcon = true;
+      usePasswordGeneratorIcons = true;
+    });
+  };
 
   policy = {
     # EXTENSIONS
