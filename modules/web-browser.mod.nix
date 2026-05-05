@@ -22,6 +22,7 @@ let
   inherit (lib.fixedPoints) fix;
   inherit (lib.strings) hasInfix;
 
+  # UNSLOP
   extensions.consent-o-matic.id = "mdjildafknihdffpkfmmpnpoiajfjnjd";
   extensions.ublock-origin =
     let
@@ -99,11 +100,6 @@ let
   # NAVIGATION
   extensions.violentmonkey.id = "jinjaccalgkegednnccohejagnlnfdag";
   extensions.vimium-c.id = "hfjbmagddngcpeloejdejnfgbamkjaeg";
-  extensions.web-archives = {
-    id = "hkligngkgcpcolhcnkgccglchdafcnao";
-
-    settings.toolbar_pin = "force_pinned";
-  };
 
   # SERVICES
   extensions.floccus.id = "fnaicdffflnofjppbagibeoednhnbjhg";
@@ -155,6 +151,79 @@ let
     DefaultBrowserSettingEnabled = false;
 
     DeveloperToolsAvailability = 1;
+
+    # BOOKMARKS
+    ManagedBookmarks =
+      let
+        mkFolder = name: children: { inherit name children; };
+
+        mkBookmark = name: url: { inherit name url; };
+
+        mkScriptlet =
+          name: javascript:
+          mkBookmark name (
+            "javascript:"
+            + javascript
+            + /* javascript */ ''
+              void undefined;
+            ''
+          );
+      in
+      [
+        { toplevel_name = "Tools"; }
+
+        (mkScriptlet "Wayback (view)" /* javascript */ ''
+          window.open("https://web.archive.org/web/*/" + location.href);
+        '')
+        (mkScriptlet "Wayback (save)" /* javascript */ ''
+          window.open("https://web.archive.org/save/" + location.href);
+        '')
+        (mkScriptlet "Archive.is (view)" /* javascript */ ''
+          window.open("https://archive.ph/newest/" + location.href);
+        '')
+        (mkScriptlet "Archive.is (save)" /* javascript */ ''
+          window.open("https://archive.ph/?run=1&url=" + encodeURIComponent(location.href));
+        '')
+
+        (mkScriptlet "Kill Sticky" /* javascript */ ''
+          document.querySelectorAll("body *").forEach((element) => {
+            let position = getComputedStyle(element).position;
+            if (position === "fixed" || position === "sticky") element.parentNode.removeChild(element);
+          });
+
+          document.documentElement.style.overflow = "auto";
+          document.body.style.overflow = "auto";
+        '')
+
+        (mkScriptlet "Force Copy Paste" /* javascript */ ''
+          ["copy", "cut", "paste", "selectstart", "contextmenu", "dragstart"].forEach((eventName) => {
+            document.addEventListener(eventName, (event) => event.stopPropagation(), true);
+          });
+
+          document.querySelectorAll("*").forEach((element) => {
+            element.style.userSelect = "auto";
+            element.style.webkitUserSelect = "auto";
+          });
+        '')
+
+        (mkFolder "Toggle" [
+          (mkScriptlet "Passwords" /* javascript */ ''
+            document.querySelectorAll("input").forEach((input) => {
+              if (input.type === "password") {
+                input.dataset.wasPassword = "";
+                input.type = "text";
+              } else if ("wasPassword" in input.dataset) {
+                delete input.dataset.wasPassword;
+                input.type = "password";
+              }
+            });
+          '')
+
+          (mkScriptlet "Edit" /* javascript */ ''
+            document.designMode = document.designMode === "on" ? "off" : "on";
+          '')
+        ])
+      ];
 
     # SEARCH
     DefaultSearchProviderEnabled = true;
