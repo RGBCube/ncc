@@ -99,13 +99,20 @@ let
   # NAVIGATION
   extensions.violentmonkey.id = "jinjaccalgkegednnccohejagnlnfdag";
   extensions.vimium-c.id = "hfjbmagddngcpeloejdejnfgbamkjaeg";
-  extensions.web-archives.id = "hkligngkgcpcolhcnkgccglchdafcnao";
+  extensions.web-archives = {
+    id = "hkligngkgcpcolhcnkgccglchdafcnao";
+
+    settings.toolbar_pin = "force_pinned";
+  };
 
   # SERVICES
   extensions.floccus.id = "fnaicdffflnofjppbagibeoednhnbjhg";
   extensions.kagi.id = "cdglnehniifkbagbbombnjghhcihifij";
   extensions.keepassxc-browser = {
     id = "oboonakemofpalcgghocfoadofidjkkk";
+
+    settings.toolbar_pin = "force_pinned";
+
     policy.settings = fix (settings: {
       autoFillRelevantCredential = true;
 
@@ -132,6 +139,12 @@ let
       |> mapAttrsToList (const <| getAttr "id");
 
     ExtensionInstallSources = singleton "https://services.helium.imput.net/*";
+
+    ExtensionSettings =
+      extensions
+      |> concatMapAttrs (
+        _: extension: optionalAttrs (extension ? settings) { ${extension.id} = extension.settings; }
+      );
 
     "3rdparty".extensions =
       extensions
