@@ -11,11 +11,11 @@
       inherit (lib.attrsets) mapAttrsToList;
       inherit (lib.modules) mkIf;
       inherit (lib.lists) singleton;
-      inherit (lib.strings) concatStringsSep;
+      inherit (lib.strings) concatLines;
     in
     {
       xdg.config.files."xdg-terminals.list" = mkIf osConfig.nixpkgs.hostPlatform.isLinux {
-        generator = concatStringsSep "\n";
+        generator = concatLines;
         value = singleton "com.mitchellh.ghostty.desktop";
       };
 

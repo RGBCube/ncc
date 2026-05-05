@@ -351,15 +351,15 @@
     "ublock": {
       "flake": false,
       "locked": {
-        "lastModified": 1777814056,
-        "narHash": "sha256-vgIaZ0W1rZ/m+yVK53Bj3LXblyqUGABd3FbamMEcw2g=",
-        "owner": "gorhill",
+        "lastModified": 1773215647,
+        "narHash": "sha256-J1vuWKQNWgqJs36Tq05+nsCUjGAcWEK5DvDJsTmlECE=",
+        "owner": "imputnet",
         "repo": "uBlock",
-        "rev": "12696424f69c090a59b4a474ca94dd00ce35e65c",
+        "rev": "3e4f46930086c87a58294b3a87582e5003516882",
         "type": "github"
       },
       "original": {
-        "owner": "gorhill",
+        "owner": "imputnet",
         "repo": "uBlock",
         "type": "github"
       }

@@ -17,36 +17,35 @@
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.shadow-xcode.text}
       '';
-      system.activationScripts.shadow-xcode.text = /* bash */ ''
-        echo "shadowing xcode..."
-        ${getExe pkgs.nushell} ${
-          pkgs.writeText "shadow-xcode.nu" /* nu */ ''
-            use std null_device
+      system.activationScripts.shadow-xcode.text = "${getExe pkgs.nushell} ${
+        pkgs.writeText "shadow-xcode.nu" /* nu */ ''
+          use std null_device
 
-            let shadow_path = "${shadowPath}"
-            let original_size = ls /usr/bin/SplitForks | get 0.size
+          print "shadowing xcode..."
 
-            let shadoweds = ls /usr/bin
-            | flatten
-            | where {
-              $in.size == $original_size and (try {
-                open $null_device | ^$in.name out+err>| str contains "xcode-select: note: No developer tools were found, requesting install."
-              } catch {
-                false
-              })
-            }
-            | get name
-            | each { path basename }
+          let shadow_path = "${shadowPath}"
+          let original_size = ls /usr/bin/SplitForks | get 0.size
 
-            rm -rf $shadow_path
-            mkdir $shadow_path
+          let shadoweds = ls /usr/bin
+          | flatten
+          | where {
+            $in.size == $original_size and (try {
+              open $null_device | ^$in.name out+err>| str contains "xcode-select: note: No developer tools were found, requesting install."
+            } catch {
+              false
+            })
+          }
+          | get name
+          | each { path basename }
 
-            for shadowed in $shadoweds {
-              ln --symbolic /usr/bin/false ($shadow_path | path join $shadowed)
-            }
-          ''
-        }
-      '';
+          rm -rf $shadow_path
+          mkdir $shadow_path
+
+          for shadowed in $shadoweds {
+            ln --symbolic /usr/bin/false ($shadow_path | path join $shadowed)
+          }
+        ''
+      }";
 
       # LOGIN WINDOW
       system.defaults.loginwindow = {

@@ -1,31 +1,30 @@
 { inputs, lib, ... }:
 let
-  inherit (lib) fix;
   inherit (lib.attrsets)
     attrNames
+    concatMapAttrs
     filterAttrs
     getAttr
     hasAttr
     mapAttrsToList
+    optionalAttrs
     ;
   inherit (lib.lists)
     filter
+    foldr
     singleton
     ;
-  inherit (lib.trivial) const importJSON;
+  inherit (lib.trivial) const importJSON warn;
   inherit (lib.strings) hasInfix;
 
-  extensions = {
-    consent-o-matic.id = "mdjildafknihdffpkfmmpnpoiajfjnjd";
-    ublock-origin = fix (self: {
-      id = "blockjmkbacgjkknlgpkjjiijinjdanf";
-      preinstalled = true;
+  extensions.consent-o-matic.id = "mdjildafknihdffpkfmmpnpoiajfjnjd";
+  extensions.ublock-origin =
+    let
+      assets = importJSON "${inputs.ublock}/assets/assets.json";
 
-      filters.assets = importJSON "${inputs.ublock}/assets/assets.json";
-
-      filters.wanted =
+      filterLists =
         (
-          self.filters.assets
+          assets
           |> filterAttrs (_: spec: (spec.content or null) == "filters" && (spec.group or null) != "regions")
           |> attrNames
           |> filter (name: name != "ublock-experimental")
@@ -41,14 +40,7 @@ let
           "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/BrowseWebsitesWithoutLoggingIn.txt"
         ];
 
-      filters.warnings =
-        self.filters.wanted
-        |> filter (
-          name: !(hasInfix "://" name || name == "user-filters" || hasAttr name self.filters.assets)
-        )
-        |> map (invalid: "helium: unknown ublock filter list: ${invalid}");
-
-      filters.user = [
+      filters = [
         "@@||reddit.com/media$document"
         "@@||reddit.com/mod$document"
         "@@||reddit.com/poll$document"
@@ -70,44 +62,17 @@ let
 
         "old.reddit.com##:is(#eu-cookie-policy, #redesign-beta-optin-btn)"
       ];
-    });
-
-    # YOUTUBE
-    dearrow.id = "enamippconapkdmgfgjchkhakpfinmaj";
-    sponsorblock.id = "mnjggcdmjocbbbhaepdhchncahnbgone";
-
-    # VISUALS
-    dark-reader.id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";
-    stylus.id = "clngdbkpkpeebahjckkjfobafhncgmne";
-    refined-github.id = "hlepfoohegkhhmjieoechaddaejaokhf";
-
-    # NAVIGATION
-    violentmonkey.id = "jinjaccalgkegednnccohejagnlnfdag";
-    vimium-c.id = "hfjbmagddngcpeloejdejnfgbamkjaeg";
-    web-archives.id = "hkligngkgcpcolhcnkgccglchdafcnao";
-
-    # SERVICES
-    floccus.id = "fnaicdffflnofjppbagibeoednhnbjhg";
-    kagi.id = "cdglnehniifkbagbbombnjghhcihifij";
-  };
-
-  policy =
-    let
-      installableIds =
-        extensions
-        |> filterAttrs (_: extension: !(extension.preinstalled or false))
-        |> mapAttrsToList (const <| getAttr "id");
     in
     {
-      # EXTENSIONS
-      ExtensionInstallForcelist = installableIds;
-      ExtensionInstallAllowlist = installableIds;
-      ExtensionInstallSources = singleton "https://services.helium.imput.net/*";
+      id = "blockjmkbacgjkknlgpkjjiijinjdanf";
+      preinstalled = true;
+      policy = {
+        toOverwrite.filterLists =
+          filter (name: !(hasInfix "://" name || name == "user-filters" || hasAttr name assets)) filterLists
+          |> foldr (name: warn "helium: unknown ublock filter list: ${name}") filterLists;
 
-      # UBLOCK ORIGIN
-      "3rdparty".extensions.${extensions.ublock-origin.id} = {
-        toOverwrite.filterLists = extensions.ublock-origin.filters.wanted;
-        toOverwrite.filters = extensions.ublock-origin.filters.user;
+        toOverwrite.filters = filters;
+
         userSettings = [
           [
             "userFiltersTrusted"
@@ -115,16 +80,56 @@ let
           ]
         ];
       };
-
-      DefaultBrowserSettingEnabled = false;
-
-      # SEARCH
-      DefaultSearchProviderEnabled = true;
-      DefaultSearchProviderName = "Kagi";
-      DefaultSearchProviderSearchURL = "https://kagi.com/search?q={searchTerms}";
-      DefaultSearchProviderSuggestURL = "https://kagi.com/api/autosuggest?q={searchTerms}";
-      SearchSuggestEnabled = true;
     };
+
+  # YOUTUBE
+  extensions.dearrow.id = "enamippconapkdmgfgjchkhakpfinmaj";
+  extensions.sponsorblock.id = "mnjggcdmjocbbbhaepdhchncahnbgone";
+
+  # VISUALS
+  extensions.dark-reader.id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";
+  extensions.stylus.id = "clngdbkpkpeebahjckkjfobafhncgmne";
+  extensions.refined-github.id = "hlepfoohegkhhmjieoechaddaejaokhf";
+
+  # NAVIGATION
+  extensions.violentmonkey.id = "jinjaccalgkegednnccohejagnlnfdag";
+  extensions.vimium-c.id = "hfjbmagddngcpeloejdejnfgbamkjaeg";
+  extensions.web-archives.id = "hkligngkgcpcolhcnkgccglchdafcnao";
+
+  # SERVICES
+  extensions.floccus.id = "fnaicdffflnofjppbagibeoednhnbjhg";
+  extensions.kagi.id = "cdglnehniifkbagbbombnjghhcihifij";
+  extensions.keepassxc-browser.id = "oboonakemofpalcgghocfoadofidjkkk";
+
+  policy = {
+    # EXTENSIONS
+    ExtensionInstallBlocklist = singleton "*";
+
+    ExtensionInstallAllowlist = policy.ExtensionInstallForcelist;
+    ExtensionInstallForcelist =
+      extensions
+      |> filterAttrs (_: extension: !(extension.preinstalled or false))
+      |> mapAttrsToList (const <| getAttr "id");
+
+    ExtensionInstallSources = singleton "https://services.helium.imput.net/*";
+
+    "3rdparty".extensions =
+      extensions
+      |> concatMapAttrs (
+        _: extension: optionalAttrs (extension ? policy) { ${extension.id} = extension.policy; }
+      );
+
+    DefaultBrowserSettingEnabled = false;
+
+    DeveloperToolsAvailability = 1;
+
+    # SEARCH
+    DefaultSearchProviderEnabled = true;
+    DefaultSearchProviderName = "Kagi";
+    DefaultSearchProviderSearchURL = "https://kagi.com/search?q={searchTerms}";
+    DefaultSearchProviderSuggestURL = "https://kagi.com/api/autosuggest?q={searchTerms}";
+    SearchSuggestEnabled = true;
+  };
 in
 {
   flake.darwinModules.helium =
@@ -135,30 +140,49 @@ in
       ...
     }:
     let
+      inherit (lib.attrsets) mapAttrsToList;
       inherit (lib.generators) toPlist;
+      inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;
+      inherit (lib.strings) toJSON;
 
-      managedPolicyPlist = toPlist { escape = true; } policy;
+      policyFiles = [
+        {
+          path = "/Library/Managed Preferences/net.imput.helium.plist";
+          content = toPlist { escape = true; } policy;
+        }
+      ]
+      ++ (
+        policy."3rdparty".extensions
+        |> mapAttrsToList (
+          id: extensionPolicy: {
+            path = "/Library/Managed Preferences/net.imput.helium.extensions.${id}.plist";
+            content = toPlist { escape = true; } extensionPolicy;
+          }
+        )
+      );
     in
     {
-      inherit (extensions.ublock-origin.filters) warnings;
-
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.helium.text}
       '';
-      system.activationScripts.helium.text = /* bash */ ''
-        # TODO: Rewrite in nu.
-        echo "setting up helium policy..."
-        /usr/bin/install -d -m 755 "/Library/Managed Preferences"
-        /bin/cat > "/Library/Managed Preferences/net.imput.helium.plist" <<'PLIST_EOF'
-        ${managedPolicyPlist}
-        PLIST_EOF
-        /usr/sbin/chown root:wheel "/Library/Managed Preferences/net.imput.helium.plist"
-        /bin/chmod 0644 "/Library/Managed Preferences/net.imput.helium.plist"
+      system.activationScripts.helium.text = "${getExe pkgs.nushell} ${
+        pkgs.writeText "helium-policy.nu" /* nu */ ''
+          print "setting up helium policy..."
 
-        console_user=$(/usr/bin/stat -f%Su /dev/console)
-        /usr/bin/sudo -u "$console_user" ${pkgs.defaultbrowser}/bin/defaultbrowser helium
-      '';
+          mkdir `/Library/Managed Preferences`
+
+          for entry in (r#'${toJSON policyFiles}'# | from json) {
+            $entry.content | save --force $entry.path
+            ^chown root:wheel $entry.path
+            ^chmod 0644 $entry.path
+          }
+
+          (^sudo
+            --user (ls --long /dev/console | get 0.user)
+            ${getExe pkgs.defaultbrowser} helium)
+        ''
+      }";
     };
 
   flake.nixosModules.helium =
@@ -167,8 +191,6 @@ in
       inherit (lib.strings) toJSON;
     in
     {
-      inherit (extensions.ublock-origin.filters) warnings;
-
       environment.etc."chromium/policies/managed/policies.json".text = toJSON policy;
     };
 
@@ -185,8 +207,6 @@ in
       inherit (lib.attrsets) genAttrs;
     in
     {
-      inherit (extensions.ublock-origin.filters) warnings;
-
       xdg.mime-apps.default-applications =
         mkIf osConfig.nixpkgs.hostPlatform.isLinux
         <| flip genAttrs (const "helium.desktop") [

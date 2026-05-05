@@ -101,7 +101,7 @@
   };
 
   inputs.ublock = {
-    url = "github:gorhill/uBlock";
+    url = "github:imputnet/uBlock";
     flake = false;
   };
 
