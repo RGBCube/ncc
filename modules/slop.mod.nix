@@ -320,7 +320,7 @@ in
         permissions.allow = map (cmd: "Bash(${cmd})") commands.allowed ++ [
           "Glob"
           "Grep"
-          "Read"
+          "Read(/nix/store/**)"
           "LSP"
           "WebFetch"
           "WebSearch"
