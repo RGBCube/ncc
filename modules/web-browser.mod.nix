@@ -51,6 +51,7 @@ let
         # YOUTUBE SHORTS -> WATCH
         ''||youtube.com/shorts/$document,uritransform=/^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([^/?#]+)/https:\/\/www.youtube.com\/watch?v=\$1/''
 
+        # OLD REDDIT
         "@@||reddit.com/media$document"
         "@@||reddit.com/mod$document"
         "@@||reddit.com/poll$document"
