@@ -104,17 +104,28 @@
     };
 
   flake.nixosModules.nix =
-    { lib, ... }:
+    { lib, pkgs, ... }:
     let
       inherit (lib.lists) singleton;
     in
     {
       persist.paths = singleton "/nix";
 
+      # TODO: Replace with nullfs when it becomes user-mountable.
+      #
+      # fileSystems."/nix/var/nix/profiles/per-user" = {
+      #   device = "nullfs";
+      #   fsType = "nullfs";
+      #   options = singleton "X-mount.mkdir";
+      # };
       fileSystems."/nix/var/nix/profiles/per-user" = {
-        device = "nullfs";
-        fsType = "nullfs";
-        options = singleton "X-mount.mkdir";
+        device = "${pkgs.emptyDirectory}";
+        fsType = "none";
+        options = [
+          "bind"
+          "ro"
+          "X-mount.mkdir"
+        ];
       };
 
       nix.gc = {
