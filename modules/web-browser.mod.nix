@@ -47,6 +47,9 @@ let
         ];
 
       filters = [
+        # YOUTUBE SHORTS -> WATCH
+        ''||youtube.com/shorts/$document,uritransform=/^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([^/?#]+)/https:\/\/www.youtube.com\/watch?v=\$1/''
+
         "@@||reddit.com/media$document"
         "@@||reddit.com/mod$document"
         "@@||reddit.com/poll$document"
