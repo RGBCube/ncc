@@ -13,20 +13,12 @@
         concatMap
         filter
         head
-        imap1
+        imap0
         tail
         ;
       inherit (lib.meta) getExe getExe';
       inherit (lib.modules) mkForce mkIf;
       inherit (lib.strings) hasInfix toJSON toUpper;
-
-      installer =
-        options.system.build.definitionsWithLocations
-        |> filter (
-          { file, value }: value ? installBootLoader && !hasInfix "linux-boot-redundancy.mod.nix" file
-        )
-        |> head
-        |> ({ value, ... }: value.installBootLoader);
 
       paths =
         config.disko.devices.disk
@@ -37,24 +29,19 @@
           |> attrValues
           |> filter (partition: partition.type == "EF00")
           |> map (partition: partition.device)
-        );
-
-      primary = {
-        source = head paths;
-        destination = "/run/boot-0";
-        label = "Linux Boot Manager";
-      };
-
-      secondary =
-        paths
-        |> tail
-        |> imap1 (
+        )
+        |> imap0 (
           index: source: {
             inherit source;
             destination = "/run/boot-${toString index}";
             label = "Linux Boot Manager Mirror (${baseNameOf source})";
           }
         );
+
+      primary = head paths // {
+        label = "Linux Boot Manager";
+      };
+      secondary = tail paths;
 
       mount = getExe' pkgs.util-linux "mount";
       umount = getExe' pkgs.util-linux "umount";
@@ -74,7 +61,16 @@
 
               try {
                 ^${mount} --mkdir --options fmask=0077,dmask=0077 $primary.source $primary.destination
-                ^${installer} $toplevel
+
+                # INSTALL BOOTLOADER
+                ^${
+                  options.system.build.definitionsWithLocations
+                  |> filter (
+                    { file, value }: value ? installBootLoader && !hasInfix "linux-boot-redundancy.mod.nix" file
+                  )
+                  |> head
+                  |> ({ value, ... }: value.installBootLoader)
+                } $toplevel
 
                 for entry in $secondary {
                   ^${mount} --mkdir --options fmask=0077,dmask=0077 $entry.source $entry.destination
