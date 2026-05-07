@@ -104,7 +104,7 @@
     };
 
   flake.nixosModules.nix =
-    { lib, pkgs, ... }:
+    { lib, ... }:
     let
       inherit (lib.lists) singleton;
     in
@@ -119,11 +119,12 @@
       #   options = singleton "X-mount.mkdir";
       # };
       fileSystems."/nix/var/nix/profiles/per-user" = {
-        device = "${pkgs.emptyDirectory}";
-        fsType = "none";
+        device = "tmpfs";
+        fsType = "tmpfs";
         options = [
-          "bind"
           "ro"
+          "size=1M"
+          "mode=755"
           "X-mount.mkdir"
         ];
       };
