@@ -49,7 +49,7 @@ let
 
       filters = [
         # YOUTUBE SHORTS -> WATCH
-        ''||youtube.com/shorts/$document,uritransform=/^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([^/?#]+)/https:\/\/www.youtube.com\/watch?v=\$1/''
+        ''||youtube.com/shorts/$document,uritransform=/^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([^\/?#]+)/https:\/\/www.youtube.com\/watch?v=\$1/''
 
         # OLD REDDIT
         "@@||reddit.com/media$document"
@@ -77,6 +77,9 @@ let
     {
       id = "blockjmkbacgjkknlgpkjjiijinjdanf";
       preinstalled = true;
+
+      settings.toolbar_pin = "force_pinned";
+
       policy = {
         toOverwrite.filterLists =
           filter (name: !(hasInfix "://" name || name == "user-filters" || hasAttr name assets)) filterLists
@@ -156,6 +159,14 @@ let
     DefaultBrowserSettingEnabled = false;
 
     DeveloperToolsAvailability = 1;
+
+    # "Continue where you left off" can't be set declaratively on a consumer machine:
+    # - Preference `session.restore_on_startup` is HMAC-tracked, writing it externally trips Chromium's reset popup.
+    # - Policy `RestoreOnStartup` is restricted by upstream Chromium to AD-joined / Cloud-Management-enrolled
+    #   devices only (anti-hijack mitigation), so the managed plist value is loaded then ignored.
+    #
+    # TODO: Remove this comment when Helium on MacOS gets a toggle to disable these checks with an environment variable.
+    RestoreOnStartup = 1;
 
     # BOOKMARKS
     ManagedBookmarks =
@@ -237,6 +248,27 @@ let
     DefaultSearchProviderSuggestURL = "https://kagi.com/api/autosuggest?q={searchTerms}";
     SearchSuggestEnabled = true;
   };
+
+  preferences = {
+    helium.completed_onboarding = true;
+    helium.services.user_consented = true;
+
+    helium.browser.layout = 2; # Vertical.
+    helium.browser.rounded_frame = false;
+
+    helium.browser.new_tab_next_to_active = true;
+
+    bookmark_bar.show_on_all_tabs = true;
+    bookmark_bar.show_tab_groups = false;
+
+    download.prompt_for_download = true; # Ask where to save each time.
+
+    # `extensions.settings` is HMAC-tracked. Writing it externally trips Chromium's reset popup warning.
+    # No policy equivalent for per-extension incognito. Toggle manually in helium://extensions for now.
+    #
+    # extensions.settings =
+    #   extensions |> concatMapAttrs (_: extension: { ${extension.id}.incognito = true; });
+  };
 in
 {
   flake.darwinModules.helium =
@@ -312,8 +344,17 @@ in
       inherit (lib.modules) mkIf;
       inherit (lib.trivial) const flip;
       inherit (lib.attrsets) genAttrs;
+      inherit (lib.strings) toJSON;
+
+      defaultPreferences.type = "copy";
+      defaultPreferences.text = toJSON preferences;
     in
     {
+      files."Library/Application Support/net.imput.helium/Default/Preferences" =
+        mkIf osConfig.nixpkgs.hostPlatform.isDarwin defaultPreferences;
+      xdg.config.files."helium/Default/Preferences" =
+        mkIf osConfig.nixpkgs.hostPlatform.isLinux defaultPreferences;
+
       xdg.mime-apps.default-applications =
         mkIf osConfig.nixpkgs.hostPlatform.isLinux
         <| flip genAttrs (const "helium.desktop") [
