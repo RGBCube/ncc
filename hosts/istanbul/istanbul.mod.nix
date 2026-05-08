@@ -142,7 +142,7 @@ in
                 --to $"local?root=($mountpoint)"
                 ${toplevel})
 
-              (^nixos-install
+              (^${getExe pkgs.nixos-install}
                 --no-channel-copy
                 --no-root-password
                 --system ${toplevel}
