@@ -73,15 +73,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1777713215,
-        "narHash": "sha256-8GzXDOXckDWwST8TY5DbwYFjdvQLlP7K9CLSVx6iTTo=",
-        "owner": "nix-community",
+        "lastModified": 1778267637,
+        "narHash": "sha256-fuLzGTNtgzoaeb1KQscuIZrnQmlX8ck9hMkKp35xSkg=",
+        "owner": "RGBCube",
         "repo": "disko",
-        "rev": "63b4e7e6cf75307c1d26ac3762b886b5b0247267",
+        "rev": "cc3fb95a8f8342c340a66bbd8a06dc36a0f05c24",
         "type": "github"
       },
       "original": {
-        "owner": "nix-community",
+        "owner": "RGBCube",
+        "ref": "fix-bcachefs-unlock",
         "repo": "disko",
         "type": "github"
       }

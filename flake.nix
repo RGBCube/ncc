@@ -44,7 +44,7 @@
     url = "github:nix-community/nixos-facter-modules";
   };
   inputs.disko = {
-    url = "github:nix-community/disko";
+    url = "github:RGBCube/disko/fix-bcachefs-unlock";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
