@@ -13,7 +13,7 @@
   flake.nixosModules.secrets =
     { config, lib, ... }:
     let
-      inherit (lib.lists) head singleton;
+      inherit (lib.lists) singleton;
     in
     {
       imports = singleton inputs.agenix.nixosModules.age;
@@ -35,11 +35,6 @@
       };
 
       age.identityPaths = singleton "/media/key/.secrets.key";
-
-      services.openssh.hostKeys = singleton {
-        type = "ed25519";
-        path = head config.age.identityPaths;
-      };
     };
 
   flake.darwinModules.secrets =

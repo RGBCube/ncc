@@ -91,6 +91,7 @@
     }:
     let
       inherit (lib.lists) head singleton;
+      inherit (lib.filesystem) dirOf;
     in
     {
       programs.mosh.enable = true;
@@ -98,6 +99,12 @@
       services.openssh = {
         enable = true;
         ports = singleton 2222;
+
+        hostKeys = singleton {
+          type = "ed25519";
+          path = head config.age.identityPaths;
+        };
+
         settings = {
           KbdInteractiveAuthentication = false;
           PasswordAuthentication = false;
@@ -123,10 +130,12 @@
         enable = true;
         port = head config.services.openssh.ports;
 
-        ignoreEmptyHostKeys = true; # Create new keys.
-
+        hostKeys = singleton "/sysroot${head config.age.identityPaths}";
         authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
       };
+
+      boot.initrd.systemd.services.sshd.unitConfig.RequiresMountsFor =
+        singleton <| dirOf <| head config.boot.initrd.network.ssh.hostKeys;
     };
 
   flake.nixosModules.endlessh-go =
