@@ -247,6 +247,19 @@ let
     DefaultSearchProviderSearchURL = "https://kagi.com/search?q={searchTerms}";
     DefaultSearchProviderSuggestURL = "https://kagi.com/api/autosuggest?q={searchTerms}";
     SearchSuggestEnabled = true;
+
+    SiteSearchSettings = [
+      {
+        name = "Lib.rs";
+        shortcut = "!rs";
+        url = "https://lib.rs/search?q={searchTerms}";
+      }
+      {
+        name = "Searchix";
+        shortcut = "!no";
+        url = "https://searchix.ovh/?query={searchTerms}";
+      }
+    ];
   };
 
   preferences = {

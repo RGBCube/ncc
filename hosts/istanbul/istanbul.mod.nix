@@ -46,7 +46,6 @@ let
           "torrent-client"
           "video-player"
           "whatsapp"
-          "zen-browser"
           "zulip"
         ]
         |> attrValues;

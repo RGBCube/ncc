@@ -213,7 +213,7 @@
             hs.hotkey.bind(super, "f", PaperWM.actions.toggle_floating)
 
             -- APPLICATIONS
-            hs.hotkey.bind(super, "w", function() hs.application.launchOrFocus("Zen") end)
+            hs.hotkey.bind(super, "w", function() hs.application.launchOrFocus("Helium") end)
             hs.hotkey.bind(super, "return", function()
               local ghostty = hs.application.get("Ghostty")
 
