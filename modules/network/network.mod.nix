@@ -62,7 +62,7 @@
         mode = "0400";
       };
 
-      persist.paths = singleton "/var/lib/NetworkManager";
+      persist.subvolumes = singleton "/var/lib/NetworkManager";
 
       networking.wireless.enable = false;
       networking.networkmanager.wifi.backend = "iwd";

@@ -109,7 +109,7 @@
       inherit (lib.lists) singleton;
     in
     {
-      persist.paths = singleton "/nix";
+      persist.subvolumes = singleton "/nix";
 
       # TODO: Replace with nullfs when it becomes user-mountable.
       #

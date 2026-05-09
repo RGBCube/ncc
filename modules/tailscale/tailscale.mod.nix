@@ -34,7 +34,7 @@
       inherit (lib.modules) mkAfter mkIf;
     in
     {
-      persist.paths = singleton "/var/lib/tailscale";
+      persist.subvolumes = singleton "/var/lib/tailscale";
 
       secrets.tailscaleAuthKey = {
         file = ./tailscale.secret.age;
