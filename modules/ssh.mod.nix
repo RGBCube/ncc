@@ -91,7 +91,7 @@
     }:
     let
       inherit (lib.lists) head singleton;
-      inherit (lib.filesystem) dirOf;
+      inherit (lib.modules) mkForce;
     in
     {
       programs.mosh.enable = true;
@@ -134,8 +134,17 @@
         authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
       };
 
-      boot.initrd.systemd.services.sshd.unitConfig.RequiresMountsFor =
-        singleton <| dirOf <| head config.boot.initrd.network.ssh.hostKeys;
+      boot.initrd.systemd.services.sshd = {
+        unitConfig.RequiresMountsFor = singleton <| head config.boot.initrd.network.ssh.hostKeys;
+
+        # Nixpkgs tries to run `chmod`, but the key is on a readonly partition so it fails.
+        #
+        # Nuke it.
+        preStart = mkForce "";
+      };
+
+      # The `hostKey` is already a runtime path, not a Nix store path.
+      boot.initrd.secrets = mkForce { };
     };
 
   flake.nixosModules.endlessh-go =
