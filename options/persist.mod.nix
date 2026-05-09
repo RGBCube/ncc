@@ -7,9 +7,9 @@
       ...
     }:
     let
-      inherit (lib.attrsets) genAttrs;
+      inherit (lib.attrsets) genAttrs mergeAttrsList optionalAttrs;
       inherit (lib.generators) toINI;
-      inherit (lib.lists) singleton;
+      inherit (lib.lists) elemAt imap0 singleton;
       inherit (lib.modules) mkIf;
       inherit (lib.options) mkEnableOption mkOption;
       inherit (lib.types)
@@ -100,17 +100,34 @@
           |> map (mountpoint: "unlock-bcachefs-${escapeSystemdPath mountpoint}.service")
         );
 
-        boot.initrd.systemd.units."sysroot-${escapeSystemdPath config.persist.mountpoint}.mount" =
-          mkIf (config.persist.passwordFile != null)
-            {
-              overrideStrategy = "asDropin";
-              text = toINI { } {
-                Unit.RequiresMountsFor = "/sysroot${dirOf config.persist.passwordFile}";
+        # Serialize per-mountpoint .mount units via After= chain. mount.bcachefs
+        # opens the device with BLK_OPEN_EXCL, parallel scans across subvolume
+        # mount units race and lose with EBUSY.
+        boot.initrd.systemd.units = mkIf (config.persist.passwordFile != null) (
+          let
+            mountpoints = singleton config.persist.mountpoint ++ config.persist.subvolumes;
+            unitName = mountpoint: "sysroot-${escapeSystemdPath mountpoint}.mount";
+          in
+          mountpoints
+          |> imap0 (
+            index: mountpoint: {
+              ${unitName mountpoint} = {
+                overrideStrategy = "asDropin";
+                text = toINI { } {
+                  Unit = {
+                    RequiresMountsFor = "/sysroot${config.persist.passwordFile}";
+                  }
+                  // optionalAttrs (index > 0) {
+                    After = unitName (elemAt mountpoints (index - 1));
+                  };
 
-                Mount.StandardInput = "file:/sysroot${config.persist.passwordFile}";
-                # Mount.KeyringMode = "shared";
+                  Mount.StandardInput = "file:/sysroot${config.persist.passwordFile}";
+                };
               };
-            };
+            }
+          )
+          |> mergeAttrsList
+        );
       };
     };
 }
