@@ -1,13 +1,14 @@
 {
   flake.nixosModules.boot =
-    { config, lib, ... }:
+    { lib, ... }:
     let
       inherit (lib.modules) mkDefault;
     in
     {
       boot.initrd.systemd = {
         enable = true;
-        emergencyAccess = mkDefault config.users.users.root.hashedPasswordFile;
+        # This is not a file path, it's a literal string, so we can't reference `root.hashedPasswordFile`.
+        emergencyAccess = mkDefault true;
       };
 
       boot.loader.systemd-boot = {
