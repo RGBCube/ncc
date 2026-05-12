@@ -930,10 +930,12 @@ in
               sys.exit("a38 shim: unbalanced braces")
 
 
-            a38_sig: bytes = rb"function (" + W + rb")\(H,_,q=\[\]\)\{"
+            # 2.1.139 added a fourth `K=[]` param (args that pass through to
+            # `command ''${H}` rather than the shim). Allow either signature.
+            a38_sig: bytes = rb"function (" + W + rb")\(H,_,q=\[\](?:,K=\[\])?\)\{"
             a38_match: re.Match[bytes] | None = None
             for cand in re.finditer(a38_sig, data):
-              if b"\x60function ''${H} {" in data[cand.end():cand.end() + 400]:
+              if b"\x60function ''${H} {" in data[cand.end():cand.end() + 800]:
                 a38_match = cand
                 break
 
