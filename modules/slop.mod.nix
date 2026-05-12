@@ -708,6 +708,22 @@ in
               lambda m: m[1] + b'("tengu_prompt_cache_1h_config",{allowlist:["*"]}).allowlist??[]',
             )
 
+            # --- Disable tengu_keybindings_dom (new chord dispatcher) ---
+            # 2.1.118 introduced a DOM-style chord/focus keybinding system behind
+            # this gate (default !0). The new system wraps the TUI in a programmatic
+            # focus manager; during /rewind the message selector unmounts and
+            # remounts in a sequence where the focus target goes null long enough
+            # that keystrokes stop routing — stdin pauses, fd 0 drops out of epoll,
+            # Ctrl-C (raw 0x03 in raw mode) has no reader. Wedges the TUI hard.
+            # The 117-era dispatcher is still present as the `: old_path` branch
+            # of every gt()?new:old site; flipping the default reverts to it.
+
+            patch(
+              "disable new keybindings dispatcher (causes /rewind hang in 2.1.118)",
+              rb'(' + W + rb')\("tengu_keybindings_dom",!0\)',
+              lambda m: m[1] + b'("tengu_keybindings_dom",!1)',
+            )
+
             # --- Fix Deno-compile bridge spawn ---
             # Deno-compiled binaries eat --flags as V8 args, so we route spawns through
             # env(1) to pass them as normal CLI flags instead.
@@ -939,6 +955,37 @@ in
               data = data[:a38_match.start()] + a38_new + data[body_end:]
               log(f"grep/find/rg shim: replaced {fn_name.decode()}")
 
+            # --- Bun runtime polyfill ---
+            # Since 2.1.128 the bundle calls Bun.* APIs unguarded (Bun.stringWidth,
+            # Bun.semver, Bun.hash, Bun.spawn, Bun.YAML, Bun.Transpiler, Bun.listen,
+            # Bun.which, Bun.wrapAnsi, Bun.stripANSI, Bun.embeddedFiles, Bun.gc,
+            # Bun.generateHeapSnapshot, Bun.JSONL, Bun.Terminal, Bun.version). Under
+            # Deno these throw `ReferenceError: Bun is not defined` at first use
+            # (Bun.stringWidth fires in a column-width helper during banner render).
+            # Define globalThis.Bun upfront with Node-backed equivalents so bare
+            # `Bun.X` lookups resolve.
+            #
+            # Bun.Terminal and Bun.JSONL are intentionally left absent: the bundle
+            # already has fallback paths gated on `typeof Bun.Terminal<"u"` and
+            # `Bun.JSONL?.parseChunk`, so leaving them undefined preserves the
+            # built-in "running under Node?" degradation rather than half-emulating.
+
+            bun_shim: bytes = rb"""(()=>{if(typeof globalThis.Bun!=="undefined")return;
+            const sw=require("string-width"),sa=require("strip-ansi"),wa=require("wrap-ansi");
+            const sv=require("semver"),ya=require("yaml");
+            const cp=require("child_process"),fs=require("fs"),path=require("path");
+            const crypto=require("crypto"),net=require("net");
+            function bunHash(input){const buf=Buffer.isBuffer(input)?input:Buffer.from(typeof input==="string"?input:String(input));return crypto.createHash("sha1").update(buf).digest().readBigUInt64LE(0);}
+            function bunSpawn(cmd,opts){opts=opts||{};const[bin,...args]=cmd;const stdio=["pipe","pipe",opts.stderr==="ignore"?"ignore":"pipe"];const child=cp.spawn(bin,args,{cwd:opts.cwd,env:opts.env||process.env,stdio,argv0:opts.argv0});const exited=new Promise(r=>child.on("exit",c=>r(c==null?1:c)));return{pid:child.pid,stdin:child.stdin,stdout:child.stdout,stderr:child.stderr,exitCode:null,killed:false,kill(s){try{child.kill(s)}catch{}this.killed=true},async wait(){return await exited},exited};}
+            function bunListen(opts){const h=opts.socket||{};const server=net.createServer(s=>{s.data=undefined;if(h.open)try{h.open(s)}catch{}s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));});server.listen(opts.port||0,opts.hostname||"127.0.0.1");return server;}
+            class BunTranspiler{constructor(o){this.opts=o}transformSync(s){return s}}
+            globalThis.Bun={version:"1.3.13",embeddedFiles:[],stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},Transpiler:BunTranspiler,generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{}};
+            })();
+            """
+
+            data = bun_shim + data
+            log("Bun runtime polyfill: prepended")
+
             Path(sys.argv[1]).write_bytes(data)
           '';
         in
@@ -1063,6 +1110,14 @@ in
                     ajv = "^8";
                     ajv-formats = "^3";
                     yaml = "^2";
+                    # Bun shim deps (see "Bun runtime polyfill" in patch script).
+                    # Pinned to CJS-compatible majors: ESM-only releases
+                    # (string-width@5+, strip-ansi@7+, wrap-ansi@8+) break
+                    # require() inside cli.cjs.
+                    string-width = "^4";
+                    strip-ansi = "^6";
+                    wrap-ansi = "^7";
+                    semver = "^7";
                   };
                 }
               }'# | save --force ($workdir | path join "package.json")
