@@ -64,24 +64,20 @@
 
       persist.subvolumes = singleton "/var/lib/NetworkManager";
 
-      networking.wireless.enable = false;
-      networking.networkmanager.wifi.backend = "iwd";
-
       networking.networkmanager = {
         enable = true;
         dns = "none";
 
-        ensureProfiles = {
-          environmentFiles = singleton config.secrets.wifiEnv.path;
+        wifi.backend = "iwd";
 
-          profiles.home = {
-            connection.id = "home";
-            connection.type = "wifi";
+        ensureProfiles.environmentFiles = singleton config.secrets.wifiEnv.path;
+        ensureProfiles.profiles.home = {
+          connection.id = "home";
+          connection.type = "wifi";
 
-            wifi.ssid = "PALA";
-            wifi-security.key-mgmt = "wpa-psk";
-            wifi-security.psk = "$WIFI_PSK";
-          };
+          wifi.ssid = "PALA";
+          wifi-security.key-mgmt = "wpa-psk";
+          wifi-security.psk = "$WIFI_PSK";
         };
       };
 
