@@ -137,16 +137,16 @@
             #!${getExe pkgs.nushell}
             #
 
-            let original = (jj git remote list | lines | parse "{name} {url}" | where name == "origin" | get 0.url)
+            let upstream = (jj git remote list | lines | parse "{name} {url}" | where name == "origin" | get 0.url)
 
-            gh repo fork
-            gh repo set-default $original
+            gh repo fork --remote
+            gh repo set-default $upstream
 
-            let trunk = (jj config get 'revset-aliases."trunk()"')
+            let trunk = jj config get 'revset-aliases."trunk()"'
             jj config set --repo 'revset-aliases."trunk()"' ($trunk | str replace "origin" "upstream")
+            jj bookmark track ($trunk | split row "@" | first) --remote upstream
 
             jj git fetch
-            jj bookmark track ($trunk | split row "@" | first) --remote upstream
           '')
         ];
 
