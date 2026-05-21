@@ -137,10 +137,8 @@
             #!${getExe pkgs.nushell}
             #
 
-            let upstream = (jj git remote list | lines | parse "{name} {url}" | where name == "origin" | get 0.url)
-
             gh repo fork --remote
-            gh repo set-default $upstream
+            gh repo set-default upstream
 
             jj git fetch
 
