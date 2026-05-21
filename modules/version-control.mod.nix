@@ -142,11 +142,12 @@
             gh repo fork --remote
             gh repo set-default $upstream
 
-            let trunk = jj config get 'revset-aliases."trunk()"'
-            jj config set --repo 'revset-aliases."trunk()"' ($trunk | str replace "origin" "upstream")
-            jj bookmark track ($trunk | split row "@" | first) --remote upstream
-
             jj git fetch
+
+            let trunk = jj config get 'revset-aliases."trunk()"'
+
+            jj bookmark track ($trunk | split row "@" | first) --remote upstream
+            jj config set --repo 'revset-aliases."trunk()"' ($trunk | str replace "origin" "upstream")
           '')
         ];
 
