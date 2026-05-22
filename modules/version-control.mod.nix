@@ -145,6 +145,7 @@
             let trunk = jj config get 'revset-aliases."trunk()"'
 
             jj bookmark track ($trunk | split row "@" | first) --remote upstream
+            jj bookmark track ($trunk | split row "@" | first) --remote origin
             jj config set --repo 'revset-aliases."trunk()"' ($trunk | str replace "origin" "upstream")
           '')
         ];
