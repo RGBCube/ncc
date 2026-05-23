@@ -255,23 +255,67 @@ let
           '')
         ])
 
-        (mkFolder "Toggle" [
-          (mkScriptlet "Password Inputs" /* javascript */ ''
-            document.querySelectorAll("input").forEach((input) => {
-              if (input.type === "password") {
-                input.dataset.wasPassword = "";
-                input.type = "text";
-              } else if ("wasPassword" in input.dataset) {
-                delete input.dataset.wasPassword;
-                input.type = "password";
-              }
-            });
-          '')
+        (mkFolder "Toggle" (
+          let
+            mkIndication = text: /* javascript */ ''
+              {
+                let indication = document.body.appendChild(document.createElement("div"));
+                indication.textContent = ${text};
 
-          (mkScriptlet "Design Mode" /* javascript */ ''
-            document.designMode = document.designMode === "on" ? "off" : "on";
-          '')
-        ])
+                Object.assign(indication.style, {
+                  position: "fixed",
+                  top: "0",
+                  right: "0",
+
+                  zIndex: "calc(infinity)",
+
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+
+                  colorScheme: "light dark",
+                  background: "Canvas",
+                  color: "CanvasText",
+                  font: "14px/1 system-ui",
+
+                  pointerEvents: "none",
+                });
+
+                indication.animate(
+                  [
+                    { opacity: 1, offset: 0.6, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
+                    { opacity: 0, offset: 1 },
+                  ],
+                  { duration: 1500, fill: "forwards" },
+                )
+                .finished
+                .then(() => indication.remove());
+              }
+            '';
+          in
+          [
+            (mkScriptlet "Password Inputs" /* javascript */ ''
+              let shown = false;
+              document.querySelectorAll("input").forEach((input) => {
+                if (input.type === "password") {
+                  input.dataset.wasPassword = "";
+                  input.type = "text";
+                  shown = true;
+                } else if ("wasPassword" in input.dataset) {
+                  delete input.dataset.wasPassword;
+                  input.type = "password";
+                }
+              });
+
+              ${mkIndication /* js */ ''"Passwords " + (shown ? "shown" : "hidden")''}
+            '')
+
+            (mkScriptlet "Design Mode" /* javascript */ ''
+              document.designMode = document.designMode === "on" ? "off" : "on";
+
+              ${mkIndication /* js */ ''"Design mode " + document.designMode''}
+            '')
+          ]
+        ))
       ];
 
     # SEARCH
