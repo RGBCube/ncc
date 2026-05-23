@@ -188,42 +188,75 @@ let
       [
         { toplevel_name = "Tools"; }
 
-        (mkScriptlet "Wayback (view)" /* javascript */ ''
-          window.open("https://web.archive.org/web/*/" + location.href);
-        '')
-        (mkScriptlet "Wayback (save)" /* javascript */ ''
-          window.open("https://web.archive.org/save/" + location.href);
-        '')
-        (mkScriptlet "Archive.is (view)" /* javascript */ ''
-          window.open("https://archive.ph/newest/" + location.href);
-        '')
-        (mkScriptlet "Archive.is (save)" /* javascript */ ''
-          window.open("https://archive.ph/?run=1&url=" + encodeURIComponent(location.href));
-        '')
+        (mkFolder "Archive" [
+          (mkFolder "Wayback" [
+            (mkScriptlet "View" /* javascript */ ''
+              window.open("https://web.archive.org/web/*/" + location.href);
+            '')
+            (mkScriptlet "Save" /* javascript */ ''
+              window.open("https://web.archive.org/save/" + location.href);
+            '')
+          ])
+          (mkFolder "Archive.is" [
+            (mkScriptlet "View" /* javascript */ ''
+              window.open("https://archive.ph/newest/" + location.href);
+            '')
+            (mkScriptlet "Save" /* javascript */ ''
+              window.open("https://archive.ph/?run=1&url=" + encodeURIComponent(location.href));
+            '')
+          ])
+        ])
 
-        (mkScriptlet "Kill Sticky" /* javascript */ ''
-          document.querySelectorAll("body *").forEach((element) => {
-            let position = getComputedStyle(element).position;
-            if (position === "fixed" || position === "sticky") element.parentNode.removeChild(element);
-          });
+        (mkFolder "Reverse Image" (
+          let
+            mkReverse =
+              name: prefix:
+              mkScriptlet name /* javascript */ ''
+                document.addEventListener("click", function handler(event) {
+                  let image = event.target.closest("img");
+                  if (!image) return;
 
-          document.documentElement.style.overflow = "auto";
-          document.body.style.overflow = "auto";
-        '')
+                  event.preventDefault();
+                  event.stopPropagation();
+                  document.removeEventListener("click", handler, true);
 
-        (mkScriptlet "Force Copy Paste" /* javascript */ ''
-          ["copy", "cut", "paste", "selectstart", "contextmenu", "dragstart"].forEach((eventName) => {
-            document.addEventListener(eventName, (event) => event.stopPropagation(), true);
-          });
+                  window.open("${prefix}" + encodeURIComponent(image.src));
+                }, true);
+              '';
+          in
+          [
+            (mkReverse "Yandex" "https://yandex.com/images/search?rpt=imageview&url=")
+            (mkReverse "Google Lens" "https://lens.google.com/uploadbyurl?url=")
+            (mkReverse "Bing" "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:")
+            (mkReverse "TinEye" "https://www.tineye.com/search?url=")
+          ]
+        ))
 
-          document.querySelectorAll("*").forEach((element) => {
-            element.style.userSelect = "auto";
-            element.style.webkitUserSelect = "auto";
-          });
-        '')
+        (mkFolder "Nuke" [
+          (mkScriptlet "Sticky Elements" /* javascript */ ''
+            document.querySelectorAll("body *").forEach((element) => {
+              let position = getComputedStyle(element).position;
+              if (position === "fixed" || position === "sticky") element.parentNode.removeChild(element);
+            });
+
+            document.documentElement.style.overflow = "auto";
+            document.body.style.overflow = "auto";
+          '')
+
+          (mkScriptlet "Copy Paste Restrictions" /* javascript */ ''
+            ["copy", "cut", "paste", "selectstart", "contextmenu", "dragstart"].forEach((eventName) => {
+              document.addEventListener(eventName, (event) => event.stopPropagation(), true);
+            });
+
+            document.querySelectorAll("*").forEach((element) => {
+              element.style.userSelect = "auto";
+              element.style.webkitUserSelect = "auto";
+            });
+          '')
+        ])
 
         (mkFolder "Toggle" [
-          (mkScriptlet "Passwords" /* javascript */ ''
+          (mkScriptlet "Password Inputs" /* javascript */ ''
             document.querySelectorAll("input").forEach((input) => {
               if (input.type === "password") {
                 input.dataset.wasPassword = "";
@@ -235,7 +268,7 @@ let
             });
           '')
 
-          (mkScriptlet "Edit" /* javascript */ ''
+          (mkScriptlet "Design Mode" /* javascript */ ''
             document.designMode = document.designMode === "on" ? "off" : "on";
           '')
         ])
