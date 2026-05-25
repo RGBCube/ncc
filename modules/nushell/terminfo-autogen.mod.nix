@@ -64,7 +64,7 @@
           # XTGETTCAP returns a separate DCS response (\eP1+r...\e\\) per capability,
           # so term query's --terminator \e\\ would stop after the first one and the
           # rest would print to the terminal.
-          # 
+          #
           # Append a DSR query (\e[5n) as sentinel — its response (\e[0n) can't appear
           # in DCS hex data, giving us a reliable terminator for the entire batch.
           term query $"\eP+q($capabilities | each { encode utf-8 | encode hex --lower } | str join ';')\e\\\e[5n" --terminator "\e[0n"

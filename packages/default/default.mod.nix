@@ -1,7 +1,19 @@
+{ self, ... }:
 {
   perSystem =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.meta) getExe;
+    in
     {
-      packages.default = pkgs.nh;
+      packages.default = pkgs.writeScriptBin "nh" /* nu */ ''
+        #!${getExe pkgs.nushell}
+        #
+
+        def --wrapped main [...args] {
+          $env.NH_FLAKE = "${self}"
+          exec ${getExe pkgs.nh} ...$args
+        }
+      '';
     };
 }
