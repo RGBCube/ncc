@@ -111,24 +111,6 @@
     {
       persist.subvolumes = singleton "/nix";
 
-      # TODO: Replace with nullfs when it becomes user-mountable.
-      #
-      # fileSystems."/nix/var/nix/profiles/per-user" = {
-      #   device = "nullfs";
-      #   fsType = "nullfs";
-      #   options = singleton "X-mount.mkdir";
-      # };
-      fileSystems."/nix/var/nix/profiles/per-user" = {
-        device = "tmpfs";
-        fsType = "tmpfs";
-        options = [
-          "ro"
-          "size=1M"
-          "mode=755"
-          "X-mount.mkdir"
-        ];
-      };
-
       nix.gc = {
         dates = "weekly";
         persistent = true;
