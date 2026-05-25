@@ -59,6 +59,7 @@ in
         imports = modules;
 
         networking.hostName = "istanbul";
+        networking.macPolicy = "hostname";
 
         boot.initrd.availableKernelModules.e1000e = true;
 
