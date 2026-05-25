@@ -151,7 +151,7 @@ in
         mode = "0400";
       };
 
-      persist.subvolumes = singleton "/var/lib/NetworkManager";
+      persist.mountpoints = singleton "/var/lib/NetworkManager";
 
       networking.networkmanager = {
         enable = true;

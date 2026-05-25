@@ -14,7 +14,7 @@
       inherit (lib.lists) singleton;
     in
     {
-      persist.subvolumes = singleton "/var/lib/syncthing";
+      persist.mountpoints = singleton "/var/lib/syncthing";
 
       services.syncthing.enable = true;
     };

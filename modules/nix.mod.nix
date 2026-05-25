@@ -109,7 +109,7 @@
       inherit (lib.lists) singleton;
     in
     {
-      persist.subvolumes = singleton "/nix";
+      persist.mountpoints = singleton "/nix";
 
       nix.gc = {
         dates = "weekly";

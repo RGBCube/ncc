@@ -7,10 +7,17 @@
       ...
     }:
     let
-      inherit (lib.attrsets) genAttrs mergeAttrsList optionalAttrs;
+      inherit (lib.attrsets)
+        genAttrs
+        genAttrs'
+        mapAttrsRecursive
+        nameValuePair
+        optionalAttrs
+        recursiveUpdate
+        ;
       inherit (lib.generators) toINI;
-      inherit (lib.lists) elemAt imap0 singleton;
-      inherit (lib.modules) mkIf;
+      inherit (lib.lists) head;
+      inherit (lib.modules) mkIf mkMerge;
       inherit (lib.options) mkEnableOption mkOption;
       inherit (lib.types)
         listOf
@@ -22,7 +29,7 @@
     in
     {
       options.persist = {
-        enable = mkEnableOption "bcachefs subvolume persistence";
+        enable = mkEnableOption "bcachefs-backed persistence";
 
         filesystemName = mkOption {
           type = str;
@@ -33,7 +40,7 @@
         passwordFile = mkOption {
           type = nullOr path;
           default = null;
-          description = "Path to the passphrase file.";
+          description = "Path to the password file.";
         };
 
         extraFormatArgs = mkOption {
@@ -46,16 +53,10 @@
           description = "Extra arguments passed to bcachefs format.";
         };
 
-        mountpoint = mkOption {
-          type = path;
-          default = "/media/${config.persist.filesystemName}";
-          description = "Mountpoint for the filesystem.";
-        };
-
-        subvolumes = mkOption {
+        mountpoints = mkOption {
           type = listOf path;
           default = [ ];
-          description = "Directories to persist as subvolumes under the root filesystem.";
+          description = "Directories to persist under the root filesystem.";
         };
 
         mountOptions = mkOption {
@@ -63,71 +64,80 @@
           default = [
             "lazytime"
           ];
-          description = "Mount options applied to the filesystem and every subvolume.";
+          description = "Mount options applied to each mountpoint.";
         };
       };
 
-      config = mkIf config.persist.enable {
-        disko.devices.nodev."root" = {
-          fsType = "tmpfs";
-          mountpoint = "/";
-          mountOptions = [
-            "defaults"
-            "size=25%"
-            "mode=755"
-          ];
-        };
+      config = mkIf config.persist.enable (mkMerge [
+        {
+          disko.devices.nodev."root" = {
+            fsType = "tmpfs";
+            mountpoint = "/";
+            mountOptions = [
+              "defaults"
+              "size=25%"
+              "mode=755"
+            ];
+          };
 
-        disko.devices.bcachefs_filesystems.${config.persist.filesystemName} = {
-          type = "bcachefs_filesystem";
+          disko.devices.bcachefs_filesystems.${config.persist.filesystemName} = {
+            type = "bcachefs_filesystem";
 
-          inherit (config.persist)
-            mountpoint
-            passwordFile
-            extraFormatArgs
-            mountOptions
-            ;
+            inherit (config.persist)
+              passwordFile
+              extraFormatArgs
+              mountOptions
+              ;
 
-          subvolumes = genAttrs config.persist.subvolumes (mountpoint: {
-            inherit mountpoint;
-            inherit (config.persist) mountOptions;
-          });
-        };
+            subvolumes = genAttrs config.persist.mountpoints (mountpoint: {
+              inherit mountpoint;
+              inherit (config.persist) mountOptions;
+            });
+          };
 
-        # Suppress nixpkgs's per-mountpoint unlock services.
-        boot.initrd.systemd.suppressedUnits = mkIf (config.persist.passwordFile != null) (
-          singleton config.persist.mountpoint ++ config.persist.subvolumes
-          |> map (mountpoint: "unlock-bcachefs-${escapeSystemdPath mountpoint}.service")
-        );
+          # Suppress nixpkgs's per-mountpoint unlock services.
+          boot.initrd.systemd.suppressedUnits = mkIf (config.persist.passwordFile != null) (
+            config.persist.mountpoints
+            |> map (mountpoint: "unlock-bcachefs-${escapeSystemdPath mountpoint}.service")
+          );
+        }
 
-        # Serialize per-mountpoint .mount units via After= chain. mount.bcachefs
-        # opens the device with BLK_OPEN_EXCL, parallel scans across subvolume
-        # mount units race and lose with EBUSY.
-        boot.initrd.systemd.units = mkIf (config.persist.passwordFile != null) (
+        (
           let
-            mountpoints = singleton config.persist.mountpoint ++ config.persist.subvolumes;
-            unitName = mountpoint: "sysroot-${escapeSystemdPath mountpoint}.mount";
+            unitsFor =
+              root:
+              let
+                unitName = mountpoint: "${escapeSystemdPath "${root}${mountpoint}"}.mount";
+                anchor = head config.persist.mountpoints;
+              in
+              genAttrs' config.persist.mountpoints (
+                mountpoint:
+                nameValuePair (unitName mountpoint) {
+                  overrideStrategy = "asDropin";
+                  text =
+                    toINI { }
+                    <|
+                      recursiveUpdate
+                        # Order every mount after the first mount. The first mount
+                        # will do an exclusive open of the filesystem, later mounts
+                        # will be able to reuse the existing object and not lock.
+                        (optionalAttrs (mountpoint != anchor) {
+                          Unit.After = unitName anchor;
+                        })
+                        (
+                          optionalAttrs (config.persist.passwordFile != null) {
+                            Unit.RequiresMountsFor = "${root}${config.persist.passwordFile}";
+                            Mount.StandardInput = "file:${root}${config.persist.passwordFile}";
+                          }
+                        );
+                }
+              );
           in
-          mountpoints
-          |> imap0 (
-            index: mountpoint: {
-              ${unitName mountpoint} = {
-                overrideStrategy = "asDropin";
-                text = toINI { } {
-                  Unit = {
-                    RequiresMountsFor = "/sysroot${config.persist.passwordFile}";
-                  }
-                  // optionalAttrs (index > 0) {
-                    After = unitName (elemAt mountpoints (index - 1));
-                  };
-
-                  Mount.StandardInput = "file:/sysroot${config.persist.passwordFile}";
-                };
-              };
-            }
-          )
-          |> mergeAttrsList
-        );
-      };
+          {
+            boot.initrd.systemd.units = unitsFor "/sysroot";
+            systemd.units = unitsFor "";
+          }
+        )
+      ]);
     };
 }
