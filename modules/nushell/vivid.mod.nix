@@ -15,7 +15,11 @@
 
       extraDependencies = singleton lsColors;
 
-      # Yes, IFD. Deal with it.
-      environment.sessionVariables.LS_COLORS = readFile lsColors;
+      # FIXME: Decomissioned until nh fixes their remote build
+      # (to build with --eval-store auto --store <ssh> rather
+      # than evaling drv then uploading it then building remotely)
+      #
+      # # Yes, IFD. Deal with it.
+      # environment.sessionVariables.LS_COLORS = readFile lsColors;
     };
 }
