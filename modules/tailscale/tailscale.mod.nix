@@ -5,7 +5,7 @@
       inherit (lib.lists) singleton;
     in
     {
-      services.hickory-dns.settings.zones = singleton {
+      system.services.resolver.hickory-dns.settings.zones = singleton {
         zone = "warthog-major.ts.net.";
         zone_type = "External";
 

@@ -10,6 +10,8 @@
 !options/**/
 !packages/
 !packages/**/
+!services/
+!services/**/
 
 !flake.nix
 !flake.lock

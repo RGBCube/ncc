@@ -41,4 +41,11 @@ in
     apply = mapAttrs (wrap "homeModules");
     description = "Home modules.";
   };
+
+  options.flake.modularServices = mkOption {
+    type = lazyAttrsOf deferredModule;
+    default = { };
+    apply = mapAttrs (wrap "modularServices");
+    description = "Modular service modules.";
+  };
 }
