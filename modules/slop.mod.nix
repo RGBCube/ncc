@@ -317,6 +317,8 @@ in
       xdg.config.files."claude-code/settings.json".value = {
         "$schema" = "https://json.schemastore.org/claude-code-settings.json";
 
+        cleanupPeriodDays = 365 * 1000;
+
         permissions.allow = map (cmd: "Bash(${cmd})") commands.allowed ++ [
           "Glob"
           "Grep"
