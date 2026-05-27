@@ -160,6 +160,9 @@ in
 
       persist.mountpoints = singleton "/var/lib/NetworkManager";
 
+      # nixos-facter likes to enable it.
+      networking.dhcpcd.enable = false;
+
       networking.networkmanager = {
         enable = true;
         dns = "none";
