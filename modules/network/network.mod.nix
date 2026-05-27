@@ -37,6 +37,13 @@ in
     in
     singleton head ++ tail |> concatStringsSep ":";
 
+  flake.lib'.magic.ula =
+    string:
+    let
+      hash = hashString "sha256" string;
+    in
+    "fd${substring 0 2 hash}:${substring 2 4 hash}:${substring 6 4 hash}";
+
   flake.nixosModules.mac =
     { config, lib, ... }:
     let
