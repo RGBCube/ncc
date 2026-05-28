@@ -2,6 +2,11 @@
 
 Never use `git`. Always use `jj`.
 
+# Development Rules
+
+- Never `find /nix/store` or anything equivalent. Prefer using
+  `nix flake archive --json`.
+
 # Nix Style Rules
 
 - Prefer `lib.lists.singleton` over a single item list.
