@@ -4,6 +4,8 @@
 
 !hosts/
 !hosts/**/
+!lib/
+!lib/**/
 !modules/
 !modules/**/
 !options/

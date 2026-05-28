@@ -35,6 +35,8 @@
     {
       imports = singleton <| mkAliasOptionModule [ "home" ] [ "hjem" ];
 
+      home.specialArgs = { inherit lib; };
+
       home.extraModules = singleton inputs.hjem-rum.hjemModules.hjem-rum;
 
       home.clobberByDefault = true;

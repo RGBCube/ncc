@@ -1,4 +1,3 @@
-{ self, ... }:
 {
   flake.homeModules.bat =
     {
@@ -8,6 +7,7 @@
       ...
     }:
     let
+      inherit (lib.generators) toCliFlagList;
       inherit (lib.meta) getExe;
 
       batPager = pkgs.writeScriptBin "bat-pager" /* bash */ ''
@@ -31,7 +31,7 @@
         pkgs.less
       ];
 
-      xdg.config.files."bat/config".generator = self.lib.generators.toCliFlagList;
+      xdg.config.files."bat/config".generator = toCliFlagList;
       xdg.config.files."bat/config".value = {
         theme = "base16";
         pager = "${getExe pkgs.less} --quit-if-one-screen --quit-on-intr --RAW-CONTROL-CHARS";

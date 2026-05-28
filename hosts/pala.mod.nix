@@ -11,7 +11,7 @@ let
 in
 {
   flake.darwinConfigurations.pala = inputs.nix-darwin.lib.darwinSystem {
-    specialArgs = { inherit self inputs; };
+    specialArgs = { inherit lib; };
 
     modules =
       attrValues (removeAttrs self.commonModules [ "authoritative" ])

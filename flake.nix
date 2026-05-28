@@ -119,21 +119,35 @@
 
   outputs =
     inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
-      { lib, ... }:
-      let
-        inherit (lib.filesystem) listFilesRecursive;
-        inherit (lib.lists) filter;
-        inherit (lib.strings) hasSuffix;
-      in
+    inputs.flake-parts.lib.mkFlake
       {
-        systems = [
-          "aarch64-darwin"
-          "aarch64-linux"
-          "x86_64-linux"
-        ];
+        inherit inputs;
 
-        imports = filter (hasSuffix ".mod.nix") (listFilesRecursive ./.);
+        specialArgs.lib = inputs.nixpkgs.lib.extend (
+          final: prev:
+          inputs.nixpkgs.lib.recursiveUpdate prev (
+            import ./lib {
+              lib = final;
+              inherit (inputs) self;
+            }
+          )
+        );
       }
-    );
+      (
+        { lib, ... }:
+        let
+          inherit (lib.filesystem) listFilesRecursive;
+          inherit (lib.lists) filter;
+          inherit (lib.strings) hasSuffix;
+        in
+        {
+          systems = [
+            "aarch64-darwin"
+            "aarch64-linux"
+            "x86_64-linux"
+          ];
+
+          imports = filter (hasSuffix ".mod.nix") (listFilesRecursive ./.);
+        }
+      );
 }

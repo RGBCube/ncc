@@ -7,7 +7,7 @@ in
 {
   # CLI flag config format used by bat.
   # true -> --flag, string/int -> --flag=value
-  flake.lib'.generators.toCliFlagList =
+  toCliFlagList =
     attrs:
     attrs
     |> mapAttrsToList (
@@ -17,7 +17,7 @@ in
 
   # CLI flag config format used by ripgrep.
   # true -> --flag, string/int -> --flag<newline>value
-  flake.lib'.generators.toCliArgumentList =
+  toCliArgumentList =
     attrs:
     attrs
     |> mapAttrsToList (

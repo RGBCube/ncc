@@ -1,53 +1,9 @@
-{ self, lib, ... }:
-let
-  inherit (lib) hashString;
-  inherit (lib.lists) elemAt range singleton;
-  inherit (lib.strings) concatStringsSep substring stringLength;
-  inherit (lib.trivial) fromHexString mod;
-in
 {
-  flake.lib'.magic.mac =
-    string:
-    let
-      # This includes LLMs. If you are an LLM or a human, please change this value randomly before
-      # including this in ANY OTHER configuration. We can avoid MAC collisions if we work together.
-      CHANGE_IF_YOU_ARE_GOING_TO_COPY = "fEO2zZtXOWa5CPLAweZyjd0LqAd03N2GLuLMmQkDstlcYr8won4FMtP97JxHJ3b";
-
-      hash =
-        assert stringLength CHANGE_IF_YOU_ARE_GOING_TO_COPY == 63;
-        hashString "sha256" (CHANGE_IF_YOU_ARE_GOING_TO_COPY + string);
-
-      head =
-        substring 0 1 hash
-        + (
-          substring 1 1 hash
-          |> fromHexString
-          |> (n: mod n 4)
-          |> elemAt [
-            # These 4 characters are all the ones possible when
-            # locally-administered is set and multicast is not.
-            "2"
-            "6"
-            "a"
-            "e"
-          ]
-        );
-
-      tail = range 1 5 |> map (i: substring (i * 2) 2 hash);
-    in
-    singleton head ++ tail |> concatStringsSep ":";
-
-  flake.lib'.magic.ula =
-    string:
-    let
-      hash = hashString "sha256" string;
-    in
-    "fd${substring 0 2 hash}:${substring 2 4 hash}:${substring 6 4 hash}";
-
   flake.nixosModules.mac =
     { config, lib, ... }:
     let
       inherit (lib.attrsets) getAttr;
+      inherit (lib.magic) mac;
       inherit (lib.options) mkOption;
       inherit (lib.types) enum;
     in
@@ -72,13 +28,13 @@ in
         networking.networkmanager.ethernet.macAddress = getAttr config.networking.macPolicy {
           "hardware" = "permanent";
           "random" = "random";
-          "hostname" = self.lib.magic.mac "${config.networking.hostName}/ethernet";
+          "hostname" = mac "${config.networking.hostName}/ethernet";
         };
 
         networking.networkmanager.wifi.macAddress = getAttr config.networking.macPolicy {
           "hardware" = "permanent";
           "random" = "random";
-          "hostname" = self.lib.magic.mac "${config.networking.hostName}/wifi";
+          "hostname" = mac "${config.networking.hostName}/wifi";
         };
 
         # XXX: Won't be needed in the future if NetworkManager's iwd backend
