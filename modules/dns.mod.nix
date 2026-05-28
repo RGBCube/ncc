@@ -1,6 +1,8 @@
-{ self, ... }:
+{ self, lib, ... }:
 let
-  address = "${self.lib.magic.ula "resolver"}::1";
+  inherit (lib.magic) ula;
+
+  address = "${ula "resolver"}::1";
 
   mkPackage =
     { pkgs, lib }:

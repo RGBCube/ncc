@@ -1,6 +1,6 @@
 # Version Control
 
-Never use `git`. Always use `jj`.
+Only use `git` to `git add` new files for Nix, otherwise always use `jj`.
 
 # Development Rules
 
