@@ -123,6 +123,7 @@ in
         environment.systemPackages = [
           (pkgs.writeScriptBin "install-istanbul" /* nu */ ''
             #!${getExe pkgs.nushell}
+            #
 
             def main [] {
               if (^id --user | into int) != 0 {
