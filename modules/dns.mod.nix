@@ -75,7 +75,6 @@ let
           pkgs.pkg-config
         ];
 
-        meta.mainProgram = "hickory-dns"; # upstream does not seem to believe in mainProgram
         meta.platforms = old.meta.platforms ++ platforms.darwin;
       })
     );

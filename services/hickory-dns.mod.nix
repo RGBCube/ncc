@@ -20,7 +20,7 @@
         optional
         singleton
         ;
-      inherit (lib.meta) getExe;
+      inherit (lib.meta) getExe';
       inherit (lib.options) mkOption;
       inherit (lib.strings) escapeShellArgs;
       inherit (lib.types)
@@ -155,7 +155,7 @@
           cfg.tomlFormat.generate "hickory-dns.toml" <| cleanToml cfg.settings;
 
         process.argv = [
-          (getExe cfg.package)
+          (getExe' cfg.package "hickory-dns")
           "--config"
           cfg.configFile
         ]
