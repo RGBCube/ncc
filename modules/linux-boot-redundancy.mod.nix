@@ -46,6 +46,7 @@
       mount = getExe' pkgs.util-linux "mount";
       umount = getExe' pkgs.util-linux "umount";
       lsblk = getExe' pkgs.util-linux "lsblk";
+      sync = getExe' pkgs.coreutils "sync";
     in
     {
       config = mkIf (paths != [ ]) {
@@ -75,6 +76,7 @@
                 for entry in $secondary {
                   ^${mount} --mkdir --options fmask=0077,dmask=0077 $entry.source $entry.destination
                   ^${getExe pkgs.rclone} sync $primary.destination $entry.destination
+                  ^${sync} --file-system $entry.destination
                   ^${umount} $entry.destination
 
                   let existing_slot = (^${getExe pkgs.efibootmgr}
@@ -105,9 +107,11 @@
                   | str join ","
                 )
 
+                ^${sync} --file-system $primary.destination
                 ^${umount} $primary.destination
               } catch {|error|
                 for thing in ([$primary] | append $secondary | reverse) {
+                  try { ^${sync} --file-system $thing.destination }
                   try { ^${umount} $thing.destination }
                 }
 
