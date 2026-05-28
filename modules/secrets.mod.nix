@@ -13,28 +13,39 @@
   flake.nixosModules.secrets =
     { config, lib, ... }:
     let
-      inherit (lib.lists) singleton;
+      inherit (lib.lists) any singleton;
+      inherit (lib.modules) mkDefault mkIf mkMerge;
+      inherit (lib.strings) hasPrefix;
     in
     {
       imports = singleton inputs.agenix.nixosModules.age;
 
-      boot.initrd.availableKernelModules = {
-        exfat = true;
-        usb_storage = true;
-        uas = true;
-      };
+      config = mkMerge [
+        {
+          # Agenix defaults identityPaths to openssh host keys, but
+          # ssh.mod.nix derives those host keys from identityPaths.
+          # Which is a cycle if you don't define identityPaths.
+          age.identityPaths = mkDefault [ ];
+        }
 
-      fileSystems."/media/key" = {
-        device = "/dev/disk/by-label/fatih";
-        fsType = "exfat";
-        options = [
-          "ro"
-          "umask=0077"
-        ];
-        neededForBoot = true;
-      };
+        (mkIf (config.age.identityPaths |> any (hasPrefix "/media/key/")) {
+          boot.initrd.availableKernelModules = {
+            exfat = true;
+            usb_storage = true;
+            uas = true;
+          };
 
-      age.identityPaths = singleton "/media/key/.secrets.key";
+          fileSystems."/media/key" = {
+            device = "/dev/disk/by-label/${config.networking.hostName}.s"; # .s as with .secrets it is really easy to hit the exfat label limit (11 characters).
+            fsType = "exfat";
+            options = [
+              "ro"
+              "umask=0077"
+            ];
+            neededForBoot = true;
+          };
+        })
+      ];
     };
 
   flake.darwinModules.secrets =

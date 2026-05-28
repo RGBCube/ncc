@@ -12,6 +12,7 @@ in
     rgbcube = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBVkWUQ6Z4OK539tore/R5wnueNPPaX532RUAld8UOCo rgbcube";
 
     istanbul = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCykEkiotbnje7b7Gg7f+fg58zOxRjNKuJO0z1eVrmF istanbul";
+    vienna = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIO89LpzcmPit5ZanIpRhevqoUWpeB9Ja/sLxyKivfjJ vienna";
   };
 
   flake.keys-admin = singleton self.keys.rgbcube;

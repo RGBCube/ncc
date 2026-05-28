@@ -11,9 +11,10 @@ in
 {
   imports =
     singleton
-    <| lib.systems.nixosSystem "istanbul" (
+    <| lib.systems.nixosSystem "vienna" (
       { config, ... }:
       {
+
         imports =
           attrValues self.commonModules
           ++ (
@@ -23,7 +24,6 @@ in
               "fonts"
               "helium"
               "iso"
-              "linux-kernel-desktop"
               "packages-debugging-gui"
               "sound"
               "steam"
@@ -59,20 +59,38 @@ in
 
         networking = {
           macPolicy = "hostname";
+
+          defaultGateway = {
+            address = "152.53.0.1";
+            interface = "enp4s0";
+          };
+          defaultGateway6 = {
+            address = "fe80::1";
+            interface = "enp4s0";
+          };
+
+          interfaces.enp4s0 = {
+            ipv4.addresses = singleton {
+              address = "152.53.2.105";
+              prefixLength = 22;
+            };
+            ipv6.addresses = singleton {
+              address = "2a0a:4cc0:0:12d9::1";
+              prefixLength = 64;
+            };
+          };
         };
 
-        boot.initrd.availableKernelModules.e1000e = true;
-
-        age.identityPaths = singleton "/media/key/.secrets.key";
+        persist.mountpoints = singleton "/var/lib/secrets";
+        age.identityPaths = singleton "/var/lib/secrets/key";
 
         secrets.password.file = ./password.age;
         users.users.root.hashedPasswordFile = config.secrets.password.path;
 
         persist.enable = true;
-        persist.passwordFile = "/media/key/.bcachefs.key";
 
         disko.devices.disk."main" = {
-          device = "/dev/disk/by-id/nvme-SKHynix_HFS256GDE9X081N_FYACN05061040CN2U";
+          device = "/dev/disk/by-path/platform-4010000000.pcie-pci-0000:05:00.0";
           type = "disk";
 
           content.type = "gpt";
@@ -85,6 +103,17 @@ in
             content.type = "filesystem";
             content = {
               format = "vfat";
+            };
+          };
+
+          content.partitions."swap" = {
+            priority = 150;
+            size = "16G";
+            type = "8200";
+
+            content.type = "swap";
+            content = {
+              discardPolicy = "both";
             };
           };
 
@@ -101,7 +130,7 @@ in
         };
 
         hardware.report = ./report.json;
-        system.stateVersion = "25.11";
+        system.stateVersion = "26.05";
       }
     );
 }
