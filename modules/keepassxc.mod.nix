@@ -40,7 +40,6 @@
         GUI.CheckForUpdatesIncludeBetas = false;
 
         GUI.ToolButtonStyle = 4; # Follows platform style.
-        General.MinimizeAfterUnlock = true;
         Security.HideTotpPreviewPanel = true;
 
         Security.ClearSearch = true;
