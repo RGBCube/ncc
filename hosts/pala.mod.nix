@@ -14,7 +14,7 @@ in
     specialArgs = { inherit self inputs; };
 
     modules =
-      attrValues self.commonModules
+      attrValues (removeAttrs self.commonModules [ "authoritative" ])
       ++ attrValues self.darwinModules
       ++ singleton {
         home.extraModules = attrValues self.homeModules;

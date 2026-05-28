@@ -1,8 +1,194 @@
 { self, ... }:
 let
   address = "${self.lib.magic.ula "resolver"}::1";
+
+  mkPackage =
+    { pkgs, lib }:
+    let
+      inherit (lib.fixedPoints) fix;
+      inherit (lib.lists)
+        elem
+        optional
+        singleton
+        subtractLists
+        unique
+        ;
+      inherit (lib) platforms;
+    in
+    pkgs.hickory-dns.overrideAttrs (
+      old:
+      let
+        oldBuildFeatures = old.cargoBuildFeatures or (old.buildFeatures or [ ]);
+        oldCheckFeatures = old.cargoCheckFeatures or (old.checkFeatures or oldBuildFeatures);
+
+        replaceRingFeatures =
+          features:
+          (
+            features
+            |> subtractLists [
+              "dnssec-ring"
+              "h3-ring"
+              "https-ring"
+              "quic-ring"
+              "tls-ring"
+            ]
+          )
+          ++ optional (elem "dnssec-ring" features) "dnssec-aws-lc-rs"
+          ++ [
+            "h3-aws-lc-rs"
+            "https-aws-lc-rs"
+            "quic-aws-lc-rs"
+            "tls-aws-lc-rs"
+          ]
+          |> unique;
+      in
+      fix (final: {
+        version = "0.27.0-alpha.1";
+
+        src = pkgs.fetchFromGitHub {
+          owner = "RGBCube";
+          repo = "hickory-dns";
+          rev = "2c67598a63b0d568bc46740a793602b1b509e3ed";
+          hash = "sha256-n0z3MdiDWyUkoPEkQAJCP7bMWCwHsw7f3MGOZp3t+VU=";
+        };
+
+        cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
+          inherit (final) src;
+          name = "hickory-dns-${final.version}-vendor";
+          hash = "sha256-G0Hk1+kETK3pT3ZF0oCh07Eptm4BShFVpDt6k8xegHQ=";
+        };
+
+        buildFeatures = final.cargoBuildFeatures;
+        checkFeatures = final.cargoCheckFeatures;
+        cargoBuildFeatures = replaceRingFeatures oldBuildFeatures;
+        cargoCheckFeatures = replaceRingFeatures oldCheckFeatures;
+
+        env = (old.env or { }) // {
+          AWS_LC_SYS_CMAKE_BUILDER = 1;
+          LIBSQLITE3_SYS_USE_PKG_CONFIG = 1;
+        };
+
+        buildInputs = (old.buildInputs or [ ]) ++ singleton pkgs.sqlite;
+
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+          pkgs.cmake
+          pkgs.pkg-config
+        ];
+
+        meta.mainProgram = "hickory-dns"; # upstream does not seem to believe in mainProgram
+        meta.platforms = old.meta.platforms ++ platforms.darwin;
+      })
+    );
 in
 {
+
+  flake.commonModules.authoritative =
+    {
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (lib.attrsets) mapAttrsToList;
+      inherit (lib.lists) imap0 singleton;
+      inherit (lib.strings) concatLines;
+    in
+    {
+      system.services.authoritative = {
+        imports = singleton self.modularServices.hickory-dns;
+
+        hickory-dns = {
+          package = mkPackage { inherit pkgs lib; };
+          tomlFormat = pkgs.formats.toml { };
+
+          settings = {
+            listen_addrs_ipv4 = singleton "0.0.0.0";
+            listen_addrs_ipv6 = singleton "::";
+            listen_port = 53;
+
+            zones =
+              let
+                zone = "hate.software.";
+              in
+              singleton {
+                inherit zone;
+                zone_type = "Primary";
+                axfr_policy = "AllowAll";
+                file = "${pkgs.writeText "${zone}zone" /* zone */ ''
+                  $ORIGIN ${zone}
+                  $TTL 1h
+
+                  @ SOA 0.ns hostmaster (
+                    2026052805 ; serial   ; Bump on EVERY edit (YYYYMMDDnn)
+                    2h         ; refresh  ; Consulted only by secondaries.
+                    15m        ; retry    ; Consulted only by secondaries.
+                    2w         ; expire   ; secondary stops serving after this long unreachable
+                    1h         ; minimum  ; negative-cache TTL
+                  )
+
+                  ns CNAME 0.ns ; Friendly alias for the primary.
+
+                  ${
+                    [
+                      {
+                        A = "159.146.61.20";
+                        # AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
+                      }
+                      {
+                        A = "159.146.61.20";
+                        # AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
+                      }
+                    ]
+                    |> imap0 (
+                      i: records:
+                      singleton ''
+                        @ NS ${toString i}.ns
+                      ''
+                      ++ mapAttrsToList (type: value: ''
+                        ${toString i}.ns ${type} ${value}
+                      '') records
+                      |> concatLines
+                    )
+                    |> concatLines
+                  }
+
+                  ; CONTENT
+                  xn--67-lubb0090b HINFO "Tendril" "hey, hater"
+                ''}";
+              };
+          };
+        };
+      };
+    };
+
+  flake.nixosModules.authoritative =
+    { config, lib, ... }:
+    let
+      inherit (lib.attrsets) genAttrs;
+      inherit (lib.trivial) const;
+      inherit (lib.lists) singleton;
+      inherit (lib.modules) mkIf;
+    in
+    {
+      networking.firewall =
+        genAttrs [
+          "allowedTCPPorts"
+          "allowedUDPPorts"
+        ]
+        <| const
+        <| singleton 53;
+
+      # TCP SO_REUSEADDR + SO_REUSEPORT only works if both clients are on the same UID.
+      systemd.services =
+        mkIf (config.system.services ? resolver)
+        <| genAttrs [ "authoritative" "resolver" ] (const {
+          serviceConfig = {
+            User = "hickory-dns";
+            Group = "hickory-dns";
+          };
+        });
+    };
+
   flake.commonModules.resolver =
     {
       config,
@@ -11,15 +197,7 @@ in
       ...
     }:
     let
-      inherit (lib.fixedPoints) fix;
-      inherit (lib.lists)
-        elem
-        map
-        optional
-        singleton
-        subtractLists
-        unique
-        ;
+      inherit (lib.lists) map singleton;
       inherit (lib.strings) substring;
 
       id = "7f2bf8";
@@ -65,62 +243,13 @@ in
         imports = singleton self.modularServices.hickory-dns;
 
         hickory-dns = {
-          package = pkgs.hickory-dns.overrideAttrs (
-            old:
-            let
-              oldBuildFeatures = old.cargoBuildFeatures or (old.buildFeatures or [ ]);
-              oldCheckFeatures = old.cargoCheckFeatures or (old.checkFeatures or oldBuildFeatures);
-
-              replaceRingFeatures =
-                features:
-                (
-                  features
-                  |> subtractLists [
-                    "dnssec-ring"
-                    "h3-ring"
-                    "https-ring"
-                    "quic-ring"
-                    "tls-ring"
-                  ]
-                )
-                ++ optional (elem "dnssec-ring" features) "dnssec-aws-lc-rs"
-                ++ [
-                  "h3-aws-lc-rs"
-                  "https-aws-lc-rs"
-                  "quic-aws-lc-rs"
-                  "tls-aws-lc-rs"
-                ]
-                |> unique;
-
-            in
-            fix (final: {
-              buildFeatures = final.cargoBuildFeatures;
-              checkFeatures = final.cargoCheckFeatures;
-              cargoBuildFeatures = replaceRingFeatures oldBuildFeatures;
-              cargoCheckFeatures = replaceRingFeatures oldCheckFeatures;
-
-              env = (old.env or { }) // {
-                AWS_LC_SYS_CMAKE_BUILDER = 1;
-                LIBSQLITE3_SYS_USE_PKG_CONFIG = 1;
-              };
-
-              buildInputs = (old.buildInputs or [ ]) ++ singleton pkgs.sqlite;
-
-              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-                pkgs.cmake
-                pkgs.pkg-config
-              ];
-
-              meta.mainProgram = "hickory-dns"; # upstream does not seem to believe in mainProgram
-              meta.platforms = old.meta.platforms ++ lib.platforms.darwin;
-            })
-          );
+          package = mkPackage { inherit pkgs lib; };
 
           tomlFormat = pkgs.formats.toml { };
 
           settings = {
-            listen_port = 53;
             listen_addrs_ipv6 = singleton address;
+            listen_port = 53;
 
             zones = singleton {
               zone = ".";
@@ -189,6 +318,11 @@ in
       networking.interfaces.lo.ipv6.addresses = singleton {
         inherit address;
         prefixLength = 128;
+      };
+
+      systemd.services.resolver = {
+        after = singleton "network-addresses-lo.service";
+        bindsTo = singleton "network-addresses-lo.service";
       };
 
       environment.etc."resolv.conf".text = /* resolvconf */ ''
