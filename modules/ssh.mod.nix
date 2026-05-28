@@ -100,10 +100,12 @@
         enable = true;
         ports = singleton 2222;
 
-        hostKeys = singleton {
-          type = "ed25519";
-          path = head config.age.identityPaths;
-        };
+        hostKeys =
+          config.age.identityPaths
+          |> map (path: {
+            type = "ed25519";
+            inherit path;
+          });
 
         settings = {
           KbdInteractiveAuthentication = false;
@@ -130,12 +132,12 @@
         enable = true;
         port = head config.services.openssh.ports;
 
-        hostKeys = singleton "/sysroot${head config.age.identityPaths}";
+        hostKeys = config.age.identityPaths |> map (path: "/sysroot${path}");
         authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
       };
 
       boot.initrd.systemd.services.sshd = {
-        unitConfig.RequiresMountsFor = singleton <| head config.boot.initrd.network.ssh.hostKeys;
+        unitConfig.RequiresMountsFor = config.boot.initrd.network.ssh.hostKeys;
 
         # Nixpkgs tries to run `chmod`, but the key is on a readonly partition so it fails.
         #
