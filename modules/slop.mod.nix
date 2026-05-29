@@ -633,7 +633,6 @@ in
             slash_commands: list[tuple[bytes, str]] = [
               (b'name:"btw",description:"Ask a quick side question', "/btw"),
               (b'name:"bridge-kick",description:"Inject bridge failure states', "/bridge-kick"),
-              (b'name:"files",description:"List all files currently in context"', "/files"),
             ]
 
             for anchor, label in slash_commands:
@@ -648,26 +647,6 @@ in
                 continue
               data = data[:pos] + patched + data[pos + SEARCH_WINDOW :]
               log(f"slash command {label}: enabled")
-
-            # --- Bypass telemetry gate in feature flag checker ---
-            # The chain is: h8(featureGate) bails to default if !Qo(); Qo()=Ew6();
-            # Ew6()=!Cq6(); Cq6() returns true when on bedrock/vertex/foundry OR when
-            # user-facing telemetry is disabled (s_1()/equivalent). Drop the trailing
-            # telemetry-disabled check so feature gates still resolve with
-            # DISABLE_TELEMETRY=1 while preserving the bedrock/vertex/foundry detection.
-            # Anchor on the stable env-var literal CLAUDE_CODE_USE_BEDROCK; the obfuscated
-            # function name (Cq6) and the trailing wrapper name (s_1) both rotate.
-
-            patch(
-              "telemetry gate (drop telemetry-disabled check)",
-              (
-                rb"function (" + W + rb")\(\)\{return (" + W + rb")\(process\.env\.CLAUDE_CODE_USE_BEDROCK\)"
-                rb"\|\|\2\(process\.env\.CLAUDE_CODE_USE_VERTEX\)"
-                rb"\|\|\2\(process\.env\.CLAUDE_CODE_USE_FOUNDRY\)"
-                rb"\|\|" + W + rb"\(\)\}"
-              ),
-              lambda m: re.sub(rb"\|\|" + W + rb"\(\)\}$", b"||!1}", m[0]),
-            )
 
             # --- Force Av() async-gate to always resolve true ---
             # Av(flag) is the ASYNC feature-gate resolver. It short-circuits to its default
@@ -710,22 +689,6 @@ in
               lambda m: m[1] + b'("tengu_prompt_cache_1h_config",{allowlist:["*"]}).allowlist??[]',
             )
 
-            # --- Disable tengu_keybindings_dom (new chord dispatcher) ---
-            # 2.1.118 introduced a DOM-style chord/focus keybinding system behind
-            # this gate (default !0). The new system wraps the TUI in a programmatic
-            # focus manager; during /rewind the message selector unmounts and
-            # remounts in a sequence where the focus target goes null long enough
-            # that keystrokes stop routing — stdin pauses, fd 0 drops out of epoll,
-            # Ctrl-C (raw 0x03 in raw mode) has no reader. Wedges the TUI hard.
-            # The 117-era dispatcher is still present as the `: old_path` branch
-            # of every gt()?new:old site; flipping the default reverts to it.
-
-            patch(
-              "disable new keybindings dispatcher (causes /rewind hang in 2.1.118)",
-              rb'(' + W + rb')\("tengu_keybindings_dom",!0\)',
-              lambda m: m[1] + b'("tengu_keybindings_dom",!1)',
-            )
-
             # --- Fix Deno-compile bridge spawn ---
             # Deno-compiled binaries eat --flags as V8 args, so we route spawns through
             # env(1) to pass them as normal CLI flags instead.
@@ -755,33 +718,31 @@ in
             core_gates: list[Gate] = [
               (b"tengu_ccr_bridge", "remote control"),
               (b"tengu_bridge_system_init", "bridge SDK init on connect"),
-              (b"tengu_bridge_client_presence_enabled", "bridge presence heartbeats"),
               (b"tengu_bridge_requires_action_details", "bridge rich tool-use payloads"),
               (b"tengu_remote_backend", "remote backend"),
               (b"tengu_immediate_model_command", "instant /model switching"),
               (b"tengu_fgts", "fine-grained tool streaming"),
               (b"tengu_auto_background_agents", "background agent timeout"),
-              (b"tengu_plan_mode_interview_phase", "plan mode interview"),
               (b"tengu_surreal_dali", "scheduled agents/cron"),
             ]
 
             memory_gates: list[Gate] = [
               # (b"tengu_session_memory", "session memory"),  # auto-memory; pollutes unrelated convos
-              (b"tengu_pebble_leaf_prune", "message pruning"),
               (b"tengu_herring_clock", "team memory directory"),
               (b"tengu_passport_quail", "typed combined memory prompts"),
               (b"tengu_paper_halyard", "memory dedup in nested dirs"),
             ]
 
             ux_gates: list[Gate] = [
-              (b"tengu_coral_fern", "grep hints in prompt"),
               (b"tengu_kairos_brief", "brief output mode"),
+              (b"tengu_kairos_loop_dynamic", "/loop dynamic self-pacing"),
+              (b"tengu_kairos_loop_persistent", "/loop persistent mode"),
+              (b"tengu_kairos_loop_prompt", "/loop prompt sentinel"),
+              (b"tengu_terminal_sidebar", "status in terminal tab"),
               (b"tengu_destructive_command_warning", "destructive command warnings"),
               (b"tengu_amber_prism", "permission denial context"),
               (b"tengu_hawthorn_steeple", "context windowing"),
-              (b"tengu_loud_sugary_rock", "Opus 4.7 terse output guidance"),
               (b"tengu_verified_vs_assumed", "verified-vs-assumed reporting"),
-              (b"tengu_birch_compass", "/usage 'What's contributing' breakdown block"),
               # tengu_pewter_brook (fullscreen TUI default) disabled — Ink fullscreen
               # rendering drops memoized Text children in nested Box columns (/usage
               # loses its "What's contributing..." bold header, big vertical gaps).
@@ -792,18 +753,13 @@ in
               (b"tengu_chrome_auto_enable", "auto-enable chrome devtools"),
               (b"tengu_plum_vx3", "web search reranking"),
               # (b"tengu_moth_copse", "relevant memory recall"),  # auto-recall; pollutes unrelated convos
-              (b"tengu_cork_m4q", "batch command processing"),
               (b"tengu_harbor", "plugin marketplace"),
               (b"tengu_harbor_permissions", "plugin permissions"),
               (b"tengu_relay_chain_v1", "parallel command chaining guidance"),
               (b"tengu_edit_minimalanchor_jrn", "Edit tool minimal-anchor instructions"),
-              (b"tengu_slate_reef", "Read tool clearer offset/limit docs"),
-              (b"tengu_otk_slot_v1", "output-token escalation for complex tasks"),
-              (b"tengu_onyx_basin_m1k", "subagent tool-result truncation"),
-              (b"tengu_sub_nomdrep_q7k", "block subagent report .md writes"),
               (b"tengu_amber_sentinel", "Monitor tool for streaming bg scripts"),
-              (b"tengu_miraculo_the_bard", "skip penguin-mode startup prefetch"),
-              (b"tengu_noreread_q7m_velvet", "sharper 'wasted read' feedback"),
+              (b"tengu_agent_list_attach", "agent roster in messages"),
+              (b"tengu_skills_dashboard_enabled", "/skills dashboard"),
             ]
 
             flip_gates(core_gates + memory_gates + ux_gates + tool_gates)
@@ -828,52 +784,6 @@ in
               rb'(' + W + rb')\(\{name:"claude-api",description:',
               lambda m: m[1] + b'({name:"claude-api",isEnabled:()=>!1,description:',
             )
-
-            # --- Replace usage fetch with self-contained OAuth implementation ---
-            # FO()/eO() falls back to x-api-key when dA()/nA() returns false (telemetry off),
-            # but /api/oauth/usage requires Bearer + oauth beta header. Replace the entire
-            # function with a Deno-native implementation that reads credentials directly.
-
-            usage_fn_pat: bytes = (
-              rb"async function (" + W + rb")\(\)\{"
-              rb"(?:if\(!" + W + rb"\(\)\|\|!" + W + rb"\(\)\)return\{\};)?"
-              rb"let " + W + rb"=" + W + rb"\(\);if\(" + W + rb"&&" + W + rb"\(" + W + rb"\." + W + rb"\)\)return null;"
-              rb"let " + W + rb"=" + W + rb"\(\);if\(" + W + rb"\.error\)throw Error\(\x60Auth error: \x24\{" + W + rb"\.error\}\x60\);"
-              rb"let " + W + rb"=\{[^}]+\}," + W + rb"=\x60\x24\{(" + W + rb")\(\)\.(" + W + rb")\}/api/oauth/usage\x60;"
-              rb"return\(await (" + W + rb")\.get\(" + W + rb",\{headers:" + W + rb",timeout:5000\}\)\)\.data\}"
-            )
-
-            usage_fn_match: re.Match[bytes] | None = re.search(usage_fn_pat, data)
-            if usage_fn_match:
-              fn_name: bytes = usage_fn_match.group(1)
-              config_fn: bytes = usage_fn_match.group(2)
-              base_url_key: bytes = usage_fn_match.group(3)
-              http_client: bytes = usage_fn_match.group(4)
-              replacement: bytes = (
-                b"async function " + fn_name + b"(){"
-                b"const _cd=(process.env.CLAUDE_CONFIG_DIR||"
-                b'(Deno.env.get("HOME")+"/.config/claude"));'
-                b"let _tk;"
-                b'try{const _cr=JSON.parse(new TextDecoder().decode('
-                b'Deno.readFileSync(_cd+"/.credentials.json")));'
-                b"_tk=_cr?.claudeAiOauth?.accessToken}catch{return{}}"
-                b"if(!_tk)return{};"
-                b'const _cp="/tmp/.claude-usage-"+_tk.slice(-8)+".json";'
-                b"try{const _s=Deno.statSync(_cp);"
-                b"if(Date.now()-_s.mtime.getTime()<60000)"
-                b'return JSON.parse(new TextDecoder().decode(Deno.readFileSync(_cp)))}catch{}'
-                b"const _h={" + b'"Content-Type":"application/json",'
-                b'"Authorization":"Bearer "+_tk,'
-                b'"anthropic-beta":"oauth-2025-04-20"};'
-                b"const _u=`''${" + config_fn + b"()." + base_url_key + b"}/api/oauth/usage`;"
-                b"const _r=(await " + http_client + b".get(_u,{headers:_h,timeout:5000})).data;"
-                b'try{Deno.writeTextFileSync(_cp,JSON.stringify(_r))}catch{}'
-                b"return _r}"
-              )
-              data = data.replace(usage_fn_match[0], replacement)
-              log("usage fetch: replaced")
-            else:
-              log("usage fetch: pattern NOT FOUND")
 
             # --- grep/find/rg shim: delegate to absolute Nix store paths ---
             # claude-code ships a shell shim factory that emits bash functions
