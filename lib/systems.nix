@@ -85,7 +85,7 @@ in
                 |> attrValues;
 
               environment.systemPackages = [
-                self.packages.${pkgs.hostPlatform.system}."installer-${hostName}"
+                self.packages.${pkgs.stdenv.hostPlatform.system}."installer-${hostName}"
 
                 (pkgs.writeShellScriptBin "generate-report" /* bash */ ''
                   set -euo pipefail
