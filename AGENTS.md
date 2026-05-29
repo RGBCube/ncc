@@ -6,6 +6,10 @@ Only use `git` to `git add` new files for Nix, otherwise always use `jj`.
 
 - Never `find /nix/store` or anything equivalent. Prefer using
   `nix flake archive --json`.
+- Do not execute `nix flake archive --json` with commands that actually search
+  over the result of that, as it forces the user to review every single time.
+  Run `nix flake archive --json` once, then refer to its output literally in
+  other, separate find commands.
 
 # Nix Style Rules
 
