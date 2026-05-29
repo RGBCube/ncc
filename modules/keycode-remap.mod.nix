@@ -180,10 +180,6 @@ let
     }
   ];
 in
-{ lib, ... }:
-let
-  inherit (lib.generators) toJSON;
-in
 {
   flake.darwinModules.keycode-remap =
     { lib, ... }:
@@ -197,6 +193,7 @@ in
   flake.homeModules.keycode-remap =
     { lib, osConfig, ... }:
     let
+      inherit (lib.generators) toJSON;
       inherit (lib.modules) mkIf;
     in
     {

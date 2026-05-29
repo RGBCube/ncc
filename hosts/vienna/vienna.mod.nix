@@ -4,15 +4,18 @@
   ...
 }:
 let
-  inherit (lib.attrsets) attrValues removeAttrs;
   inherit (lib.lists) singleton;
-  inherit (lib.trivial) flip;
 in
 {
   imports =
     singleton
     <| lib.systems.nixosSystem "vienna" (
-      { config, ... }:
+      { config, lib, ... }:
+      let
+        inherit (lib.attrsets) attrValues removeAttrs;
+        inherit (lib.lists) singleton;
+        inherit (lib.trivial) flip;
+      in
       {
 
         imports =

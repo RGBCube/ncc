@@ -1,9 +1,9 @@
 {
   perSystem =
-    { lib, pkgs, ... }:
+    { pkgs, ... }:
     {
       packages.fast-workspace-switch = pkgs.callPackage (
-        { stdenv, writeText }:
+        { stdenv, writeText, lib }:
         stdenv.mkDerivation {
           pname = "fast-workspace-switch";
           version = "1.0.0";

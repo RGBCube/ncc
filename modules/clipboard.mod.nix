@@ -1,10 +1,9 @@
-{ lib, ... }:
-let
-  inherit (lib.strings) toJSON;
-in
 {
   flake.darwinModules.clipboard =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.strings) toJSON;
+    in
     {
       environment.systemPackages = [
         pkgs.maccy
