@@ -65,10 +65,12 @@
           XDG_DATA_HOME = config.xdg.data.directory;
           XDG_STATE_HOME = config.xdg.state.directory;
         }
-        |> concatMapAttrs (name: value: {
-          "\$${name}" = value;
-          "\${${name}}" = value;
-        });
+        |> concatMapAttrs (
+          name: value: {
+            "\$${name}" = value;
+            "\${${name}}" = value;
+          }
+        );
 
       nuVariables =
         osConfig.environment.variables
@@ -99,7 +101,7 @@
         text =
           # zsh
           mkAfter ''
-            SHELL=${getExe config.programs.nushell.package} exec ${getExe config.programs.nushell.package} --config '${config.environment.sessionVariables.XDG_CONFIG_HOME}/nushell/config.nu'
+            SHELL=${getExe config.programs.nushell.package} exec ${getExe config.programs.nushell.package} --login --config '${config.environment.sessionVariables.XDG_CONFIG_HOME}/nushell/config.nu'
           '';
       };
 
