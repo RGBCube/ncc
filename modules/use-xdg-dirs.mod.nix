@@ -51,6 +51,9 @@
       xdg.data.files."go".type = "directory";
       environment.sessionVariables.GOPATH = "${config.xdg.data.directory}/go";
 
+      xdg.data.files."gradle".type = "directory";
+      environment.sessionVariables.GRADLE_USER_HOME = "${config.xdg.data.directory}/gradle";
+
       xdg.config.files."ripgrep".type = "directory";
       environment.sessionVariables.RIPGREP_CONFIG_PATH = "${config.xdg.config.directory}/ripgrep/config";
 
