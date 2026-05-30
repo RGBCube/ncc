@@ -10,6 +10,8 @@ Only use `git` to `git add` new files for Nix, otherwise always use `jj`.
   over the result of that, as it forces the user to review every single time.
   Run `nix flake archive --json` once, then refer to its output literally in
   other, separate find commands.
+- Never use non-new `nix` commands. Prefer `nix build` over `nix-build` and so
+  on. Always prefer new (nix3) commands.
 
 # Nix Style Rules
 
