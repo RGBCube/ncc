@@ -10,7 +10,7 @@
       {
         name: zmk,
         remote: zmkfirmware,
-        revision: main,
+        revision: ed56d81db79cf3a6e5dc02697277c0fad880ad34,
         import: app/west.yml,
       },
     ],

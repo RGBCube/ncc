@@ -25,10 +25,27 @@ in
           "-DCONFIG_ZMK_STUDIO_TRANSPORT_BLE=y"
         ];
 
-        zephyrDepsHash = "sha256-sCIbjeRbmKivNQQB4O/E7Hd/1mwfhhLPQTPWE6vADco=";
+        zephyrDepsHash = "sha256-7IDDbW+FtQPDJdkpy3ty5GtK+9dcAuYO8WJ5SSd4sIc=";
 
         meta = {
           description = "ZMK firmware";
+          license = lib.licenses.mit;
+          platforms = lib.platforms.all;
+        };
+      };
+
+      packages.corne-settings-reset-firmware = inputs.zmk-nix.legacyPackages.${system}.buildKeyboard {
+        name = "corne-settings-reset-firmware";
+
+        src = ./.;
+
+        board = "nice_nano@2.0.0//zmk";
+        shield = "settings_reset";
+
+        zephyrDepsHash = "sha256-7IDDbW+FtQPDJdkpy3ty5GtK+9dcAuYO8WJ5SSd4sIc=";
+
+        meta = {
+          description = "ZMK settings-reset firmware";
           license = lib.licenses.mit;
           platforms = lib.platforms.all;
         };
