@@ -83,9 +83,6 @@
       inherit (lib.modules) mkAfter mkIf;
 
       isDarwin = osConfig.nixpkgs.hostPlatform.isDarwin;
-      fast-workspace-switch =
-        getExe
-          self.packages.${osConfig.nixpkgs.hostPlatform.system}.fast-workspace-switch;
     in
     {
       # SPOONS
@@ -153,8 +150,23 @@
             return current_index
           end
 
+          local space_task = nil
+
           local changeSpaceBy = function(offset)
-            os.execute("${fast-workspace-switch}" .. " " .. (offset > 0 and "right" or "left") .. " ".. math.abs(offset))
+            if offset == 0 then return end
+
+            if space_task and space_task:isRunning() then
+              space_task:terminate()
+            end
+
+            space_task = hs.task.new("${
+              getExe self.packages.${osConfig.nixpkgs.hostPlatform.system}.fast-workspace-switch
+            }", nil, nil, {
+              offset > 0 and "right" or "left",
+              tostring(math.abs(offset)),
+            })
+
+            space_task:start()
           end
 
           local gotoSpace = function(index)
