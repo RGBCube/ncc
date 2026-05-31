@@ -289,6 +289,52 @@ in
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkBefore;
+
+      bind = pkgs.runCommandCC "libbind.dylib" { } ''
+        $CC -dynamiclib -Wall -o $out ${
+          pkgs.writeText "bind.c" /* c */ ''
+            #include <arpa/inet.h>
+            #include <net/if.h>
+            #include <netinet/in.h>
+            #include <string.h>
+            #include <sys/socket.h>
+
+            static struct in6_addr __resolver_addr(void) {
+              struct in6_addr addr;
+              inet_pton(AF_INET6, "${address}", &addr);
+              return addr;
+            }
+
+            static void __pin_to_loopback(int fd, const struct sockaddr *addr, socklen_t len) {
+              if (addr == NULL || addr->sa_family != AF_INET6 || len != sizeof(struct sockaddr_in6))
+                return;
+
+              struct in6_addr resolver_addr = __resolver_addr();
+              if (memcmp(&((const struct sockaddr_in6 *)addr)->sin6_addr, &resolver_addr, sizeof(resolver_addr)) != 0)
+                return;
+
+              unsigned int index = if_nametoindex("lo0");
+              if (index == 0)
+                return;
+
+              setsockopt(fd, IPPROTO_IPV6, IPV6_BOUND_IF, &index, sizeof(index));
+            }
+
+            static int __bind_replacement(int fd, const struct sockaddr *addr, socklen_t len) {
+              __pin_to_loopback(fd, addr, len);
+              return bind(fd, addr, len);
+            }
+
+            __attribute__((used)) static struct {
+              const void *replacement;
+              const void *replacee;
+            } _bind_replacement __attribute__((section("__DATA,__interpose"))) = {
+              .replacement = (const void *)&__bind_replacement,
+              .replacee = (const void *)&bind,
+            };
+          ''
+        }
+      '';
     in
     {
       networking.dns = singleton address;
@@ -296,12 +342,13 @@ in
       system.services.resolver.launchd.ProgramArguments =
         mkBefore
         <| singleton
-        <| "${pkgs.writeScript "resolver-setup-address" /* nu */ ''
+        <| "${pkgs.writeScript "resolver-setup" /* nu */ ''
           #!${getExe pkgs.nushell}
           #
 
           def --wrapped main [...rest] {
             try { ^/sbin/ifconfig lo0 inet6 ${address}/128 alias }
+            $env.DYLD_INSERT_LIBRARIES = "${bind}"
             exec ...$rest
           }
         ''}";
