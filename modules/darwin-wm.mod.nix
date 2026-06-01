@@ -161,7 +161,7 @@
 
             space_task = hs.task.new("${
               getExe self.packages.${osConfig.nixpkgs.hostPlatform.system}.fast-workspace-switch
-            }", nil, nil, {
+            }", nil, {
               offset > 0 and "right" or "left",
               tostring(math.abs(offset)),
             })
