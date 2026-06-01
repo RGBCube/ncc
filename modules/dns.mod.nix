@@ -287,12 +287,17 @@ in
     { lib, pkgs, ... }:
     let
       inherit (lib.lists) singleton;
+      inherit (lib.attrsets) getLib;
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkBefore;
 
-      bind = pkgs.runCommandCC "libbind.dylib" { } ''
-        $CC -dynamiclib -Wall -o $out ${
-          pkgs.writeText "bind.c" /* c */ ''
+      bind = pkgs.callPackage (
+        { stdenv, writeText }:
+        stdenv.mkDerivation {
+          pname = "resolver-bind-interpose";
+          version = "1.0.0";
+
+          src = writeText "bind.c" /* c */ ''
             #include <arpa/inet.h>
             #include <net/if.h>
             #include <netinet/in.h>
@@ -332,9 +337,21 @@ in
               .replacement = (const void *)&__bind_replacement,
               .replacee = (const void *)&bind,
             };
-          ''
+          '';
+
+          dontUnpack = true;
+          dontConfigure = true;
+
+          buildPhase = /* bash */ ''
+            $CC -dynamiclib -Wall -o libbind.dylib $src
+          '';
+
+          installPhase = /* bash */ ''
+            mkdir -p $out/lib
+            install -m755 libbind.dylib $out/lib/
+          '';
         }
-      '';
+      ) { };
     in
     {
       networking.dns = singleton address;
@@ -348,7 +365,7 @@ in
 
           def --wrapped main [...rest] {
             try { ^/sbin/ifconfig lo0 inet6 ${address}/128 alias }
-            $env.DYLD_INSERT_LIBRARIES = "${bind}"
+            $env.DYLD_INSERT_LIBRARIES = "${getLib bind}/lib/libbind.dylib"
             exec ...$rest
           }
         ''}";
