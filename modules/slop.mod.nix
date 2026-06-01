@@ -906,6 +906,7 @@ in
         singleton
         <| pkgs.writeScriptBin "claude" /* nu */ ''
           #!${getExe pkgs.nushell}
+          #
 
           def detect-platform []: nothing -> string {
             let arch = match ($nu.os-info.arch | str downcase) {

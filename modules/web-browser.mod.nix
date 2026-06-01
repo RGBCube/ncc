@@ -374,6 +374,7 @@ in
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;
       inherit (lib.strings) toJSON;
+      inherit (lib.shell) asShell;
 
       policyFiles = [
         {
@@ -395,23 +396,21 @@ in
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.helium.text}
       '';
-      system.activationScripts.helium.text = "${getExe pkgs.nushell} ${
-        pkgs.writeText "helium-policy.nu" /* nu */ ''
-          print "setting up helium policy..."
+      system.activationScripts.helium.text = asShell pkgs.nushell "helium-policy.nu" /* nu */ ''
+        print "setting up helium policy..."
 
-          mkdir `/Library/Managed Preferences`
+        mkdir `/Library/Managed Preferences`
 
-          for entry in (r#'${toJSON policyFiles}'# | from json) {
-            $entry.content | save --force $entry.path
-            ^chown root:wheel $entry.path
-            ^chmod 0644 $entry.path
-          }
+        for entry in (r#'${toJSON policyFiles}'# | from json) {
+          $entry.content | save --force $entry.path
+          ^chown root:wheel $entry.path
+          ^chmod 0644 $entry.path
+        }
 
-          (^sudo
-            --user (ls --long /dev/console | get 0.user)
-            ${getExe pkgs.defaultbrowser} helium)
-        ''
-      }";
+        (^/usr/bin/sudo
+          --user (ls --long /dev/console | get 0.user)
+          ${getExe pkgs.defaultbrowser} helium)
+      '';
     };
 
   flake.nixosModules.helium =

@@ -6,7 +6,7 @@ let
 in
 {
   # CLI flag config format used by bat.
-  # true -> --flag, string/int -> --flag=value
+  # true -> --flag, string/int -> --flag 'value'
   toCliFlagList =
     attrs:
     attrs

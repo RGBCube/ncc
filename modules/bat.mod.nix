@@ -12,6 +12,7 @@
 
       batPager = pkgs.writeScriptBin "bat-pager" /* bash */ ''
         #!${getExe pkgs.bash}
+
         ${getExe pkgs.bat} --plain
       '';
     in
@@ -50,14 +51,15 @@
     let
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;
+      inherit (lib.shell) asShell;
     in
     {
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.bat.text}
       '';
-      system.activationScripts.bat.text = /* bash */ ''
-        echo "refreshing bat cache..."
-        ${getExe pkgs.bat} cache --build
+      system.activationScripts.bat.text = asShell pkgs.nushell "bat-cache.nu" /* nu */ ''
+        print "refreshing bat cache..."
+        ^/usr/bin/sudo --set-home --user r##'${config.system.primaryUser}'## -- ${getExe pkgs.bat} cache --build
       '';
     };
 
@@ -71,26 +73,24 @@
     let
       inherit (lib.attrsets) filterAttrs mapAttrsToList;
       inherit (lib.meta) getExe;
-      inherit (lib.strings) concatLines escapeShellArg;
+      inherit (lib.shell) asShell;
+      inherit (lib.strings) toJSON;
     in
     {
-      system.activationScripts.bat.text =
-        config.users.users
-        |> filterAttrs (
-          _:
-          {
-            isNormalUser ? false,
-            ...
-          }:
-          isNormalUser
-        )
-        |> mapAttrsToList (
-          name: _: /* bash */ ''
-            echo "refreshing bat cache..."
-            ${pkgs.util-linux}/bin/runuser --user ${escapeShellArg name} --command ${escapeShellArg "${getExe pkgs.bat} cache --build"}
-          ''
-        )
-        |> concatLines;
+      system.activationScripts.bat.text = asShell pkgs.nushell "bat-cache.nu" /* nu */ ''
+        print "refreshing bat cache..."
+
+        let users = r##'${
+          config.users.users
+          |> filterAttrs (_: user: user.isNormalUser)
+          |> mapAttrsToList (name: _: name)
+          |> toJSON
+        }'## | from json
+
+        for user in $users {
+          ^${pkgs.util-linux}/bin/runuser --user $user -- ${getExe pkgs.bat} cache --build
+        }
+      '';
     };
 
 }

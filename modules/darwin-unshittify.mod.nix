@@ -9,6 +9,7 @@
     let
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;
+      inherit (lib.shell) asShell;
 
       shadowPath = "/Users/${config.system.primaryUser}/.local/share/shadow";
     in
@@ -17,35 +18,33 @@
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.shadow-xcode.text}
       '';
-      system.activationScripts.shadow-xcode.text = "${getExe pkgs.nushell} ${
-        pkgs.writeText "shadow-xcode.nu" /* nu */ ''
-          use std null_device
+      system.activationScripts.shadow-xcode.text = asShell pkgs.nushell "shadow-xcode.nu" /* nu */ ''
+        use std null_device
 
-          print "shadowing xcode..."
+        print "shadowing xcode..."
 
-          let shadow_path = "${shadowPath}"
-          let original_size = ls /usr/bin/SplitForks | get 0.size
+        let shadow_path = r##'${shadowPath}'##
+        let original_size = ls /usr/bin/SplitForks | get 0.size
 
-          let shadoweds = ls /usr/bin
-          | flatten
-          | where {
-            $in.size == $original_size and (try {
-              open $null_device | ^$in.name out+err>| str contains "xcode-select: note: No developer tools were found, requesting install."
-            } catch {
-              false
-            })
-          }
-          | get name
-          | each { path basename }
+        let shadoweds = ls /usr/bin
+        | flatten
+        | where {
+          $in.size == $original_size and (try {
+            open $null_device | ^$in.name out+err>| str contains "xcode-select: note: No developer tools were found, requesting install."
+          } catch {
+            false
+          })
+        }
+        | get name
+        | each { path basename }
 
-          rm -rf $shadow_path
-          mkdir $shadow_path
+        rm -rf $shadow_path
+        mkdir $shadow_path
 
-          for shadowed in $shadoweds {
-            ln --symbolic /usr/bin/false ($shadow_path | path join $shadowed)
-          }
-        ''
-      }";
+        for shadowed in $shadoweds {
+          ln --symbolic /usr/bin/false ($shadow_path | path join $shadowed)
+        }
+      '';
 
       # LOGIN WINDOW
       system.defaults.loginwindow = {

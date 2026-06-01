@@ -1,8 +1,14 @@
 {
   flake.darwinModules.file-explorer =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       inherit (lib.modules) mkAfter;
+      inherit (lib.shell) asShell;
     in
     {
       system.defaults.NSGlobalDomain = {
@@ -54,9 +60,9 @@
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.unhide-library.text}
       '';
-      system.activationScripts.unhide-library.text = /* bash */ ''
-        echo "unhiding ~/Library..."
-        /usr/bin/chflags nohidden ~/Library
+      system.activationScripts.unhide-library.text = asShell pkgs.nushell "unhide-library.nu" /* nu */ ''
+        print "unhiding library..."
+        ^/usr/bin/chflags nohidden r##'/Users/${config.system.primaryUser}/Library'##
       '';
     };
 
