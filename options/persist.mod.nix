@@ -10,7 +10,6 @@
       inherit (lib.attrsets)
         genAttrs
         genAttrs'
-        mapAttrsRecursive
         nameValuePair
         optionalAttrs
         recursiveUpdate

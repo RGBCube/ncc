@@ -7,7 +7,6 @@
       ...
     }:
     let
-      inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;
       inherit (lib.shell) asShell;
 
