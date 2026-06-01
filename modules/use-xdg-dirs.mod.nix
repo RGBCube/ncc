@@ -22,6 +22,9 @@
       environment.sessionVariables.AWS_CONFIG_FILE = "${config.xdg.config.directory}/aws/config";
       environment.sessionVariables.AWS_SHARED_CREDENTIALS_FILE = "${config.xdg.config.directory}/aws/credentials";
 
+      xdg.config.files."codex".type = "directory";
+      environment.sessionVariables.CODEX_HOME = "${config.xdg.config.directory}/codex";
+
       xdg.config.files."claude-code".type = "directory";
       environment.sessionVariables.CLAUDE_CONFIG_DIR = "${config.xdg.config.directory}/claude-code";
 

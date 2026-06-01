@@ -110,6 +110,57 @@ in
       };
     };
 
+  flake.homeModules.codex =
+    {
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (lib.lists) singleton;
+      inherit (lib.strings)
+        concatMapStringsSep
+        removeSuffix
+        splitString
+        toJSON
+        trim
+        ;
+    in
+    {
+      packages = singleton pkgs.codex;
+
+      xdg.config.files."codex/config.toml".type = "copy";
+      xdg.config.files."codex/config.toml".generator = pkgs.writers.writeTOML "codex-config.toml";
+      xdg.config.files."codex/config.toml".value = {
+        approval_policy = "on-request";
+        check_for_update_on_startup = false;
+        commit_attribution = "";
+
+        history.persistence = "save-all";
+
+        default_permissions = "default";
+        permissions.default = {
+          description = "Read-only default with network access and explicit command rules.";
+          extends = ":read-only";
+
+          filesystem.":minimal" = "read";
+          filesystem.":workspace_roots"."." = "read";
+
+          network.enabled = true;
+          network.domains."*" = "allow";
+        };
+      };
+
+      xdg.config.files."codex/rules/default.rules".text =
+        commands.allowed
+        |> concatMapStringsSep "\n" (command: /* starlark */ ''
+          prefix_rule(
+              pattern = ${command |> removeSuffix "*" |> trim |> splitString " " |> toJSON},
+              decision = "allow",
+          )
+        '');
+    };
+
   flake.homeModules.claude-code =
     {
       config,
