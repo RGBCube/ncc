@@ -3,7 +3,11 @@
     { pkgs, ... }:
     {
       packages.fast-workspace-switch = pkgs.callPackage (
-        { stdenv, writeText, lib }:
+        {
+          stdenv,
+          writeText,
+          lib,
+        }:
         stdenv.mkDerivation {
           pname = "fast-workspace-switch";
           version = "1.0.0";
@@ -11,8 +15,8 @@
           src = writeText "fast-workspace-switch.c" /* c */ ''
             #include <CoreGraphics/CoreGraphics.h>
             #include <errno.h>
-            #include <stdbool.h>
             #include <inttypes.h>
+            #include <stdbool.h>
             #include <stdint.h>
             #include <stdio.h>
             #include <stdlib.h>
@@ -21,12 +25,7 @@
 
             static const useconds_t GESTURE_HOLD_MICROS = 15000;
             static const useconds_t INTER_SWITCH_DELAY_MICROS = 50000;
-            static const CGFloat FLOAT_MIN_VALUE = 0x1p-149f;
-            static const int64_t SWIPE_MAGNITUDE_CENTI = 225;
-            static const uint64_t SWIPE_MAGNITUDE_SCALE = 100;
-            static const int64_t SWIPE_GESTURE_VALUE_MULTIPLIER = 200;
-            static const int64_t SWIPE_MAGNITUDE_RIGHT_BITS = 1074790400;
-            static const int64_t SWIPE_MAGNITUDE_LEFT_BITS = -1072693248;
+            static const double FLOAT_MIN_VALUE = 1.401298464324817e-45;
             static const int32_t EXIT_STATUS_SUCCESS = 0;
             static const int32_t EXIT_STATUS_FAILURE = 1;
 
@@ -39,6 +38,12 @@
               DIRECTION_LEFT,
               DIRECTION_RIGHT,
             } Direction;
+
+            typedef struct {
+              double magnitude;
+              int32_t magnitudeAsInt;
+              double gestureValue;
+            } SwipeValues;
 
             static bool parseCount(const char *value, uint64_t *count) {
               errno = 0;
@@ -64,22 +69,29 @@
               return event;
             }
 
-            static CGEventRef createSwipeEvent(Direction direction, GesturePhase phase) {
+            static SwipeValues swipeValuesForDirection(Direction direction) {
+              SwipeValues values;
+              values.magnitude = direction == DIRECTION_LEFT ? -2.25 : 2.25;
+              values.gestureValue = 200.0 * values.magnitude;
+
+              float magnitudeAsFloat = (float)values.magnitude;
+              memcpy(&values.magnitudeAsInt, &magnitudeAsFloat, sizeof(values.magnitudeAsInt));
+
+              return values;
+            }
+
+            static CGEventRef createSwipeEvent(const SwipeValues *values, GesturePhase phase) {
               CGEventRef event = CGEventCreate(NULL);
               if (event == NULL) {
                 return NULL;
               }
 
-              const int64_t magnitudeCenti = direction == DIRECTION_LEFT ? -SWIPE_MAGNITUDE_CENTI : SWIPE_MAGNITUDE_CENTI;
-              const int64_t magnitudeBits = direction == DIRECTION_LEFT ? SWIPE_MAGNITUDE_LEFT_BITS : SWIPE_MAGNITUDE_RIGHT_BITS;
-              const int64_t gestureValue = magnitudeCenti * SWIPE_GESTURE_VALUE_MULTIPLIER / (int64_t)SWIPE_MAGNITUDE_SCALE;
-
               CGEventSetIntegerValueField(event, 0x37, 30);
               CGEventSetIntegerValueField(event, 0x6E, 23);
               CGEventSetIntegerValueField(event, 0x84, phase);
               CGEventSetIntegerValueField(event, 0x86, phase);
-              CGEventSetDoubleValueField(event, 0x7C, (CGFloat)magnitudeCenti / (CGFloat)SWIPE_MAGNITUDE_SCALE);
-              CGEventSetIntegerValueField(event, 0x87, magnitudeBits);
+              CGEventSetDoubleValueField(event, 0x7C, values->magnitude);
+              CGEventSetIntegerValueField(event, 0x87, values->magnitudeAsInt);
               CGEventSetIntegerValueField(event, 0x7B, 1);
               CGEventSetIntegerValueField(event, 0xA5, 1);
               CGEventSetDoubleValueField(event, 0x77, FLOAT_MIN_VALUE);
@@ -88,16 +100,17 @@
               CGEventSetIntegerValueField(event, 0x88, 0);
 
               if (phase == GESTURE_PHASE_ENDED) {
-                CGEventSetDoubleValueField(event, 0x81, (CGFloat)gestureValue);
-                CGEventSetDoubleValueField(event, 0x82, (CGFloat)gestureValue);
+                CGEventSetDoubleValueField(event, 0x81, values->gestureValue);
+                CGEventSetDoubleValueField(event, 0x82, values->gestureValue);
               }
 
               return event;
             }
 
             static bool postSwipe(Direction direction) {
+              SwipeValues values = swipeValuesForDirection(direction);
               CGEventRef beginMarkerEvent = createMarkerEvent();
-              CGEventRef beginSwipeEvent = createSwipeEvent(direction, GESTURE_PHASE_BEGAN);
+              CGEventRef beginSwipeEvent = createSwipeEvent(&values, GESTURE_PHASE_BEGAN);
               if (beginMarkerEvent == NULL || beginSwipeEvent == NULL) {
                 fprintf(stderr, "Failed to create begin events.\n");
                 if (beginMarkerEvent != NULL) {
@@ -118,7 +131,7 @@
               usleep(GESTURE_HOLD_MICROS);
 
               CGEventRef endMarkerEvent = createMarkerEvent();
-              CGEventRef endSwipeEvent = createSwipeEvent(direction, GESTURE_PHASE_ENDED);
+              CGEventRef endSwipeEvent = createSwipeEvent(&values, GESTURE_PHASE_ENDED);
               if (endMarkerEvent == NULL || endSwipeEvent == NULL) {
                 fprintf(stderr, "Failed to create end events.\n");
                 if (endMarkerEvent != NULL) {
