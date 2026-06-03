@@ -109,8 +109,12 @@
                 code = 49;
               };
               tab = {
-                char = 9;
+                char = 65535;
                 code = 48;
+              };
+              backspace = {
+                char = 65535;
+                code = 51;
               };
             };
 
@@ -175,6 +179,65 @@
             "option"
           ];
 
+          # Spotlight search launcher.
+          "64" = hotkey "backspace" [
+            "super"
+          ];
+
+          # Keyboard focus/navigation shortcuts: menu bar, Dock,
+          # active/next window, window toolbar, floating window,
+          # Full Keyboard Access toggle, Tab focus behavior, and app-window cycle.
+          "7".enabled = 0;
+          "8".enabled = 0;
+          "9".enabled = 0;
+          "10".enabled = 0;
+          "11".enabled = 0;
+          "12".enabled = 0;
+          "13".enabled = 0;
+          "27".enabled = 0;
+
+          # Accessibility Zoom/display toggles: zoom, zoom in/out,
+          # reverse black and white, and zoom image smoothing.
+          "15".enabled = 0;
+          "17".enabled = 0;
+          "19".enabled = 0;
+          "21".enabled = 0;
+          "23".enabled = 0;
+
+          # Increase / Decrease contrast.
+          "25".enabled = 0;
+          "26".enabled = 0;
+
+          # Mission Control all-windows overview.
+          "32" = hotkey "o" [
+            "super"
+          ];
+
+          # Disable Application Windows and slow Mission Control variants.
+          "33".enabled = 0;
+          "34".enabled = 0;
+          "35".enabled = 0;
+
+          # Show desktop / slowly.
+          "36".enabled = 0;
+          "37".enabled = 0;
+
+          # Toggle Dock hiding.
+          "52".enabled = 0;
+
+          # F14/F15 display brightness shortcuts, separate from hardware brightness keys.
+          "53".enabled = 0;
+          "54".enabled = 0;
+
+          # Move focus to status menus.
+          "57".enabled = 0;
+
+          # VoiceOver.
+          "59".enabled = 0;
+
+          # Finder search window, which currently opens Spotlight on Tahoe.
+          "65".enabled = 0;
+
           # Previous / Next space.
           "79".enabled = 0;
           "81".enabled = 0;
@@ -183,12 +246,47 @@
           "80".enabled = 0;
           "82".enabled = 0;
 
+          # Help menu.
+          "98".enabled = 0;
+
+          # Trackpad handwriting.
+          "156".enabled = 0;
+
+          # Contextual menu.
+          "159".enabled = 0;
+
+          # Accessibility controls.
+          "162".enabled = 0;
+
           # Hidden Control-alone hotkey from Apple's default template.
           "164".enabled = 0;
 
           # Save / Copy Touch Bar.
           "181".enabled = 0;
           "182".enabled = 0;
+
+          # Quick Note.
+          "190".enabled = 0;
+
+          # Minimize window.
+          "233".enabled = 0;
+
+          # Fill / Center / Restore window.
+          "237".enabled = 0;
+          "238".enabled = 0;
+          "239".enabled = 0;
+
+          # Tile window to left / right / top / bottom half.
+          "240".enabled = 0;
+          "241".enabled = 0;
+          "242".enabled = 0;
+          "243".enabled = 0;
+
+          # Arrange windows left/right, right/left, top/bottom, or bottom/top.
+          "248".enabled = 0;
+          "249".enabled = 0;
+          "250".enabled = 0;
+          "251".enabled = 0;
         };
 
       system.activationScripts.script.text = mkAfter ''
