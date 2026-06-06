@@ -18,6 +18,7 @@ let
     const
     importJSON
     warn
+    flip
     ;
   inherit (lib.fixedPoints) fix;
   inherit (lib.strings) hasInfix;
@@ -32,8 +33,10 @@ let
         (
           assets
           |> filterAttrs (_: spec: (spec.content or null) == "filters" && (spec.group or null) != "regions")
+          |> flip removeAttrs [
+            "ublock-experimental"
+          ]
           |> attrNames
-          |> filter (name: name != "ublock-experimental")
         )
         ++ [
           "TUR-0"
@@ -156,9 +159,12 @@ let
         _: extension: optionalAttrs (extension ? policy) { ${extension.id} = extension.policy; }
       );
 
+    # MISC
     DefaultBrowserSettingEnabled = false;
 
     DeveloperToolsAvailability = 1;
+
+    BatterySaverModeAvailability = 0;
 
     # "Continue where you left off" can't be set declaratively on a consumer machine:
     # - Preference `session.restore_on_startup` is HMAC-tracked, writing it externally trips Chromium's reset popup.
@@ -324,19 +330,6 @@ let
     DefaultSearchProviderSearchURL = "https://kagi.com/search?q={searchTerms}";
     DefaultSearchProviderSuggestURL = "https://kagi.com/api/autosuggest?q={searchTerms}";
     SearchSuggestEnabled = true;
-
-    SiteSearchSettings = [
-      {
-        name = "Lib.rs";
-        shortcut = "!rs";
-        url = "https://lib.rs/search?q={searchTerms}";
-      }
-      {
-        name = "Searchix";
-        shortcut = "!no";
-        url = "https://searchix.ovh/?query={searchTerms}";
-      }
-    ];
   };
 
   preferences = {
@@ -379,7 +372,7 @@ in
       policyFiles = [
         {
           path = "/Library/Managed Preferences/net.imput.helium.plist";
-          content = toPlist { escape = true; } policy;
+          content = policy |> toPlist { escape = true; };
         }
       ]
       ++ (
@@ -387,7 +380,7 @@ in
         |> mapAttrsToList (
           id: extensionPolicy: {
             path = "/Library/Managed Preferences/net.imput.helium.extensions.${id}.plist";
-            content = toPlist { escape = true; } extensionPolicy;
+            content = extensionPolicy |> toPlist { escape = true; };
           }
         )
       );
