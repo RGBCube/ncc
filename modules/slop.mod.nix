@@ -1,5 +1,5 @@
 let
-  commands.allowed = [
+  allowed.commands = [
     "rg*"
     "ls*"
 
@@ -71,6 +71,11 @@ let
     "cargo clippy*"
     "cargo check*"
   ];
+
+  allowed.paths = [
+    "/etc/profiles"
+    "/nix/store"
+  ];
 in
 {
   flake.homeModules.opencode =
@@ -94,6 +99,7 @@ in
         permission = {
           "*" = "ask";
           codesearch = "allow";
+          external_directory = genAttrs (map (path: "${path}/**") allowed.paths) (const "allow");
           glob = "allow";
           grep = "allow";
           list = "allow";
@@ -105,7 +111,7 @@ in
           webfetch = "allow";
           websearch = "allow";
 
-          bash = genAttrs commands.allowed (const "allow");
+          bash = genAttrs allowed.commands (const "allow");
         };
       };
     };
@@ -117,6 +123,7 @@ in
       ...
     }:
     let
+      inherit (lib.attrsets) genAttrs;
       inherit (lib.lists) singleton;
       inherit (lib.strings)
         concatMapStringsSep
@@ -125,9 +132,34 @@ in
         toJSON
         trim
         ;
+      inherit (lib.trivial) const;
+
+      codex = pkgs.codex.overrideAttrs (
+        finalAttrs: _previousAttrs: {
+          version = "0.135.0";
+
+          src = pkgs.fetchFromGitHub {
+            owner = "openai";
+            repo = "codex";
+            tag = "rust-v${finalAttrs.version}";
+            hash = "sha256-7Ak7rpogcN2kNezk7aMdMmkgNyPxH58f6lFdXOd/mgc=";
+          };
+
+          cargoHash = "sha256-v1ggzNoncBVcOiJDQNNKPxYqWASNGjVjLMCXhsIbrVI=";
+          cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
+            inherit (finalAttrs)
+              pname
+              version
+              src
+              sourceRoot
+              ;
+            hash = finalAttrs.cargoHash;
+          };
+        }
+      );
     in
     {
-      packages = singleton pkgs.codex;
+      packages = singleton codex;
 
       xdg.config.files."codex/config.toml".type = "copy";
       xdg.config.files."codex/config.toml".generator = pkgs.writers.writeTOML "codex-config.toml";
@@ -143,8 +175,11 @@ in
           description = "Read-only default with network access and explicit command rules.";
           extends = ":read-only";
 
-          filesystem.":minimal" = "read";
-          filesystem.":workspace_roots"."." = "read";
+          filesystem = {
+            ":minimal" = "read";
+            ":workspace_roots"."." = "read";
+          }
+          // genAttrs allowed.paths (const "read");
 
           network.enabled = true;
           network.domains."*" = "allow";
@@ -152,7 +187,7 @@ in
       };
 
       xdg.config.files."codex/rules/default.rules".text =
-        commands.allowed
+        allowed.commands
         |> concatMapStringsSep "\n" (command: /* starlark */ ''
           prefix_rule(
               pattern = ${command |> removeSuffix "*" |> trim |> splitString " " |> toJSON},
@@ -370,20 +405,23 @@ in
 
         cleanupPeriodDays = 365 * 1000;
 
-        permissions.allow = map (cmd: "Bash(${cmd})") commands.allowed ++ [
-          "Glob"
-          "Grep"
-          "Read(/nix/store/**)"
-          "LSP"
-          "WebFetch"
-          "WebSearch"
-          "TaskCreate"
-          "TaskUpdate"
-          "TaskGet"
-          "TaskList"
-          "TaskOutput"
-          "TaskStop"
-        ];
+        permissions.allow =
+          [ ]
+          ++ map (cmd: "Bash(${cmd})") allowed.commands
+          ++ map (path: "Read(${path}/**)") allowed.paths
+          ++ [
+            "Glob"
+            "Grep"
+            "LSP"
+            "WebFetch"
+            "WebSearch"
+            "TaskCreate"
+            "TaskUpdate"
+            "TaskGet"
+            "TaskList"
+            "TaskOutput"
+            "TaskStop"
+          ];
 
         env.CLAUDE_BASH_NO_LOGIN = "1";
         env.CLAUDE_CODE_EAGER_FLUSH = "1";
