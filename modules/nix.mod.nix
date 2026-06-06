@@ -80,8 +80,8 @@
       nix.package = pkgs.nixVersions.latest;
 
       home.extraModules = singleton {
-        programs.nushell.extraConfig = # nu
-          ''
+        programs.nushell.extraConfig = "source ${
+          pkgs.writeText "nix-run-shortcuts.nu" /* nu */ ''
             def --wrapped * [program: string = "", ...arguments] {
               if ($program | str contains "#") or ($program | str contains ":") {
                 nix run $program -- ...$arguments
@@ -99,7 +99,8 @@
                 }
               })
             }
-          '';
+          ''
+        }\n";
       };
     };
 

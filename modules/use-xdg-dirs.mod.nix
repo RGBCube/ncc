@@ -4,6 +4,7 @@
       config,
       osConfig,
       lib,
+      pkgs,
       ...
     }:
     let
@@ -12,11 +13,13 @@
     {
       xdg.data.files."android".type = "directory";
       environment.sessionVariables.ANDROID_USER_HOME = "${config.xdg.data.directory}/android";
-      programs.nushell.extraConfig = /* nu */ ''
-        def --wrapped adb [...args] {
-          with-env { HOME: "${config.xdg.data.directory}/android" } { ^adb ...$args }
-        }
-      '';
+      programs.nushell.extraConfig = "source ${
+        pkgs.writeText "adb-wrapper.nu" /* nu */ ''
+          def --wrapped adb [...args] {
+            with-env { HOME: "${config.xdg.data.directory}/android" } { ^adb ...$args }
+          }
+        ''
+      }\n";
 
       xdg.config.files."aws".type = "directory";
       environment.sessionVariables.AWS_CONFIG_FILE = "${config.xdg.config.directory}/aws/config";

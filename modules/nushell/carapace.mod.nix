@@ -16,12 +16,10 @@
 
       environment.sessionVariables.CARAPACE_BRIDGES = "inshellisense,carapace,zsh,fish,bash";
 
-      programs.nushell.extraConfig = /* nu */ ''
-        source ${
-          pkgs.runCommand "carapace.nu" { } /* bash */ ''
-            ${getExe pkgs.carapace} _carapace nushell > $out
-          ''
-        }
-      '';
+      programs.nushell.extraConfig = "source ${
+        pkgs.runCommand "carapace.nu" { } /* bash */ ''
+          ${getExe pkgs.carapace} _carapace nushell > $out
+        ''
+      }\n";
     };
 }

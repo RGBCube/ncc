@@ -80,6 +80,7 @@
       config,
       lib,
       osConfig,
+      pkgs,
       ...
     }:
     let
@@ -91,7 +92,7 @@
       assertions = [
         {
           assertion =
-            !osConfig.nixpkgs.hostPlatform.isDarwin || shadowPath == "${config.directory}/.local/share/shadow";
+            osConfig.nixpkgs.hostPlatform.isDarwin -> shadowPath == "${config.directory}/.local/share/shadow";
           message = "shadow-xcode: XDG_DATA_HOME drifted from the hardcoded path in darwinModules.unshittify";
         }
       ];
@@ -99,16 +100,18 @@
       programs.nushell.extraConfig =
         # For some reason mkIf does not work here.
         optionalString osConfig.nixpkgs.hostPlatform.isDarwin
-        <| /* nu */ ''
-          do --env {
-            let usr_bin_index = $env.PATH
-            | enumerate
-            | where item == /usr/bin
-            | get 0.index;
+        <| "source ${
+          pkgs.writeText "shadow-xcode-path.nu" /* nu */ ''
+            do --env {
+              let usr_bin_index = $env.PATH
+              | enumerate
+              | where item == /usr/bin
+              | get 0.index;
 
-            $env.PATH = $env.PATH
-            | insert $usr_bin_index "${shadowPath}";
-          }
-        '';
+              $env.PATH = $env.PATH
+              | insert $usr_bin_index "${shadowPath}";
+            }
+          ''
+        }\n";
     };
 }

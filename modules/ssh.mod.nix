@@ -5,6 +5,7 @@
       config,
       lib,
       osConfig,
+      pkgs,
       ...
     }:
     let
@@ -65,11 +66,13 @@
 
       programs.nushell.extraConfig =
         mkAfter
-        <| optionalString osConfig.nixpkgs.hostPlatform.isDarwin /* nu */ ''
-          try {
-            $env.SSH_AUTH_SOCK = ^launchctl getenv SSH_AUTH_SOCK | str trim
-          }
-        '';
+        <| optionalString osConfig.nixpkgs.hostPlatform.isDarwin "source ${
+          pkgs.writeText "ssh-auth-sock.nu" /* nu */ ''
+            try {
+              $env.SSH_AUTH_SOCK = ^launchctl getenv SSH_AUTH_SOCK | str trim
+            }
+          ''
+        }\n";
     };
 
   flake.homeModules.ssh-client-desktop =
