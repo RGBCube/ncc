@@ -14,6 +14,7 @@
         mapAttrs
         optionalAttrs
         ;
+      inherit (lib.filesystem) dirOf;
       inherit (lib.lists)
         isList
         map
@@ -104,7 +105,7 @@
 
               directory = mkOption {
                 type = str;
-                default = "/var/lib/hickory-dns-${name}";
+                default = dirOf cfg.configFile;
                 description = "Directory for relative zone files.";
               };
 
