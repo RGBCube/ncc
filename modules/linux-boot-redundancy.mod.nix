@@ -52,8 +52,9 @@
       config = mkIf (paths != [ ]) {
         boot.loader.efi.efiSysMountPoint = primary.destination;
 
-        system.build.installBootLoader = mkForce (
-          pkgs.writeScript "install-redundant-boot" /* nu */ ''
+        system.build.installBootLoader =
+          mkForce
+          <| pkgs.writeScript "install-redundant-boot" /* nu */ ''
             #!${getExe pkgs.nushell}
             #
             def main [toplevel: path] {
@@ -118,8 +119,7 @@
                 error make { msg: $error.msg }
               }
             }
-          ''
-        );
+          '';
       };
     };
 }
