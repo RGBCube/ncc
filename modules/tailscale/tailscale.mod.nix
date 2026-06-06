@@ -95,15 +95,11 @@
       ...
     }:
     let
-      inherit (lib.meta) getExe;
       inherit (lib.modules) mkIf;
 
       package = pkgs.tailscale;
     in
     {
-      programs.nushell.aliases.ts =
-        if osConfig.nixpkgs.hostPlatform.isDarwin then "tailscale" else getExe pkgs.tailscale;
-
       packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
         package
       ];
