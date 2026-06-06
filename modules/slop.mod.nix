@@ -13,6 +13,7 @@ let
     "jj file list*"
     "jj file search*"
     "jj file show*"
+    "jj file track*"
     "jj git colocation status*"
     "jj git remote list*"
     "jj git root*"
@@ -69,7 +70,17 @@ let
     "gh workflow view*"
 
     "cargo clippy*"
-    "cargo check*"
+  ];
+
+  forbidden.commands = [
+    {
+      command = "git*";
+      justification = "Use `jj` for version control.";
+    }
+    {
+      command = "cargo check*";
+      justification = "Use `cargo clippy` instead of `cargo check`.";
+    }
   ];
 
   allowed.paths = [
@@ -111,7 +122,10 @@ in
           webfetch = "allow";
           websearch = "allow";
 
-          bash = genAttrs allowed.commands (const "allow");
+          bash =
+            { }
+            // genAttrs allowed.commands (const "allow")
+            // genAttrs (forbidden.commands |> map ({ command, ... }: command)) (const "reject");
         };
       };
     };
@@ -167,17 +181,23 @@ in
         approval_policy = "on-request";
         check_for_update_on_startup = false;
         commit_attribution = "";
+        developer_instructions = ''
+          Use `jj` for version control. Instead of `git add`, use `jj file track`.
+          Use `cargo clippy` instead of `cargo check`.
+        '';
 
         history.persistence = "save-all";
 
         default_permissions = "default";
         permissions.default = {
-          description = "Read-only default with network access and explicit command rules.";
-          extends = ":read-only";
+          extends = ":workspace";
 
           filesystem = {
+            ":root" = "deny";
             ":minimal" = "read";
-            ":workspace_roots"."." = "read";
+            "~/.config/jj" = "read";
+            ":workspace_roots"."." = "write";
+            ":workspace_roots".".git" = "write";
           }
           // genAttrs allowed.paths (const "read");
 
@@ -187,13 +207,28 @@ in
       };
 
       xdg.config.files."codex/rules/default.rules".text =
-        allowed.commands
-        |> concatMapStringsSep "\n" (command: /* starlark */ ''
-          prefix_rule(
-              pattern = ${command |> removeSuffix "*" |> trim |> splitString " " |> toJSON},
-              decision = "allow",
+        (
+          forbidden.commands
+          |> concatMapStringsSep "\n" (
+            { command, justification }:
+            /* starlark */ ''
+              prefix_rule(
+                  pattern = ${command |> removeSuffix "*" |> trim |> splitString " " |> toJSON},
+                  decision = "forbidden",
+                  justification = ${toJSON justification},
+              )
+            ''
           )
-        '');
+        )
+        + (
+          allowed.commands
+          |> concatMapStringsSep "\n" (command: /* starlark */ ''
+            prefix_rule(
+                pattern = ${command |> removeSuffix "*" |> trim |> splitString " " |> toJSON},
+                decision = "allow",
+            )
+          '')
+        );
     };
 
   flake.homeModules.claude-code =
@@ -422,6 +457,7 @@ in
             "TaskOutput"
             "TaskStop"
           ];
+        permissions.deny = [ ] ++ map ({ command, ... }: "Bash(${command})") forbidden.commands;
 
         env.CLAUDE_BASH_NO_LOGIN = "1";
         env.CLAUDE_CODE_EAGER_FLUSH = "1";
