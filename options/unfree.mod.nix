@@ -8,7 +8,7 @@
       inherit (lib.types) listOf str;
     in
     {
-      options.allowedUnfreePackageNames = mkOption {
+      options.nixpkgs.allowedUnfreePackages = mkOption {
         type = listOf str;
         default = [ ];
         description = "List of unfree package names to allow.";
@@ -19,6 +19,6 @@
       };
 
       config.nixpkgs.config.allowUnfreePredicate =
-        package: elem (getName package) config.allowedUnfreePackageNames;
+        package: elem (getName package) config.nixpkgs.allowedUnfreePackages;
     };
 }

@@ -5,7 +5,7 @@
       inherit (lib.lists) singleton;
     in
     {
-      allowedUnfreePackageNames = singleton "steam";
+      nixpkgs.allowedUnfreePackages = singleton "steam";
 
       programs.steam.enable = true;
     };

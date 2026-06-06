@@ -119,7 +119,7 @@
       inherit (lib.lists) singleton;
     in
     {
-      allowedUnfreePackageNames = singleton "ida-pro";
+      nixpkgs.allowedUnfreePackages = singleton "ida-pro";
 
       environment.systemPackages = singleton self.packages.x86_64-linux.ida-pro;
     };

@@ -18,7 +18,7 @@
 
       hardware.enableAllHardware = true;
 
-      allowedUnfreePackageNames = [
+      nixpkgs.allowedUnfreePackages = [
         "broadcom-bt-firmware"
         "b43-firmware"
         "xone-dongle-firmware"
