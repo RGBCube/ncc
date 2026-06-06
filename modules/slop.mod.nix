@@ -1020,7 +1020,7 @@ in
           def detect-version [--cache: directory, --rebuild]: nothing -> string {
             let version_file = $cache | path join "latest-version"
 
-            match ($rebuild or (try { (date now) - (ls $version_file | get 0.modified) > 6hr })) {
+            match ($rebuild or (try { (date now) - (ls $version_file | get 0.modified) > 6hr } | default true)) {
               # Version older than 6h or doesn't exist.
               true | null => {
                 let version = try {
