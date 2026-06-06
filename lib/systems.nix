@@ -111,25 +111,22 @@ in
               writeScriptBin,
             }:
             let
-              inherit (lib.meta) getExe;
+              inherit (lib.meta) getExe getExe';
             in
             writeScriptBin "install-${hostName}" /* nu */ ''
               #!${getExe nushell}
               #
 
               def main [] {
-                if (^id --user | into int) != 0 {
-                  error make { msg: "install must run as root" }
-                }
-
                 let mountpoint = "/mnt"
 
                 mkdir $mountpoint
                 # bcachefs format refuses unless the mount-point parent is 0755.
-                ^chmod 755 $mountpoint
+                ^${getExe' pkgs.uutils-coreutils-noprefix "chmod"} 755 $mountpoint
 
                 DISKO_SKIP_SWAP=1 ^${nixosConfig.config.system.build.diskoScript}
 
+                # TODO: Make this a store path?
                 (^nix copy
                   --no-check-sigs
                   --to $"local?root=($mountpoint)"
