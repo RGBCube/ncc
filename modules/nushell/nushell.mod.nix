@@ -25,6 +25,7 @@
         concatLines
         concatStringsSep
         replaceStrings
+        splitString
         ;
     in
     {
@@ -62,37 +63,48 @@
             suffixedVariables
           ];
 
+          nuString =
+            value:
+            /* nu */ ''$"${
+              value
+              |>
+                replaceStrings
+                  [
+                    "\${XDG_STATE_HOME}"
+                    "\$HOME"
+                    "\${HOME}"
+                    "\$USER"
+                    "\${USER}"
+                  ]
+                  [
+                    "($env.XDG_STATE_HOME? | default ($env.HOME + '/.local/state'))"
+                    "($env.HOME)"
+                    "($env.HOME)"
+                    "($env.USER)"
+                    "($env.USER)"
+                  ]
+            }"'';
+
           assignments =
             allVariables
             |> mapAttrsToList (
-              name: segments: /* nu */ ''
-                $env.${name} = $"${
-                  segments
-                  |> concatStringsSep ":"
-                  |>
-                    replaceStrings
-                      [
-                        "\${XDG_STATE_HOME}"
-                        "\$HOME"
-                        "\${HOME}"
-                        "\$USER"
-                        "\${USER}"
-                      ]
-                      [
-                        "($env.XDG_STATE_HOME? | default ($env.HOME + '/.local/state'))"
-                        "($env.HOME)"
-                        "($env.HOME)"
-                        "($env.USER)"
-                        "($env.USER)"
-                      ]
-                }"
-              ''
+              name: segments:
+              if name == "PATH" then
+                /* nu */ ''
+                  $env.PATH = [
+                  ${segments |> concatMap (splitString ":") |> map (segment: "  ${nuString segment}") |> concatLines}
+                  ]
+                ''
+              else
+                /* nu */ ''
+                  $env.${name} = ${nuString <| concatStringsSep ":" segments}
+                ''
             )
             |> concatLines;
         in
         pkgs.writeText "set-environment.nu" ''
-          if ($env.__NIXOS_SET_ENVIRONMENT? | is-not-empty) { } else {
-            $env.__NIXOS_SET_ENVIRONMENT = "1"
+          if ($env.__NIXOS_SET_ENVIRONMENT_DONE? | is-not-empty) { } else {
+            $env.__NIXOS_SET_ENVIRONMENT_DONE = "1"
             ${assignments}
           }
         '';
@@ -129,7 +141,31 @@
       programs.nushell = {
         enable = true;
 
-        extraConfig = readFile ./nushell.config.nu;
+        settings = {
+          history.file_format = "sqlite";
+          history.max_size = 1 * 1000 * 1000;
+
+          show_banner = false;
+
+          edit_mode = "vi";
+
+          cursor_shape.emacs = "line";
+          cursor_shape.vi_insert = "line";
+          cursor_shape.vi_normal = "block";
+
+          completions.algorithm = "substring";
+
+          use_kitty_protocol = true;
+          shell_integration.osc9_9 = true;
+
+          highlight_resolved_externals = true;
+
+          table.mode = "single";
+          table.header_on_separator = true;
+          table.footer_inheritance = true;
+        };
+
+        extraConfig = mkAfter <| readFile ./nushell.config.nu;
 
         aliases = {
           e = "^$env.EDITOR";

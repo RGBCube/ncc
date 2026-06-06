@@ -24,7 +24,6 @@
         pkgs.asciinema
         pkgs.fastfetch
         pkgs.fd
-        pkgs.jc
         pkgs.openssl
         pkgs.p7zip
         pkgs.rclone
