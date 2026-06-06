@@ -8,8 +8,10 @@
       ...
     }:
     let
+      inherit (lib) hashString;
       inherit (lib.meta) getExe;
       inherit (lib.trivial) const;
+      inherit (lib.modules) mkForce;
       inherit (lib.attrsets)
         genAttrs
         mapAttrs
@@ -19,6 +21,8 @@
       inherit (lib.lists)
         concatLists
         concatMap
+        reverseList
+        singleton
         toList
         ;
       inherit (lib.strings)
@@ -29,19 +33,26 @@
         ;
     in
     {
+      assertions = singleton {
+        assertion =
+          hashString "sha256" config.environment.extraInit
+          == "36e519c7ce90530ada79c273393c0990b6f26faa4d54376d6a8eb30c872855a1";
+        message = ''
+          nushell: environment.extraInit changed, update system.build.setEnvironmentNu's Nu translation.
+
+          Unexpected body:
+          ${config.environment.extraInit}
+        '';
+      };
+
       users.defaultUserShell = inputs.crash.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      environment.sessionVariables.SHELLS =
-        [
+      environment.sessionVariables.SHELLS = config.environment.shells |> concatStringsSep ":";
+      environment.shells =
+        mkForce
+        <| map getExe [
           pkgs.nushell
           pkgs.bash
-        ]
-        |> map getExe
-        |> concatStringsSep ":";
-
-      environment.shells = map getExe [
-        pkgs.nushell
-        pkgs.bash
-      ];
+        ];
 
       environment.shellAliases = genAttrs [ "ls" "ll" "l" ] (const null);
 
@@ -101,11 +112,22 @@
                 ''
             )
             |> concatLines;
+
+          extraInitNu = /* nu */ ''
+            # Equivalent to the current NixOS environment.extraInit.
+            $env.PATH = $env.PATH | prepend ${nuString "${config.security.wrapperDir}"}
+
+            $env.NIX_USER_PROFILE_DIR = $"/nix/var/nix/profiles/per-user/($env.USER)"
+            $env.NIX_PROFILES = ${
+              config.environment.profiles |> reverseList |> concatStringsSep " " |> nuString
+            }
+          '';
         in
         pkgs.writeText "set-environment.nu" ''
           if ($env.__NIXOS_SET_ENVIRONMENT_DONE? | is-not-empty) { } else {
-            $env.__NIXOS_SET_ENVIRONMENT_DONE = "1"
-            ${assignments}
+          $env.__NIXOS_SET_ENVIRONMENT_DONE = "1"
+          ${assignments}
+          ${extraInitNu}
           }
         '';
     };
