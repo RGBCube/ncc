@@ -125,8 +125,14 @@ in
           bash =
             { }
             // genAttrs allowed.commands (const "allow")
-            // genAttrs (forbidden.commands |> map ({ command, ... }: command)) (const "reject");
+            // genAttrs (forbidden.commands |> map ({ command, ... }: command)) (const "deny");
         };
+      };
+
+      xdg.config.files."opencode/tui.json".generator = toJSON { };
+      xdg.config.files."opencode/tui.json".value = {
+        "$schema" = "https://opencode.ai/tui.json";
+        theme = "system";
       };
     };
 
