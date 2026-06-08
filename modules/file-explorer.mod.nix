@@ -62,7 +62,7 @@
       '';
       system.activationScripts.unhide-library.text = asShell pkgs.nushell "unhide-library.nu" /* nu */ ''
         print "unhiding library..."
-        ^/usr/bin/chflags nohidden r##'/Users/${config.system.primaryUser}/Library'##
+        ^/usr/bin/chflags nohidden r###'/Users/${config.system.primaryUser}/Library'###
       '';
     };
 

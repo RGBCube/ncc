@@ -1160,7 +1160,7 @@ in
               ^${getExe lift} ($workdir | path join "package" "claude") $cli
               ^${getExe patch} $cli
 
-              r#'${
+              r###'${
                 strings.toJSON {
                   name = "claude-code-lifted";
                   type = "commonjs";
@@ -1181,7 +1181,7 @@ in
                     semver = "^7";
                   };
                 }
-              }'# | save --force ($workdir | path join "package.json")
+              }'### | save --force ($workdir | path join "package.json")
 
               $env.DENO_DIR = ($workdir | path join ".deno")
               (^"${getExe pkgs.deno}" install
@@ -1199,9 +1199,9 @@ in
               rm --recursive --force $workdir
             }
 
-            r#'${
+            r###'${
               strings.toJSON config.xdg.config.files."claude-code/settings.json".value.env
-            }'# | from json | load-env
+            }'### | from json | load-env
 
             exec $binary_path ...$arguments
           }

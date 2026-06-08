@@ -389,7 +389,7 @@
               #!${getExe pkgs.nushell}
               #
 
-              let hotkeys = r##'${
+              let hotkeys = r###'${
                 config.system.defaults.CustomUserPreferences."com.apple.symbolichotkeys".AppleSymbolicHotKeys
                 |> mapAttrsToList (
                   id:
@@ -404,7 +404,7 @@
                   ++ optionals (value != null) (map toString value.parameters)
                 )
                 |> toJSON
-              }'## | from json
+              }'### | from json
 
               for hotkey in $hotkeys {
                 ^${getExe reload-symbolic-hotkey} ...$hotkey

@@ -59,7 +59,7 @@
       '';
       system.activationScripts.bat.text = asShell pkgs.nushell "bat-cache.nu" /* nu */ ''
         print "refreshing bat cache..."
-        ^/usr/bin/sudo --set-home --user r##'${config.system.primaryUser}'## -- ${getExe pkgs.bat} cache --build
+        ^/usr/bin/sudo --set-home --user r###'${config.system.primaryUser}'### -- ${getExe pkgs.bat} cache --build
       '';
     };
 
@@ -80,12 +80,12 @@
       system.activationScripts.bat.text = asShell pkgs.nushell "bat-cache.nu" /* nu */ ''
         print "refreshing bat cache..."
 
-        let users = r##'${
+        let users = r###'${
           config.users.users
           |> filterAttrs (_: user: user.isNormalUser)
           |> mapAttrsToList (name: _: name)
           |> toJSON
-        }'## | from json
+        }'### | from json
 
         for user in $users {
           ^${pkgs.util-linux}/bin/runuser --user $user -- ${getExe pkgs.bat} cache --build

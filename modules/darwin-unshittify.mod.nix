@@ -22,7 +22,7 @@
 
         print "shadowing xcode..."
 
-        let shadow_path = r##'${shadowPath}'##
+        let shadow_path = r###'${shadowPath}'###
         let original_size = ls /usr/bin/SplitForks | get 0.size
 
         let shadoweds = ls /usr/bin

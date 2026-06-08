@@ -58,8 +58,8 @@
             #!${getExe pkgs.nushell}
             #
             def main [toplevel: path] {
-              let primary = r#'${toJSON primary}'# | from json
-              let secondary = r#'${toJSON secondary}'# | from json
+              let primary = r###'${toJSON primary}'### | from json
+              let secondary = r###'${toJSON secondary}'### | from json
 
               try {
                 ^${mount} --mkdir --options fmask=0077,dmask=0077 $primary.source $primary.destination
@@ -82,7 +82,7 @@
 
                   let existing_slot = (^${getExe pkgs.efibootmgr}
                     | lines
-                    | parse --regex r#'^Boot(?P<slot>[0-9A-Fa-f]{4})\*?\s(?P<label>[^\t]*)\t.*$'#
+                    | parse --regex r###'^Boot(?P<slot>[0-9A-Fa-f]{4})\*?\s(?P<label>[^\t]*)\t.*$'###
                     | where label == $entry.label
                     | get 0?.slot)
                   if ($existing_slot | is-not-empty) {
@@ -97,7 +97,7 @@
                     --loader '\EFI\BOOT\BOOT${toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI')
                 }
 
-                let entries = ^${getExe pkgs.efibootmgr} | lines | parse --regex r#'^Boot(?P<slot>[0-9A-Fa-f]{4})\*?\s(?P<label>[^\t]*)\t.*$'#
+                let entries = ^${getExe pkgs.efibootmgr} | lines | parse --regex r###'^Boot(?P<slot>[0-9A-Fa-f]{4})\*?\s(?P<label>[^\t]*)\t.*$'###
                 def "into slot" []: string -> any {
                   $entries | where label == $in | get 0?.slot
                 }
