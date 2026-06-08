@@ -1,4 +1,7 @@
+{ lib, ... }:
 let
+  inherit (lib.strings) concatLines;
+
   allowed.commands = [
     "rg*"
     "ls*"
@@ -83,6 +86,16 @@ let
     }
   ];
 
+  instructions =
+    forbidden.commands
+    |> map (
+      { justification, ... }:
+      ''
+        - ${justification}
+      ''
+    )
+    |> concatLines;
+
   allowed.paths = [
     "/etc/profiles"
     "/nix/store"
@@ -95,6 +108,7 @@ in
       inherit (lib.generators) toJSON;
       inherit (lib.trivial) const;
       inherit (lib.attrsets) genAttrs;
+      inherit (lib.lists) singleton;
     in
     {
       packages = [
@@ -106,6 +120,8 @@ in
         "$schema" = "https://opencode.ai/config.json";
 
         autoupdate = false;
+
+        instructions = singleton "${pkgs.writeText "instructions.md" instructions}";
 
         permission = {
           "*" = "ask";
@@ -187,10 +203,7 @@ in
         approval_policy = "on-request";
         check_for_update_on_startup = false;
         commit_attribution = "";
-        developer_instructions = ''
-          Use `jj` for version control. Instead of `git add`, use `jj file track`.
-          Use `cargo clippy` instead of `cargo check`.
-        '';
+        developer_instructions = instructions;
 
         history.persistence = "save-all";
 
@@ -439,6 +452,8 @@ in
       '';
     in
     {
+      xdg.config.files."claude-code/CLAUDE.md".text = instructions;
+
       xdg.config.files."claude-code/settings.json".type = "copy"; # Slop tries to write to the config directory :/.
       xdg.config.files."claude-code/settings.json".generator = toJSON { };
       xdg.config.files."claude-code/settings.json".value = {
