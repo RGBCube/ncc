@@ -105,7 +105,6 @@ let
 
   # VISUALS
   extensions.dark-reader.id = "eimadpbcbfnmbkopoojfekhnkhdbieeh";
-  extensions.stylus.id = "clngdbkpkpeebahjckkjfobafhncgmne";
   extensions.refined-github.id = "hlepfoohegkhhmjieoechaddaejaokhf";
 
   # NAVIGATION
@@ -113,7 +112,6 @@ let
   extensions.vimium-c.id = "hfjbmagddngcpeloejdejnfgbamkjaeg";
 
   # SERVICES
-  extensions.floccus.id = "fnaicdffflnofjppbagibeoednhnbjhg";
   extensions.kagi.id = "cdglnehniifkbagbbombnjghhcihifij";
   extensions.keepassxc-browser = {
     id = "oboonakemofpalcgghocfoadofidjkkk";
