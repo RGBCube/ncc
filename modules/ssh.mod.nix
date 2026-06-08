@@ -30,7 +30,6 @@
           ''
             Host ${name}
               User root
-              # Tailscale.
               HostName ${name}
               Port ${toString <| head config.services.openssh.ports}
           ''
