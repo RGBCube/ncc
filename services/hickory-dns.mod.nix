@@ -164,7 +164,6 @@
       }
       // optionalAttrs (options ? launchd) {
         launchd = {
-          KeepAlive = true;
           ProgramArguments = [
             "/bin/sh"
             "-c"
@@ -172,6 +171,7 @@
               /bin/wait4path /nix/store && exec ${escapeShellArgs config.process.argv}
             ''
           ];
+          KeepAlive = true;
           RunAtLoad = true;
         };
       }
