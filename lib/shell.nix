@@ -9,10 +9,10 @@ in
       shell.stdenv.mkDerivation {
         name = filename;
 
-        inherit text;
         passAsFile = singleton "text";
-        phases = singleton "installPhase";
+        inherit text;
 
+        phases = singleton "installPhase";
         installPhase = /* bash */ ''
           cp "$textPath" "$out"
         '';
