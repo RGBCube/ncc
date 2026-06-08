@@ -1,4 +1,9 @@
-{ inputs, lib, ... }:
+{
+  self,
+  inputs,
+  lib,
+  ...
+}:
 let
   inherit (lib.attrsets)
     attrNames
@@ -360,44 +365,39 @@ in
       ...
     }:
     let
-      inherit (lib.attrsets) mapAttrsToList;
+      inherit (lib.attrsets) concatMapAttrs;
       inherit (lib.generators) toPlist;
+      inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;
-      inherit (lib.strings) toJSON;
       inherit (lib.shell) asShell;
-
-      policyFiles = [
-        {
-          path = "/Library/Managed Preferences/net.imput.helium.plist";
-          content = policy |> toPlist { escape = true; };
-        }
-      ]
-      ++ (
-        policy."3rdparty".extensions
-        |> mapAttrsToList (
-          id: extensionPolicy: {
-            path = "/Library/Managed Preferences/net.imput.helium.extensions.${id}.plist";
-            content = extensionPolicy |> toPlist { escape = true; };
-          }
-        )
-      );
     in
     {
+      system.services.helium-policy = {
+        imports = singleton self.modularServices.managed-files;
+
+        managed-files = {
+          inherit (pkgs) smfh nushell;
+
+          files = {
+            "/Library/Managed Preferences/net.imput.helium.plist".text = policy |> toPlist { escape = true; };
+          }
+          // (
+            policy."3rdparty".extensions
+            |> concatMapAttrs (
+              id: extensionPolicy: {
+                "/Library/Managed Preferences/net.imput.helium.extensions.${id}.plist".text =
+                  extensionPolicy |> toPlist { escape = true; };
+              }
+            )
+          );
+        };
+      };
+
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.helium.text}
       '';
-      system.activationScripts.helium.text = asShell pkgs.nushell "helium-policy.nu" /* nu */ ''
-        print "setting up helium policy..."
-
-        mkdir `/Library/Managed Preferences`
-
-        for entry in (r#'${toJSON policyFiles}'# | from json) {
-          $entry.content | save --force $entry.path
-          ^chown root:wheel $entry.path
-          ^chmod 0644 $entry.path
-        }
-
+      system.activationScripts.helium.text = asShell pkgs.nushell "helium-default-browser.nu" /* nu */ ''
         (^/usr/bin/sudo
           --user (ls --long /dev/console | get 0.user)
           ${getExe pkgs.defaultbrowser} helium)
