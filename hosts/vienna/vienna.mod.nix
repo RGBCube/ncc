@@ -17,7 +17,6 @@ in
         inherit (lib.trivial) flip;
       in
       {
-
         imports =
           attrValues self.commonModules
           ++ (
@@ -92,9 +91,12 @@ in
 
         persist.enable = true;
 
+        disko.imageBuilder.imageFormat = "qcow2";
+
         disko.devices.disk."main" = {
           device = "/dev/disk/by-path/platform-4010000000.pcie-pci-0000:05:00.0";
           type = "disk";
+          imageSize = "32G";
 
           content.type = "gpt";
 
