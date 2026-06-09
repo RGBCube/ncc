@@ -19,8 +19,6 @@
             "--commit-lock-file"
             "--debugger"
             "--eval-store"
-            "--file"
-            "--impure"
             "--include"
             "--inputs-from"
             "--option"
@@ -35,7 +33,6 @@
             "--update-input"
             "--write-to"
             "-I"
-            "-f"
           ]
 
           let prefixes = $exact | each {|argument|
