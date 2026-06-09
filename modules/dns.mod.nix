@@ -363,10 +363,10 @@ in
           #!${getExe pkgs.nushell}
           #
 
-          def --wrapped main [...rest] {
+          def --wrapped main [...arguments] {
             try { ^/sbin/ifconfig lo0 inet6 ${address}/128 alias }
             $env.DYLD_INSERT_LIBRARIES = "${getLib bind}/lib/libbind.dylib"
-            exec ...$rest
+            exec ...$arguments
           }
         ''}";
     };

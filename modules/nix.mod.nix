@@ -90,8 +90,8 @@
               }
             }
 
-            def --wrapped > [...programs] {
-              nix shell ...($programs | each {
+            def --wrapped > [...arguments] {
+              nix shell ...($arguments | each {
                 if ($in | str contains "#") or ($in | str contains ":") {
                   $in
                 } else {

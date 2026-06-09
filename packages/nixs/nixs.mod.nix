@@ -49,8 +49,8 @@
           ($argument in $exact) or ($prefixes | any {|prefix| $argument | str starts-with $prefix })
         }
 
-        def --wrapped main [...args] {
-          let arguments = match $args {
+        def --wrapped main [...arguments] {
+          let command = match $arguments {
             ["--version"] => ["--version"]
             ["help", ..$rest] => ["help", ...$rest]
             ["config", "show", ..$rest] => ["config", "show", ...$rest]
@@ -62,18 +62,18 @@
             ["store", "info"] => ["store", "info"]
             ["path-info", ..$rest] => ["path-info", ...$rest]
             _ => {
-              print --stderr $"unsupported command: ($args | str join ' ')"
+              print --stderr $"unsupported command: ($arguments | str join ' ')"
               exit 64
             }
           }
 
-          let denied = $arguments | where { is-denied }
+          let denied = $command | where { is-denied }
           if ($denied | is-not-empty) {
             print --stderr $"denied arguments: ($denied | str join ', ')"
             exit 2
           }
 
-          exec ${getExe pkgs.nix} --option allow-import-from-derivation false ...$arguments
+          exec ${getExe pkgs.nix} --option allow-import-from-derivation false ...$command
         }
       '';
     };

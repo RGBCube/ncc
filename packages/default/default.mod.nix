@@ -10,9 +10,9 @@
         #!${getExe pkgs.nushell}
         #
 
-        def --wrapped main [...args] {
+        def --wrapped main [...arguments] {
           $env.NH_FLAKE = "${self}"
-          exec ${getExe pkgs.nh} ...$args
+          exec ${getExe pkgs.nh} ...$arguments
         }
       '';
     };
