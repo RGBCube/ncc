@@ -92,7 +92,6 @@
         })
 
         pkgs.dig
-        pkgs.doggo
         pkgs.inetutils
       ]
       ++ optionals osConfig.nixpkgs.hostPlatform.isDarwin [
