@@ -28,6 +28,8 @@ let
     concatStringsSep
     escape
     match
+    stringLength
+    substring
     ;
   inherit (lib.trivial) id;
   inherit (lib.types)
@@ -46,6 +48,15 @@ let
     ;
 
   quote = value: ''"${escape [ ''"'' "\\" ] value}"'';
+
+  # A character-string holds at most 255 bytes, longer values are carried as
+  # multiple character-strings in one record. Readers join them back together.
+  chunk =
+    value:
+    if stringLength value <= 255 then
+      singleton value
+    else
+      singleton (substring 0 255 value) ++ chunk (substring 255 (stringLength value - 255) value);
 
   # DNS names are stored as absolute, root-first label paths; the root is [ ].
   dnsLabel =
@@ -360,7 +371,9 @@ let
           data = mkField { } str "Binary data for validating the cert.";
         } (self: "${toString self.usage} ${toString self.selector} ${toString self.matching} ${self.data}");
 
-        TXT = mkStringRecord { _rdata = quote; } "Text record.";
+        TXT = mkStringRecord {
+          _rdata = value: value |> chunk |> map quote |> concatStringsSep " ";
+        } "Text record.";
 
         FQDN = mkOption {
           internal = true;
