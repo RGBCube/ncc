@@ -1,8 +1,11 @@
 { self, lib, ... }:
 let
   inherit (lib.magic) ula;
+  inherit (lib.lists) singleton;
 
   address = "${ula "resolver"}::1";
+
+  apex = self.dns.software.hate;
 
   mkPackage =
     { pkgs, lib }:
@@ -82,6 +85,41 @@ let
     );
 in
 {
+  flake.dns.software.hate = {
+    SOA = {
+      mname = apex.ns."0".FQDN;
+      rname = apex.FQDN ++ singleton "hostmaster";
+      serial = 2026061000; # Bump on EVERY edit (YYYYMMDDnn).
+      refresh = "2h"; # Consulted only by secondaries.
+      retry = "15m"; # Consulted only by secondaries.
+      expire = "2w"; # Secondary stops serving after this long unreachable.
+      minimum = "1h"; # Negative-cache TTL.
+    };
+
+    NS = [
+      apex.ns."0".FQDN
+      apex.ns."1".FQDN
+    ];
+
+    ns = {
+      # Friendly alias for the primary.
+      CNAME = apex.ns."0".FQDN;
+
+      "0".A = "159.146.61.20";
+      # "0".AAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
+
+      "1".A = "159.146.61.20";
+      # "1".AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
+    };
+
+    # CONTENT
+    xn--67-lubb0090b.HINFO = [
+      {
+        cpu = "Tendril";
+        os = "hey, hater";
+      }
+    ];
+  };
 
   flake.commonModules.authoritative =
     {
@@ -90,9 +128,8 @@ in
       ...
     }:
     let
-      inherit (lib.attrsets) mapAttrsToList;
-      inherit (lib.lists) imap0 singleton;
-      inherit (lib.strings) concatLines;
+      inherit (lib.lists) reverseList singleton;
+      inherit (lib.strings) concatStringsSep;
     in
     {
       system.services.authoritative = {
@@ -107,56 +144,15 @@ in
             listen_addrs_ipv6 = singleton "::";
             listen_port = 53;
 
-            zones =
-              let
-                zone = "hate.software.";
-              in
-              singleton {
-                inherit zone;
-                zone_type = "Primary";
-                axfr_policy = "AllowAll";
-                file = "${pkgs.writeText "${zone}zone" /* zone */ ''
-                  $ORIGIN ${zone}
-                  $TTL 1h
-
-                  @ SOA 0.ns hostmaster (
-                    2026052805 ; serial   ; Bump on EVERY edit (YYYYMMDDnn)
-                    2h         ; refresh  ; Consulted only by secondaries.
-                    15m        ; retry    ; Consulted only by secondaries.
-                    2w         ; expire   ; secondary stops serving after this long unreachable
-                    1h         ; minimum  ; negative-cache TTL
-                  )
-
-                  ns CNAME 0.ns ; Friendly alias for the primary.
-
-                  ${
-                    [
-                      {
-                        A = "159.146.61.20";
-                        # AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
-                      }
-                      {
-                        A = "159.146.61.20";
-                        # AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
-                      }
-                    ]
-                    |> imap0 (
-                      i: records:
-                      singleton ''
-                        @ NS ${toString i}.ns
-                      ''
-                      ++ mapAttrsToList (type: value: ''
-                        ${toString i}.ns ${type} ${value}
-                      '') records
-                      |> concatLines
-                    )
-                    |> concatLines
-                  }
-
-                  ; CONTENT
-                  xn--67-lubb0090b HINFO "Tendril" "hey, hater"
-                ''}";
-              };
+            zones = singleton {
+              zone = "${apex.FQDN |> reverseList |> concatStringsSep "."}.";
+              zone_type = "Primary";
+              axfr_policy = "AllowAll";
+              file = "${pkgs.writeText "zone" /* zone */ ''
+                $TTL 1h
+                ${apex.RENDERED}
+              ''}";
+            };
           };
         };
       };
