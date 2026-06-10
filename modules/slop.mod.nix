@@ -75,6 +75,7 @@ let
     "gh workflow view*"
 
     "cargo clippy*"
+    "cargo nextest*"
 
     "nixs *"
   ];
@@ -87,6 +88,10 @@ let
     {
       command = "cargo check*";
       justification = "Use `cargo clippy` instead of `cargo check`.";
+    }
+    {
+      command = "cargo test*";
+      justification = "Use `cargo nextest` instead of `cargo test`.";
     }
   ];
 
