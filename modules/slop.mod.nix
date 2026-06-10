@@ -88,36 +88,21 @@ let
       command = "cargo check*";
       justification = "Use `cargo clippy` instead of `cargo check`.";
     }
-    {
-      command = "nix eval*";
-      justification = "Use `nixs eval`.";
-    }
-    {
-      command = "nix flake archive*";
-      justification = "Use `nixs flake archive`.";
-    }
-    {
-      command = "nix flake metadata*";
-      justification = "Use `nixs flake metadata`.";
-    }
-    {
-      command = "nix flake show*";
-      justification = "Use `nixs flake show`.";
-    }
-    {
-      command = "nix path-info*";
-      justification = "Use `nixs path-info`.";
-    }
   ];
 
   instructions =
-    forbidden.commands
-    |> map (
-      { justification, ... }:
-      ''
-        - ${justification}
-      ''
-    )
+    [
+      "Use `nixs eval`."
+      "Use `nixs flake archive`."
+      "Use `nixs flake metadata`."
+      "Use `nixs flake show`."
+      "Use `nixs path-info`."
+      "Prefer nix3 commands over nix2 commands."
+    ]
+    ++ (forbidden.commands |> map ({ justification, ... }: justification))
+    |> map (instruction: ''
+      - ${instruction}
+    '')
     |> concatLines;
 
   allowed.paths = [
