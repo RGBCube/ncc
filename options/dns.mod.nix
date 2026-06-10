@@ -392,7 +392,7 @@ let
             let
               walk =
                 currentNode:
-                (currentNode.RECORDS |> filter ({ type, ... }: type != "DS"))
+                currentNode.RECORDS
                 ++ (
                   currentNode
                   |> filterAttrs (optionName: _: !(options ? ${optionName}))
@@ -405,7 +405,7 @@ let
                       # of in-bailiwick name servers (glue) cross into this zone.
                       (
                         # All NS and DS records
-                        childNode.RECORDS |> filter (entry: elem entry.type [ "NS" "DS" ])
+                        childNode.RECORDS |> filter (entry: entry.type == "NS" || entry.type == "DS")
                       )
                       ++ (
                         # All NS records' A and AAAA contents.
@@ -415,7 +415,7 @@ let
                           # Only if ns contents are in bailwick.
                           optionals (take (length childNode.FQDN) nsName == childNode.FQDN) (
                             (childNode |> attrByPath (nsName |> drop (length childNode.FQDN)) { }).RECORDS or [ ]
-                            |> filter ({ type, ... }: elem type [ "A" "AAAA" ])
+                            |> filter ({ type, ... }: type == "A" || type == "AAAA")
                           )
                         )
                       )
@@ -423,7 +423,14 @@ let
                   |> concatLists
                 );
             in
-            if config.SOA == null then [ ] else walk config;
+            if config.SOA == null then
+              [ ]
+            else if config.NS == [ ] then
+              throw "The zone ${renderDnsName config.FQDN} declares a SOA but no NS records."
+            else
+              # A DS record at our own apex belongs to the parent zone, not us.
+              # Exclude DS of our own zone, keep DS from other zones.
+              walk config |> filter (entry: entry.type == "DS" -> entry.owner != config.FQDN);
         };
 
         RENDERED = mkOption {
