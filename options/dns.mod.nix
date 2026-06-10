@@ -392,7 +392,7 @@ let
             let
               walk =
                 currentNode:
-                currentNode.RECORDS
+                (currentNode.RECORDS |> filter (entry: entry.type != "DS"))
                 ++ (
                   currentNode
                   |> filterAttrs (optionName: _: !(options ? ${optionName}))
@@ -400,6 +400,7 @@ let
                     _: childNode:
                     if childNode.SOA == null then
                       walk childNode
+                      ++ optionals (childNode.NS != [ ]) (childNode.RECORDS |> filter (entry: entry.type == "DS"))
                     else
                       # A zone cut. Only the delegation records and the addresses
                       # of in-bailiwick name servers (glue) cross into this zone.
@@ -428,9 +429,7 @@ let
             else if config.NS == [ ] then
               throw "The zone ${renderDnsName config.FQDN} declares a SOA but no NS records."
             else
-              # A DS record at our own apex belongs to the parent zone, not us.
-              # Exclude DS of our own zone, keep DS from other zones.
-              walk config |> filter (entry: entry.type == "DS" -> entry.owner != config.FQDN);
+              walk config;
         };
 
         RENDERED = mkOption {
