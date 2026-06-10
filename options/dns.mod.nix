@@ -11,7 +11,6 @@ let
     concatLists
     concatMap
     drop
-    elem
     filter
     init
     length
@@ -69,16 +68,12 @@ let
   dnsName = addCheck (listOf str) (labels: all dnsLabel.check labels) // {
     description = "DNS name as a root-first label path";
   };
-  dnsNames =
-    coercedTo
-      (
-        addCheck dnsName (labels: labels != [ ])
-        // {
-          description = "non-root DNS name";
-        }
-      )
-      singleton
-      (listOf dnsName);
+  dnsNames = coercedTo (
+    addCheck dnsName (labels: labels != [ ])
+    // {
+      description = "non-root DNS name";
+    }
+  ) singleton (listOf dnsName);
 
   renderDnsName = labels: "${labels |> reverseList |> concatStringsSep "."}.";
 
@@ -170,7 +165,8 @@ let
                 mkField { } bool
                   "Indicates that the corresponding property tag MUST be understood if the semantics of the CAA record are to be correctly interpreted by an issuer.";
               reservedFlags =
-                mkField { } (ints.between 0 127) "The flags of the record minus the issuer critical flag.";
+                mkField { } (ints.between 0 127)
+                  "The flags of the record minus the issuer critical flag.";
               tag = mkField { } str "The property tag.";
               value = mkField { } str "The raw value of the CAA record.";
             }
@@ -289,7 +285,9 @@ let
               rname =
                 mkField { } dnsName
                   "A domain-name which specifies the mailbox of the person responsible for this zone.";
-              serial = mkField { } ints.u32 "The unsigned 32 bit version number of the original copy of the zone.";
+              serial =
+                mkField { } ints.u32
+                  "The unsigned 32 bit version number of the original copy of the zone.";
               refresh = mkField { } str "A 32 bit time interval before the zone should be refreshed.";
               retry =
                 mkField { } str
