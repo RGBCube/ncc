@@ -1,5 +1,6 @@
 { self, lib, ... }:
 let
+  inherit (lib.dns) withClass;
   inherit (lib.magic) ula;
   inherit (lib.lists) singleton;
 
@@ -113,12 +114,10 @@ in
     };
 
     # CONTENT
-    xn--67-lubb0090b.HINFO = [
-      {
-        cpu = "Tendril";
-        os = "hey, hater";
-      }
-    ];
+    xn--67-lubb0090b.HINFO = withClass "CH" {
+      cpu = "Tendril";
+      os = "hey, hater";
+    };
   };
 
   flake.commonModules.authoritative =
@@ -148,10 +147,7 @@ in
               zone = "${apex.FQDN |> reverseList |> concatStringsSep "."}.";
               zone_type = "Primary";
               axfr_policy = "AllowAll";
-              file = "${pkgs.writeText "zone" /* zone */ ''
-                $TTL 1h
-                ${apex.RENDERED}
-              ''}";
+              file = pkgs.writeText "zone" apex.RENDERED;
             };
           };
         };

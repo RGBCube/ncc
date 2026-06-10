@@ -36,46 +36,19 @@ let
     addCheck
     bool
     coercedTo
+    enum
     int
     ints
     lazyAttrsOf
     listOf
     nullOr
     oneOf
+    raw
     str
     submodule
     ;
 
   quote = value: ''"${escape [ ''"'' "\\" ] value}"'';
-
-  # A character-string holds at most 255 bytes, longer values are carried as
-  # multiple character-strings in one record. Readers join them back together.
-  chunk =
-    value:
-    if stringLength value <= 255 then
-      singleton value
-    else
-      singleton (substring 0 255 value) ++ chunk (substring 255 (stringLength value - 255) value);
-
-  # DNS names are stored as absolute, root-first label paths; the root is [ ].
-  dnsLabel =
-    addCheck str (
-      label: match "(\\*|[A-Za-z0-9_]|[A-Za-z0-9_][A-Za-z0-9_-]{0,61}[A-Za-z0-9_])" label != null
-    )
-    // {
-      description = "DNS label";
-    };
-  dnsName = addCheck (listOf str) (labels: all dnsLabel.check labels) // {
-    description = "DNS name as a root-first label path";
-  };
-  dnsNames = coercedTo (
-    addCheck dnsName (labels: labels != [ ])
-    // {
-      description = "non-root DNS name";
-    }
-  ) singleton (listOf dnsName);
-
-  renderDnsName = labels: "${labels |> reverseList |> concatStringsSep "."}.";
 
   weight =
     flag: bit:
@@ -90,6 +63,32 @@ let
     rest: type: description:
     mkOption (rest // { inherit type description; });
 
+  plural =
+    element:
+    coercedTo (
+      addCheck raw (value: value != [ ] && element.check value)
+      // {
+        inherit (element) description;
+      }
+    ) singleton (listOf element);
+
+  rrset =
+    payload:
+    coercedTo raw (
+      value: if value._type or "" == "rrset" then removeAttrs value [ "_type" ] else { rdata = value; }
+    )
+    <| submodule {
+      options = {
+        ttl = mkField { default = "1h"; } str "The time to live.";
+        class = mkField { default = "IN"; } (enum [
+          "IN"
+          "CH"
+          "HS"
+        ]) "The DNS class.";
+        rdata = mkField { } payload "The data.";
+      };
+    };
+
   mkStringRecord =
     {
       single ? false,
@@ -98,7 +97,7 @@ let
     description:
     mkOption {
       inherit description;
-      type = if single then nullOr str else coercedTo str singleton (listOf str);
+      type = rrset (if single then nullOr str else plural str);
       default = if single then null else [ ];
     }
     // {
@@ -106,19 +105,19 @@ let
       inherit _rdata;
     };
 
-  mkDnsNameRecord =
+  mkNameRecord =
     {
       single ? false,
     }:
     description:
     mkOption {
       inherit description;
-      type = if single then nullOr dnsName else dnsNames;
+      type = rrset (if single then nullOr name else plural name);
       default = if single then null else [ ];
     }
     // {
       _single = single;
-      _rdata = renderDnsName;
+      _rdata = name.render;
     };
 
   mkAttrRecord =
@@ -128,7 +127,7 @@ let
     description: options: _rdata:
     mkOption {
       inherit description;
-      type = (if single then nullOr else listOf) <| submodule { inherit options; };
+      type = rrset <| (if single then nullOr else plural) <| submodule { inherit options; };
       default = if single then null else [ ];
     }
     // {
@@ -136,18 +135,28 @@ let
       inherit _rdata;
     };
 
-  record = submodule {
-    options = {
-      owner = mkField { } dnsName "The absolute owner name as a root-first label path.";
-      type = mkField { } str "The DNS record type.";
-      data = mkField { } str "The DNS record data.";
+  label =
+    addCheck str (
+      label: match "(\\*|[A-Za-z0-9_]|[A-Za-z0-9_][A-Za-z0-9_-]{0,61}[A-Za-z0-9_])" label != null
+    )
+    // {
+      description = "DNS label";
     };
-  };
 
-  dnsNode = submodule (
+  # Names are stored as absolute, root-first label paths. Root is [ ].
+  name =
+    addCheck (listOf label)
+      # Check inner items eagerly rather than lazily.
+      (labels: all label.check labels)
+    // {
+      description = "DNS name as a root-first label path";
+      render = labels: "${labels |> reverseList |> concatStringsSep "."}.";
+    };
+
+  node = submodule (
     { config, options, ... }:
     {
-      freeformType = (lazyAttrsOf dnsNode) // {
+      freeformType = (lazyAttrsOf node) // {
         description = "DNS name trie";
       };
 
@@ -156,7 +165,7 @@ let
 
         AAAA = mkStringRecord { } "IPv6 Address record.";
 
-        ANAME = mkDnsNameRecord { single = true; } "Address-specific DNS aliases.";
+        ANAME = mkNameRecord { single = true; } "Address-specific DNS aliases.";
 
         CAA =
           mkAttrRecord { } "Certification Authority Authorization."
@@ -187,7 +196,7 @@ let
               self: "${toString self.type} ${toString self.keyTag} ${toString self.algorithm} ${self.certificate}"
             );
 
-        CNAME = mkDnsNameRecord { single = true; } "Canonical name record.";
+        CNAME = mkNameRecord { single = true; } "Canonical name record.";
 
         CSYNC =
           mkAttrRecord { } "Child-to-parent synchronization record."
@@ -237,9 +246,9 @@ let
             mkField { } ints.u16
               "A 16 bit integer which specifies the preference given to this RR among others at the same owner. Lower values are preferred.";
           exchange =
-            mkField { } dnsName
+            mkField { } name
               "A domain-name which specifies a host willing to act as a mail exchange for the owner name.";
-        } (self: "${toString self.preference} ${renderDnsName self.exchange}");
+        } (self: "${toString self.preference} ${name.render self.exchange}");
 
         NAPTR =
           mkAttrRecord { } "Naming Authority Pointer."
@@ -260,19 +269,19 @@ let
                 mkField { } str
                   "A character-string containing a substitution expression that is applied to the original string held by the client in order to construct the next domain name to lookup.";
               replacement =
-                mkField { } dnsName
+                mkField { } name
                   "A domain-name which is the next domain-name to query for depending on the potential values found in the flags field.";
             }
             (
               self:
-              "${toString self.order} ${toString self.preference} ${quote self.flags} ${quote self.services} ${quote self.regexp} ${renderDnsName self.replacement}"
+              "${toString self.order} ${toString self.preference} ${quote self.flags} ${quote self.services} ${quote self.regexp} ${name.render self.replacement}"
             );
 
-        NS = mkDnsNameRecord { } "Name server record.";
+        NS = mkNameRecord { } "Name server record.";
 
         OPENPGPKEY = mkStringRecord { } "OpenPGP public key.";
 
-        PTR = mkDnsNameRecord { } "Pointer record.";
+        PTR = mkNameRecord { } "Pointer record.";
 
         SMIMEA = self.TLSA;
 
@@ -280,10 +289,10 @@ let
           mkAttrRecord { single = true; } "Start of [a zone of] authority record."
             {
               mname =
-                mkField { } dnsName
+                mkField { } name
                   "The domain-name of the name server that was the original or primary source of data for this zone.";
               rname =
-                mkField { } dnsName
+                mkField { } name
                   "A domain-name which specifies the mailbox of the person responsible for this zone.";
               serial =
                 mkField { } ints.u32
@@ -301,7 +310,7 @@ let
             }
             (
               self:
-              "${renderDnsName self.mname} ${renderDnsName self.rname} ${toString self.serial} ${self.refresh} ${self.retry} ${self.expire} ${self.minimum}"
+              "${name.render self.mname} ${name.render self.rname} ${toString self.serial} ${self.refresh} ${self.retry} ${self.expire} ${self.minimum}"
             );
 
         SRV =
@@ -312,11 +321,11 @@ let
                 mkField { } ints.u16
                   "A server selection mechanism. The weight field specifies a relative weight for entries with the same priority.";
               port = mkField { } ints.u16 "The port on this target host of this service.";
-              target = mkField { } dnsName "The domain name of the target host.";
+              target = mkField { } name "The domain name of the target host.";
             }
             (
               self:
-              "${toString self.priority} ${toString self.weight} ${toString self.port} ${renderDnsName self.target}"
+              "${toString self.priority} ${toString self.weight} ${toString self.port} ${name.render self.target}"
             );
 
         SSHFP = mkAttrRecord { } "SSH Public Key Fingerprint." {
@@ -332,7 +341,7 @@ let
                 mkField { } ints.u16
                   "When SvcPriority is 0 the SVCB record is in AliasMode. Otherwise, it is in ServiceMode.";
               target =
-                mkField { } dnsName
+                mkField { } name
                   "The domain name of either the alias target (for AliasMode) or the alternative endpoint (for ServiceMode).";
               parameters = mkField { default = { }; } (
                 attrsOf
@@ -347,7 +356,7 @@ let
               self:
               [
                 (toString self.priority)
-                (renderDnsName self.target)
+                (name.render self.target)
               ]
               ++ (
                 self.parameters
@@ -370,13 +379,26 @@ let
         } (self: "${toString self.usage} ${toString self.selector} ${toString self.matching} ${self.data}");
 
         TXT = mkStringRecord {
-          _rdata = value: value |> chunk |> map quote |> concatStringsSep " ";
+          _rdata =
+            value:
+            value
+            # A character-string holds at most 255 bytes, longer values are carried as
+            # multiple character-strings in one record. Readers join them back together.
+            |> fix (
+              chunk: rest:
+              if stringLength rest <= 255 then
+                singleton rest
+              else
+                singleton (substring 0 255 rest) ++ chunk (substring 255 (stringLength rest - 255) rest)
+            )
+            |> map quote
+            |> concatStringsSep " ";
         } "Text record.";
 
         FQDN = mkOption {
           internal = true;
           readOnly = true;
-          type = dnsName;
+          type = name;
           description = "The absolute DNS name of this node as a root-first label path.";
           # This option tree is mounted at `flake.dns`, drop that prefix after dropping `FQDN`.
           default = options.FQDN.loc |> init |> drop 2;
@@ -385,25 +407,34 @@ let
         RECORDS = mkOption {
           internal = true;
           readOnly = true;
-          type = listOf record;
+          type =
+            listOf
+            <| submodule {
+              options = {
+                owner = mkField { } name "The absolute owner name as a root-first label path.";
+                ttl = mkField { } str "The time to live of this record.";
+                class = mkField { } str "The DNS class of this record.";
+                type = mkField { } str "The DNS record type.";
+                data = mkField { } str "The DNS record data.";
+              };
+            };
           description = "Every record owned by this node.";
           default =
             config
             |> filterAttrs (optionName: _: options ? ${optionName}._rdata)
             |> mapAttrsToList (
-              type: value:
-              value
-              |> (
-                value:
-                if value == null then
+              type: rrset:
+              (
+                if rrset.rdata == null then
                   [ ]
                 else if options.${type}._single then
-                  singleton value
+                  singleton rrset.rdata
                 else
-                  toList value
+                  toList rrset.rdata
               )
               |> map (value: {
                 owner = config.FQDN;
+                inherit (rrset) class ttl;
                 inherit type;
                 data = options.${type}._rdata value;
               })
@@ -412,8 +443,8 @@ let
             |> (
               records:
               # A CNAME forbids any other data at its name.
-              if config.CNAME != null && length records > 1 then
-                throw "The name ${renderDnsName config.FQDN} declares a CNAME record next to other records."
+              if config.CNAME.rdata != null && length records > 1 then
+                throw "The name ${name.render config.FQDN} declares a CNAME record next to other records."
               else
                 records
             );
@@ -422,7 +453,7 @@ let
         ENTRIES = mkOption {
           internal = true;
           readOnly = true;
-          type = listOf record;
+          type = self.RECORDS.type;
           description = "Every record in this zone.";
           default =
             let
@@ -434,9 +465,9 @@ let
                   |> filterAttrs (optionName: _: !(options ? ${optionName}))
                   |> mapAttrsToList (
                     _: childNode:
-                    if childNode.SOA == null then
+                    if childNode.SOA.rdata == null then
                       walk childNode
-                      ++ optionals (childNode.NS != [ ]) (childNode.RECORDS |> filter (entry: entry.type == "DS"))
+                      ++ optionals (childNode.NS.rdata != [ ]) (childNode.RECORDS |> filter (entry: entry.type == "DS"))
                     else
                       # A zone cut. Only the delegation records and the addresses
                       # of in-bailiwick name servers (glue) cross into this zone.
@@ -446,7 +477,7 @@ let
                       )
                       ++ (
                         # All NS records' A and AAAA contents.
-                        childNode.NS
+                        childNode.NS.rdata
                         |> concatMap (
                           nsName:
                           # Only if ns contents are in bailwick.
@@ -458,7 +489,7 @@ let
                               # Without glue this delegation can never resolve, its
                               # addresses are only reachable through the delegation itself.
                               if glue == [ ] then
-                                throw "The in-bailiwick name server ${renderDnsName nsName} of the delegated zone ${renderDnsName childNode.FQDN} has no A or AAAA records to use as glue."
+                                throw "The in-bailiwick name server ${name.render nsName} of the delegated zone ${name.render childNode.FQDN} has no A or AAAA records to use as glue."
                               else
                                 glue
                             )
@@ -469,10 +500,10 @@ let
                   |> concatLists
                 );
             in
-            if config.SOA == null then
+            if config.SOA.rdata == null then
               [ ]
-            else if config.NS == [ ] then
-              throw "The zone ${renderDnsName config.FQDN} declares a SOA but no NS records."
+            else if config.NS.rdata == [ ] then
+              throw "The zone ${name.render config.FQDN} declares a SOA but no NS records."
             else
               walk config;
         };
@@ -483,11 +514,11 @@ let
           type = nullOr str;
           description = "The BIND zone file body for this zone, null when this node does not define a SOA.";
           default =
-            if config.SOA == null then
+            if config.SOA.rdata == null then
               null
             else
               config.ENTRIES
-              |> map (entry: "${renderDnsName entry.owner} ${entry.type} ${entry.data}")
+              |> map (entry: "${name.render entry.owner} ${entry.ttl} ${entry.class} ${entry.type} ${entry.data}")
               |> concatLines;
         };
       });
@@ -496,7 +527,7 @@ let
 in
 {
   options.flake.dns = mkOption {
-    type = dnsNode;
+    type = node;
     default = { };
     # TODO: description.
   };
