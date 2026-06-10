@@ -36,6 +36,7 @@ let
     bool
     coercedTo
     int
+    ints
     lazyAttrsOf
     listOf
     nullOr
@@ -47,11 +48,26 @@ let
   quote = value: ''"${escape [ ''"'' "\\" ] value}"'';
 
   # DNS names are stored as absolute, root-first label paths; the root is [ ].
-  dnsLabel = addCheck str (
-    label: match "(\\*|[A-Za-z0-9_]|[A-Za-z0-9_][A-Za-z0-9_-]{0,61}[A-Za-z0-9_])" label != null
-  );
-  dnsName = addCheck (listOf str) (labels: all dnsLabel.check labels);
-  dnsNames = coercedTo (addCheck dnsName (labels: labels != [ ])) singleton (listOf dnsName);
+  dnsLabel =
+    addCheck str (
+      label: match "(\\*|[A-Za-z0-9_]|[A-Za-z0-9_][A-Za-z0-9_-]{0,61}[A-Za-z0-9_])" label != null
+    )
+    // {
+      description = "DNS label";
+    };
+  dnsName = addCheck (listOf str) (labels: all dnsLabel.check labels) // {
+    description = "DNS name as a root-first label path";
+  };
+  dnsNames =
+    coercedTo
+      (
+        addCheck dnsName (labels: labels != [ ])
+        // {
+          description = "non-root DNS name";
+        }
+      )
+      singleton
+      (listOf dnsName);
 
   renderDnsName = labels: "${labels |> reverseList |> concatStringsSep "."}.";
 
@@ -142,7 +158,8 @@ let
               issuerCritical =
                 mkField { } bool
                   "Indicates that the corresponding property tag MUST be understood if the semantics of the CAA record are to be correctly interpreted by an issuer.";
-              reservedFlags = mkField { } int "The flags of the record minus the issuer critical flag.";
+              reservedFlags =
+                mkField { } (ints.between 0 127) "The flags of the record minus the issuer critical flag.";
               tag = mkField { } str "The property tag.";
               value = mkField { } str "The raw value of the CAA record.";
             }
@@ -154,9 +171,9 @@ let
         CERT =
           mkAttrRecord { } "Storing Certificates in the Domain Name System (DNS)."
             {
-              type = mkField { } int "The CERT type.";
-              keyTag = mkField { } int "The CERT key tag.";
-              algorithm = mkField { } int "The CERT algorithm.";
+              type = mkField { } ints.u16 "The CERT type.";
+              keyTag = mkField { } ints.u16 "The CERT key tag.";
+              algorithm = mkField { } ints.u8 "The CERT algorithm.";
               certificate = mkField { } str "The CERT record data.";
             }
             (
@@ -168,7 +185,7 @@ let
         CSYNC =
           mkAttrRecord { } "Child-to-parent synchronization record."
             {
-              serial = mkField { } int "A copy of the 32-bit SOA serial number from the child zone.";
+              serial = mkField { } ints.u32 "A copy of the 32-bit SOA serial number from the child zone.";
               immediate = mkField { } bool "The immediate flag.";
               soaMinimum = mkField { } bool "The soaminimum flag.";
               types =
@@ -189,11 +206,11 @@ let
         DS =
           mkAttrRecord { } "Delegation signer."
             {
-              keyTag = mkField { } int "Lists the key tag of the DNSKEY RR referred to by the DS record.";
+              keyTag = mkField { } ints.u16 "Lists the key tag of the DNSKEY RR referred to by the DS record.";
               algorithm =
-                mkField { } int
+                mkField { } ints.u8
                   "Lists the algorithm number of the DNSKEY RR referred to by the DS record.";
-              digestType = mkField { } int "Identifies the algorithm used to construct the digest.";
+              digestType = mkField { } ints.u8 "Identifies the algorithm used to construct the digest.";
               digest = mkField { } str "A digest of the DNSKEY RR referred to by the DS record.";
             }
             (
@@ -210,7 +227,7 @@ let
 
         MX = mkAttrRecord { } "Mail exchange record." {
           preference =
-            mkField { } int
+            mkField { } ints.u16
               "A 16 bit integer which specifies the preference given to this RR among others at the same owner. Lower values are preferred.";
           exchange =
             mkField { } dnsName
@@ -221,10 +238,10 @@ let
           mkAttrRecord { } "Naming Authority Pointer."
             {
               order =
-                mkField { } int
+                mkField { } ints.u16
                   "A 16-bit unsigned integer specifying the order in which the NAPTR records MUST be processed. The ordering is from lowest to highest.";
               preference =
-                mkField { } int
+                mkField { } ints.u16
                   "A 16-bit unsigned integer that specifies the order in which NAPTR records with equal Order values SHOULD be processed, low numbers being processed before high numbers.";
               flags =
                 mkField { } str
@@ -261,7 +278,7 @@ let
               rname =
                 mkField { } dnsName
                   "A domain-name which specifies the mailbox of the person responsible for this zone.";
-              serial = mkField { } int "The unsigned 32 bit version number of the original copy of the zone.";
+              serial = mkField { } ints.u32 "The unsigned 32 bit version number of the original copy of the zone.";
               refresh = mkField { } str "A 32 bit time interval before the zone should be refreshed.";
               retry =
                 mkField { } str
@@ -281,11 +298,11 @@ let
         SRV =
           mkAttrRecord { } "Service locator."
             {
-              priority = mkField { } int "The priority of this target host.";
+              priority = mkField { } ints.u16 "The priority of this target host.";
               weight =
-                mkField { } int
+                mkField { } ints.u16
                   "A server selection mechanism. The weight field specifies a relative weight for entries with the same priority.";
-              port = mkField { } int "The port on this target host of this service.";
+              port = mkField { } ints.u16 "The port on this target host of this service.";
               target = mkField { } dnsName "The domain name of the target host.";
             }
             (
@@ -294,8 +311,8 @@ let
             );
 
         SSHFP = mkAttrRecord { } "SSH Public Key Fingerprint." {
-          algorithm = mkField { } int "The SSH public key algorithm.";
-          fingerprintType = mkField { } int "The fingerprint type to use.";
+          algorithm = mkField { } ints.u8 "The SSH public key algorithm.";
+          fingerprintType = mkField { } ints.u8 "The fingerprint type to use.";
           fingerprint = mkField { } str "The fingerprint of the public key.";
         } (self: "${toString self.algorithm} ${toString self.fingerprintType} ${self.fingerprint}");
 
@@ -303,7 +320,7 @@ let
           mkAttrRecord { } "DNS SVCB and HTTPS RRs."
             {
               priority =
-                mkField { } int
+                mkField { } ints.u16
                   "When SvcPriority is 0 the SVCB record is in AliasMode. Otherwise, it is in ServiceMode.";
               target =
                 mkField { } dnsName
@@ -334,12 +351,12 @@ let
 
         TLSA = mkAttrRecord { } "Certificate association." {
           usage =
-            mkField { } int
+            mkField { } ints.u8
               "Specifies the provided association that will be used to match the certificate presented in the TLS handshake.";
           selector =
-            mkField { } int
+            mkField { } ints.u8
               "Specifies which part of the TLS certificate presented by the server will be matched against the association data.";
-          matching = mkField { } int "Specifies how the certificate association is presented.";
+          matching = mkField { } ints.u8 "Specifies how the certificate association is presented.";
           data = mkField { } str "Binary data for validating the cert.";
         } (self: "${toString self.usage} ${toString self.selector} ${toString self.matching} ${self.data}");
 
@@ -380,7 +397,15 @@ let
                 data = options.${type}._rdata value;
               })
             )
-            |> concatLists;
+            |> concatLists
+            |> (
+              records:
+              # A CNAME forbids any other data at its name.
+              if config.CNAME != null && length records > 1 then
+                throw "The name ${renderDnsName config.FQDN} declares a CNAME record next to other records."
+              else
+                records
+            );
         };
 
         ENTRIES = mkOption {
@@ -417,6 +442,15 @@ let
                           optionals (take (length childNode.FQDN) nsName == childNode.FQDN) (
                             (childNode |> attrByPath (nsName |> drop (length childNode.FQDN)) { }).RECORDS or [ ]
                             |> filter ({ type, ... }: type == "A" || type == "AAAA")
+                            |> (
+                              glue:
+                              # Without glue this delegation can never resolve, its
+                              # addresses are only reachable through the delegation itself.
+                              if glue == [ ] then
+                                throw "The in-bailiwick name server ${renderDnsName nsName} of the delegated zone ${renderDnsName childNode.FQDN} has no A or AAAA records to use as glue."
+                              else
+                                glue
+                            )
                           )
                         )
                       )
