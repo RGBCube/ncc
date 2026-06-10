@@ -183,6 +183,8 @@
           after = singleton "network.target";
           wantedBy = singleton "multi-user.target";
 
+          restartTriggers = singleton config.configData."hickory-dns.toml".source;
+
           serviceConfig = {
             Restart = "on-failure";
             RestartSec = "10s";
