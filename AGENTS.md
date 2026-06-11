@@ -58,3 +58,4 @@ Never use `git`. Instead of `git add`, use `jj file track`.
   `darwinModules` first.
 - Do not use `builtins.` in modules.
 - Never use `rec` ever. Worst case, define a custom `fix`.
+- Do not use shortform CLI arguments if longform exists. Ever.
