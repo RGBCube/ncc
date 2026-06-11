@@ -260,9 +260,6 @@
         # HTML
         pkgs.vscode-langservers-extracted
 
-        # KOTLIN
-        pkgs.kotlin-language-server
-
         # LATEX
         pkgs.texlab
 
