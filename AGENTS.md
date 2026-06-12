@@ -63,3 +63,5 @@ Never use `git`. Instead of `git add`, use `jj file track`.
 - Never use `rec` ever. Worst case, define a custom `fix`.
 - Do not use shortform CLI arguments if longform exists in source files. It's
   only OK for interactive use. (and never when providing scripts to the user)
+- Never use `toString` for paths that need to preserve derivation contexts.
+  Always `"${path}"`.
