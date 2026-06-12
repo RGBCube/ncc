@@ -9,10 +9,13 @@ Never use `git`. Instead of `git add`, use `jj file track`.
 - Do not execute `nix flake archive --json` with commands that actually search
   over the result of that, as it forces the user to review every single time.
   Run `nix flake archive --json` once, then refer to its output literally in
-  other, separate find commands. Not like `NIXPKGS=... rg $NIXPKGS`,
+  other, separate find commands. Not like `NIXPKGS=/nix/store/... rg $NIXPKGS`,
+  not like `np=/nix/store/...; sed -n 258,275p "$np/lib/modules.nix"`,
   _literally_, without any variables.
 - Never use non-new `nix` commands. Prefer `nix build` over `nix-build` and so
   on. Always prefer new (nix3) commands.
+- Never use python to parse json if jq can do it fine, jq avoids permission
+  prompts.
 
 # Nix Style Rules
 
@@ -58,4 +61,5 @@ Never use `git`. Instead of `git add`, use `jj file track`.
   `darwinModules` first.
 - Do not use `builtins.` in modules.
 - Never use `rec` ever. Worst case, define a custom `fix`.
-- Do not use shortform CLI arguments if longform exists. Ever.
+- Do not use shortform CLI arguments if longform exists in source files. It's
+  only OK for interactive use. (and never when providing scripts to the user)
