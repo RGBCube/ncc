@@ -7,7 +7,6 @@ let
     mapAttrsToList
     ;
   inherit (lib.lists)
-    all
     concatLists
     concatMap
     drop
@@ -16,7 +15,6 @@ let
     length
     map
     optionals
-    reverseList
     singleton
     take
     toList
@@ -26,7 +24,6 @@ let
     concatLines
     concatStringsSep
     escape
-    match
     stringLength
     substring
     ;
@@ -47,6 +44,7 @@ let
     str
     submodule
     ;
+  inherit (lib.types.dns) name;
 
   quote = value: ''"${escape [ ''"'' "\\" ] value}"'';
 
@@ -133,24 +131,6 @@ let
     // {
       _single = single;
       inherit _rdata;
-    };
-
-  label =
-    addCheck str (
-      label: match "(\\*|[A-Za-z0-9_]|[A-Za-z0-9_][A-Za-z0-9_-]{0,61}[A-Za-z0-9_])" label != null
-    )
-    // {
-      description = "DNS label";
-    };
-
-  # Names are stored as absolute, root-first label paths. Root is [ ].
-  name =
-    addCheck (listOf label)
-      # Check inner items eagerly rather than lazily.
-      (labels: all label.check labels)
-    // {
-      description = "DNS name as a root-first label path";
-      render = labels: "${labels |> reverseList |> concatStringsSep "."}.";
     };
 
   node = submodule (

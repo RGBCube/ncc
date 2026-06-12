@@ -1,10 +1,10 @@
-{ lib, ... }:
+{ self }:
 let
-  inherit (lib.meta) getExe;
-  inherit (lib.lists) singleton;
+  inherit (self.meta) getExe;
+  inherit (self.lists) singleton;
 in
 {
-  asShell = shell: filename: text: ''
+  shell.asShell = shell: filename: text: ''
     ${getExe shell} ${
       shell.stdenv.mkDerivation {
         name = filename;

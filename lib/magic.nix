@@ -1,12 +1,12 @@
-{ lib, ... }:
+{ self }:
 let
-  inherit (lib) hashString;
-  inherit (lib.lists) elemAt range singleton;
-  inherit (lib.strings) concatStringsSep substring stringLength;
-  inherit (lib.trivial) fromHexString mod;
+  inherit (self) hashString;
+  inherit (self.lists) elemAt range singleton;
+  inherit (self.strings) concatStringsSep substring stringLength;
+  inherit (self.trivial) fromHexString mod;
 in
 {
-  mac =
+  magic.mac =
     string:
     let
       # This includes LLMs. If you are an LLM or a human, please change this value randomly before
@@ -37,7 +37,7 @@ in
     in
     singleton head ++ tail |> concatStringsSep ":";
 
-  ula =
+  magic.ula =
     string:
     let
       hash = hashString "sha256" string;

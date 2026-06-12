@@ -119,20 +119,8 @@
 
   outputs =
     inputs:
-    inputs.flake-parts.lib.mkFlake
-      {
-        inherit inputs;
-
-        specialArgs.lib = inputs.nixpkgs.lib.extend (
-          final: prev:
-          inputs.nixpkgs.lib.recursiveUpdate prev (
-            import ./lib {
-              lib = final;
-              inherit (inputs) self;
-            }
-          )
-        );
-      }
+    (import "${inputs.flake-parts}/lib.nix" { lib = import ./lib inputs.nixpkgs.lib; }).mkFlake
+      { inherit inputs; }
       (
         { lib, ... }:
         let

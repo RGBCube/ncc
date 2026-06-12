@@ -1,13 +1,13 @@
-{ lib, ... }:
+{ self }:
 let
-  inherit (lib.attrsets) mapAttrsToList;
-  inherit (lib.strings) concatLines;
-  inherit (lib.lists) singleton flatten;
+  inherit (self.attrsets) mapAttrsToList;
+  inherit (self.strings) concatLines;
+  inherit (self.lists) singleton flatten;
 in
 {
   # CLI flag config format used by bat.
   # true -> --flag, string/int -> --flag 'value'
-  toCliFlagList =
+  generators.toCliFlagList =
     attrs:
     attrs
     |> mapAttrsToList (
@@ -17,7 +17,7 @@ in
 
   # CLI flag config format used by ripgrep.
   # true -> --flag, string/int -> --flag<newline>value
-  toCliArgumentList =
+  generators.toCliArgumentList =
     attrs:
     attrs
     |> mapAttrsToList (
