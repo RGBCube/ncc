@@ -146,11 +146,13 @@
     in
     {
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
-        text =
-          # zsh
-          mkAfter ''
-            SHELL=${getExe config.programs.nushell.package} exec ${getExe config.programs.nushell.package} --login --config '${config.environment.sessionVariables.XDG_CONFIG_HOME}/nushell/config.nu'
-          '';
+        text = mkAfter /* zsh */ ''
+          # Nested exec for the true shell to see the variables.
+          SHELL=${getExe config.programs.nushell.package} exec ${getExe config.programs.nushell.package} \
+            --login \
+            --config '${config.environment.sessionVariables.XDG_CONFIG_HOME}/nushell/config.nu' \
+            --execute 'exec $env.SHELL'
+        '';
       };
 
       xdg.config.files."nushell/config.nu".text =
