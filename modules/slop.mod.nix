@@ -794,7 +794,6 @@ in
 
             slash_commands: list[tuple[bytes, str]] = [
               (b'name:"btw",description:"Ask a quick side question', "/btw"),
-              (b'name:"bridge-kick",description:"Inject bridge failure states', "/bridge-kick"),
             ]
 
             for anchor, label in slash_commands:
@@ -810,30 +809,28 @@ in
               data = data[:pos] + patched + data[pos + SEARCH_WINDOW :]
               log(f"slash command {label}: enabled")
 
-            # --- Force Av() async-gate to always resolve true ---
-            # Av(flag) is the ASYNC feature-gate resolver. It short-circuits to its default
-            # in two places when telemetry is off: an inline `if(!va())return!1;` AND the
-            # same check inside Irq() which it delegates to. Since Av() hardcodes !1 as the
-            # default passed to Irq, dropping only the inline guard leaves Irq returning
-            # false anyway.
+            # --- Force the async feature-gate resolver to resolve true when offline ---
+            # The ASYNC gate resolver (Av → YB across versions) falls back to its default
+            # when telemetry is off (`if(!p4())return!1`), so every gate it resolves reads
+            # false. In 2.1.181 it shares its `tHt()`/`nHt()` override-map preamble with a
+            # SIBLING resolver (X1r) that resolves `tengu_disable_bypass_permissions_mode`
+            # — forcing THAT one true would DISABLE bypass-permissions mode. So we can't
+            # match on the shared preamble or replace the whole body; instead we flip only
+            # the offline fallback inside the resolver whose tail reads
+            # `cachedGrowthBookFeatures?.[e]===!0` (YB), leaving X1r and the explicit
+            # override maps untouched.
             #
-            # Every Av() call-site in 2.1.113 targets a gate we intentionally want enabled:
-            #  - tengu_ccr_bridge          → Qr8() → initReplBridge() auto-connect
-            #  - tengu_ccr_bridge_multi_session → multi-session remote control
-            #  - tengu_ccr_bundle_seed_enabled  → CCR bundle seed
-            #  - tengu_harbor             → plugin marketplace
-            # None of these are things we want off. Replace the whole body to return !0.
-            # Safe because Av() never writes telemetry — it only reads cached flag state.
+            # YB's only call-sites all target gates we want enabled:
+            #  - tengu_ccr_bridge              → bridge auto-connect
+            #  - tengu_ccr_bundle_seed_enabled → CCR bundle seed
+            #  - tengu_harbor                  → plugin marketplace
+            # Flipping the fallback to !0 enables these; explicit `tHt`/`nHt` overrides
+            # still win, so an intentionally-disabled gate stays disabled.
 
-            patch(
-              "Av() force-true for telemetry-off builds",
-              # Negative lookahead keeps the body match from extending past the end of Av
-              # into the next function definition (a previous version matched `async
-              # function Bb8(...)` and spanned through Av's tail, obliterating both).
-              # The inner resolver name (Irq → aeq → ...) rotates across versions, so
-              # capture it rather than pinning to a literal.
-              rb"async function (" + W + rb")\(H\)\{(?:(?!async function ).){60,400}?return " + W + rb"\(H,!1,!0\)\}",
-              lambda m: b"async function " + m[1] + b"(H){return !0}",
+            replace(
+              "async gate offline fallback true",
+              b"if(!p4())return!1;if(vt().cachedGrowthBookFeatures?.[e]===!0)",
+              b"if(!p4())return!0;if(vt().cachedGrowthBookFeatures?.[e]===!0)",
             )
 
             # --- Restore 1h prompt cache TTL when telemetry is off ---
@@ -884,7 +881,6 @@ in
               (b"tengu_remote_backend", "remote backend"),
               (b"tengu_immediate_model_command", "instant /model switching"),
               (b"tengu_fgts", "fine-grained tool streaming"),
-              (b"tengu_auto_background_agents", "background agent timeout"),
               (b"tengu_surreal_dali", "scheduled agents/cron"),
             ]
 
@@ -920,19 +916,10 @@ in
               (b"tengu_relay_chain_v1", "parallel command chaining guidance"),
               (b"tengu_edit_minimalanchor_jrn", "Edit tool minimal-anchor instructions"),
               (b"tengu_amber_sentinel", "Monitor tool for streaming bg scripts"),
-              (b"tengu_agent_list_attach", "agent roster in messages"),
               (b"tengu_skills_dashboard_enabled", "/skills dashboard"),
             ]
 
             flip_gates(core_gates + memory_gates + ux_gates + tool_gates)
-
-            # --- Bump background agent timeout from 120s to 240s ---
-
-            patch(
-              "background agent timeout",
-              rb'"tengu_auto_background_agents",![01]\)\)return 120000',
-              lambda m: m[0].replace(b"120000", b"240000"),
-            )
 
             # --- Disable the claude-api bundled skill ---
             # Registered via vA({name:"claude-api",description:v4_,...}) at bundle-load
@@ -943,8 +930,10 @@ in
 
             patch(
               "disable claude-api skill",
-              rb'(' + W + rb')\(\{name:"claude-api",description:',
-              lambda m: m[1] + b'({name:"claude-api",isEnabled:()=>!1,description:',
+              # Skill registrations now carry a `menuDescription` field ahead of the
+              # injected `description` (2.1.181), so anchor on that.
+              rb'(' + W + rb')\(\{name:"claude-api",menuDescription:',
+              lambda m: m[1] + b'({name:"claude-api",isEnabled:()=>!1,menuDescription:',
             )
 
             # --- grep/find/rg shim: delegate to absolute Nix store paths ---
@@ -956,13 +945,20 @@ in
             # factory's body so it emits bash that calls the real tools directly
             # via their Nix store paths.
             #
-            # Anchor on (a) the (H,_,q=[]) signature — stable API contract with
-            # the three call sites — and (b) the `\x60function ''${H} {` bash
-            # header that this function MUST emit to do its job. Two other
-            # functions share the signature so the bash header disambiguates.
-            # Use brace-balanced parsing for the body end so internal restructures
-            # (2.1.113→2.1.121 added windows-path branches and chained more lets)
-            # don't break us.
+            # 2.1.181 rewrote the factory (a38 `(H,_,q=[])` → `Fzr(e,t,n=[],r=[])`):
+            # e=command name (grep/find/rg), t=ARGV0/real-tool name (ugrep/bfs/rg),
+            # n=default args, r=passthrough glob patterns (dropped — the real tool
+            # supports those flags). The emitted bash also changed shape (env-var
+            # override + zsh/win/exec branches, header `\x60function ''${e} {`).
+            #
+            # Anchor on (a) the four-param `(W,W,W=[],W=[])` signature — unique to
+            # this factory in 2.1.181 — and (b) the `\x60function ''${e} {` bash
+            # header it MUST emit, where e is the first param (captured, since names
+            # rotate across versions). Brace-balanced parsing finds the body end so
+            # internal restructures don't break us. We reconstruct the whole function
+            # with our own param names (call sites pass positionally) so it emits a
+            # single-line bash function that execs the real store tool, falling back
+            # to `command <name>` when the store path is missing.
 
             def scan_js_block(blob: bytes, pos: int) -> int:
               """Return the offset just past the `}` closing the `{` at pos-1.
@@ -1001,34 +997,33 @@ in
                     else:
                       pos += 1
                 pos += 1
-              sys.exit("a38 shim: unbalanced braces")
+              sys.exit("grep/find/rg shim: unbalanced braces")
 
 
-            # 2.1.139 added a fourth `K=[]` param (args that pass through to
-            # `command ''${H}` rather than the shim). Allow either signature.
-            a38_sig: bytes = rb"function (" + W + rb")\(H,_,q=\[\](?:,K=\[\])?\)\{"
-            a38_match: re.Match[bytes] | None = None
-            for cand in re.finditer(a38_sig, data):
-              if b"\x60function ''${H} {" in data[cand.end():cand.end() + 800]:
-                a38_match = cand
+            fzr_sig: bytes = (
+              rb"function (" + W + rb")\((" + W + rb"),(" + W + rb"),("
+              + W + rb")=\[\],(" + W + rb")=\[\]\)\{"
+            )
+            fzr_match: re.Match[bytes] | None = None
+            for cand in re.finditer(fzr_sig, data):
+              if b"\x60function ''${" + cand.group(2) + b"} {" in data[cand.end():cand.end() + 800]:
+                fzr_match = cand
                 break
 
-            if a38_match is None:
+            if fzr_match is None:
               log("grep/find/rg shim: NOT FOUND")
             else:
-              fn_name: bytes = a38_match.group(1)
-              body_end: int = scan_js_block(data, a38_match.end())
-              a38_new: bytes = (
-                b"function " + fn_name + b"(H,_,q=[]){"
-                b'let K=q.length>0?\x60''${q.join(" ")} "$@"\x60:\'"$@"\';'
+              fn_name: bytes = fzr_match.group(1)
+              body_end: int = scan_js_block(data, fzr_match.end())
+              fzr_new: bytes = (
+                b"function " + fn_name + b"(e,t,n=[],r=[]){"
+                b'let o=n.length>0?n.join(" ")+\' "$@"\':\'"$@"\';'
                 b'let P=({ugrep:"${getExe' pkgs.ugrep "ugrep"}",'
                 b'bfs:"${getExe pkgs.bfs}",'
-                b'rg:"${getExe pkgs.ripgrep}"})[_]||_;'
-                b"return\x60function ''${H} { "
-                b'if ! [ -x ''${P} ]; then command ''${H} "$@"; return; fi; '
-                b"''${P} ''${K}; }\x60}"
+                b'rg:"${getExe pkgs.ripgrep}"})[t]||t;'
+                b'return "function "+e+" { if ! [ -x "+P+" ]; then command "+e+\' "$@"; return; fi; \'+P+" "+o+"; }"}'
               )
-              data = data[:a38_match.start()] + a38_new + data[body_end:]
+              data = data[:fzr_match.start()] + fzr_new + data[body_end:]
               log(f"grep/find/rg shim: replaced {fn_name.decode()}")
 
             # --- Bun runtime polyfill ---
