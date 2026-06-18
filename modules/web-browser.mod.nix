@@ -304,6 +304,7 @@ let
           [
             (mkScriptlet "Password Inputs" /* javascript */ ''
               let shown = false;
+
               document.querySelectorAll("input").forEach((input) => {
                 if (input.type === "password") {
                   input.dataset.wasPassword = "";
@@ -322,6 +323,29 @@ let
               document.designMode = document.designMode === "on" ? "off" : "on";
 
               ${mkIndication /* js */ ''"Design mode " + document.designMode''}
+            '')
+
+            (mkScriptlet "Selections" /* javascript */ ''
+              let enabler = (window.__forceSelection ??= Object.assign(document.createElement("style"), {
+                textContent: "*, *::before, *::after { user-select: text !important; }",
+                stop: (event) => event.stopPropagation(),
+              }));
+
+              if (!enabler.isConnected) {
+                document.head.appendChild(enabler);
+
+                ["copy", "cut", "paste", "selectstart", "contextmenu", "dragstart"].forEach((eventName) => {
+                  document.addEventListener(eventName, enabler.stop, true);
+                });
+              } else {
+                enabler.remove();
+
+                ["copy", "cut", "paste", "selectstart", "contextmenu", "dragstart"].forEach((eventName) => {
+                  document.removeEventListener(eventName, enabler.stop, true);
+                });
+              }
+
+              ${mkIndication /* js */ ''"Selections " + (enabler.isConnected ? "enabled" : "disabled")''}
             '')
           ]
         ))
