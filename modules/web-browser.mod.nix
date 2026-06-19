@@ -84,6 +84,8 @@ let
         ''||reddit.com^$document,uritransform=/^https:\/\/(?:www\.|np\.|amp\.|i\.)?reddit\.com\/(?!gallery\/)/https:\/\/old.reddit.com\//''
 
         "old.reddit.com##:is(#eu-cookie-policy, #redesign-beta-optin-btn)"
+
+        "dolap.com##.fancybox-wrap"
       ];
     in
     {
