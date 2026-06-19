@@ -59,6 +59,10 @@ let
         # YOUTUBE SHORTS -> WATCH
         ''||youtube.com/shorts/$document,uritransform=/^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([^\/?#]+)/https:\/\/www.youtube.com\/watch?v=\$1/''
 
+        # TODO: Allow youtube embeds without click2load'ing, as they are broken: https://github.com/uBlockOrigin/uBlock-issues/issues/3868
+        "@@||youtube.com/embed/$frame"
+        "@@||youtube-nocookie.com/embed/$frame"
+
         # OLD REDDIT
         "@@||reddit.com/media$document"
         "@@||reddit.com/mod$document"
