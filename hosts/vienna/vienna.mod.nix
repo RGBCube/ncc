@@ -38,6 +38,7 @@ in
               self.homeModules
               |> flip removeAttrs [
                 "cinny"
+                "codex"
                 "darwin-wm"
                 "discord"
                 "file-explorer"
@@ -91,7 +92,28 @@ in
 
         persist.enable = true;
 
-        disko.imageBuilder.imageFormat = "qcow2";
+        disko.imageBuilder = {
+          imageFormat = "qcow2";
+
+          enableBinfmt = true;
+          pkgs = import self.inputs.nixpkgs { system = "x86_64-linux"; };
+          kernelPackages.kernel =
+            config.disko.imageBuilder.pkgs.linuxPackages_latest
+            |> (
+              linuxPackages:
+              config.disko.imageBuilder.pkgs.aggregateModules [
+                linuxPackages.kernel
+                linuxPackages.kernel.modules
+                linuxPackages.bcachefs
+              ]
+            );
+          extraRootModules = [
+            "bcachefs"
+            "vfat"
+            "nls_cp437"
+            "nls_iso8859-1"
+          ];
+        };
 
         disko.devices.disk."main" = {
           device = "/dev/disk/by-path/platform-4010000000.pcie-pci-0000:05:00.0";
