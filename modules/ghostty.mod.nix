@@ -36,7 +36,6 @@
 
           mouse-hide-while-typing = true;
 
-          confirm-close-surface = false;
           quit-after-last-window-closed = true;
 
           window-decoration = osConfig.nixpkgs.hostPlatform.isDarwin;
