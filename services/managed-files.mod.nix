@@ -9,12 +9,22 @@
     }:
     let
       inherit (lib) baseNameOf dirOf toFile;
-      inherit (lib.attrsets) filterAttrs mapAttrsToList optionalAttrs;
-      inherit (lib.lists) singleton;
+      inherit (lib.attrsets)
+        attrNames
+        filterAttrs
+        mapAttrsToList
+        optionalAttrs
+        ;
+      inherit (lib.lists) any singleton;
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkDerivedConfig mkIf;
       inherit (lib.options) mkOption;
-      inherit (lib.strings) escapeShellArgs toJSON;
+      inherit (lib.strings)
+        escapeShellArgs
+        hasPrefix
+        optionalString
+        toJSON
+        ;
       inherit (lib.types)
         attrsOf
         enum
@@ -171,12 +181,26 @@
           ProgramArguments = [
             "/bin/sh"
             "-c"
-            /* bash */ ''
-              /bin/wait4path /nix/store && exec ${escapeShellArgs config.process.argv}
-            ''
+            (
+              /* sh */ ''
+                set -euo pipefail
+
+                /bin/wait4path /nix/store
+                ${escapeShellArgs config.process.argv}
+              ''
+              + optionalString (cfg.files |> attrNames |> any (hasPrefix "/Library/Managed Preferences/")) /* sh */ ''
+                uid=$(/usr/bin/id -u $(/usr/bin/stat -f %Su /dev/console))
+
+                # If console is owned by root, there can't be a user logged in, so can't start this.
+                [ "$uid" != 0 ] && /bin/launchctl kickstart -k gui/$uid/com.apple.cfprefsd.xpc.agent
+
+                /bin/launchctl kickstart -k system/com.apple.cfprefsd.xpc.daemon
+              ''
+            )
           ];
         };
       }
+
       // optionalAttrs (options ? systemd) {
         systemd.service = {
           wantedBy = [
