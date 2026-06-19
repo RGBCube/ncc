@@ -325,7 +325,11 @@ let
 
             (mkScriptlet "Selections" /* javascript */ ''
               let enabler = (window.__forceSelection ??= Object.assign(document.createElement("style"), {
-                textContent: "*, *::before, *::after { user-select: text !important; }",
+                textContent: `
+                  *, *::before, *::after { user-select: text !important; }
+                  [data-force-selection-before]::before { content: none !important; }
+                  [data-force-selection-after]::after { content: none !important; }
+                `,
                 stop: (event) => event.stopPropagation(),
               }));
 
@@ -335,11 +339,35 @@ let
                 ["copy", "cut", "paste", "selectstart", "contextmenu", "dragstart"].forEach((eventName) => {
                   document.addEventListener(eventName, enabler.stop, true);
                 });
+
+                // Generated content (::before/::after) is unselectable,
+                // so replace it with real text nodes and suppress the originals.
+                document.querySelectorAll("*").forEach((element) => {
+                  [
+                    ["::before", "data-force-selection-before", "afterbegin"],
+                    ["::after", "data-force-selection-after", "beforeend"],
+                  ].forEach(([pseudo, attribute, position]) => {
+                    let content = getComputedStyle(element, pseudo).content.match(/^"(.*)"$/s)?.[1];
+                    if (content == null) return;
+
+                    element.setAttribute(attribute, "");
+                    element.insertAdjacentElement(position, Object.assign(document.createElement("span"), {
+                      className: "force-selection-pseudo",
+                      textContent: content,
+                    }));
+                  });
+                });
               } else {
                 enabler.remove();
 
                 ["copy", "cut", "paste", "selectstart", "contextmenu", "dragstart"].forEach((eventName) => {
                   document.removeEventListener(eventName, enabler.stop, true);
+                });
+
+                document.querySelectorAll(".force-selection-pseudo").forEach((span) => span.remove());
+                document.querySelectorAll("[data-force-selection-before], [data-force-selection-after]").forEach((element) => {
+                  element.removeAttribute("data-force-selection-before");
+                  element.removeAttribute("data-force-selection-after");
                 });
               }
 
