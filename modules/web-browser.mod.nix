@@ -340,8 +340,8 @@ let
                   document.addEventListener(eventName, enabler.stop, true);
                 });
 
-                // Generated content (::before/::after) is unselectable,
-                // so replace it with real text nodes and suppress the originals.
+                /* Generated content (::before/::after) is unselectable,
+                   so replace it with real text nodes and suppress the originals. */
                 document.querySelectorAll("*").forEach((element) => {
                   [
                     ["::before", "data-force-selection-before", "afterbegin"],
