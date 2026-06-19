@@ -144,7 +144,7 @@
           <| getExe
           <| cfg.nushell.stdenv.mkDerivation {
             name = "managed-files-${name}";
-            meta.mainProgram = "managed-files-${name}";
+            meta.mainProgram = "managed-files";
 
             passAsFile = singleton "text";
             text = /* nu */ ''
