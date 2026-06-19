@@ -1,0 +1,25 @@
+[package]
+name = "matrix-imagepack-sync"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "matrix-imagepack-sync"
+path = "main.rs"
+
+[dependencies]
+anyhow = "1.0.102"
+clap = { version = "4.6.1", features = ["derive", "env"] }
+matrix-sdk = { version = "0.18.0", default-features = false }
+mime_guess = "2.0.5"
+reqwest = { version = "0.13.1", default-features = false, features = [
+  "json",
+] }
+ruma = { version = "0.16", default-features = false, features = [
+  "unstable-msc2545",
+] }
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.52.3", default-features = false, features = [
+  "rt-multi-thread",
+  "macros",
+] }
