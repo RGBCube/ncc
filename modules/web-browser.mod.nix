@@ -188,7 +188,7 @@ let
           name: javascript:
           mkBookmark name (
             "javascript:"
-            + javascript
+            + "{${javascript}}"
             + /* javascript */ ''
               void undefined;
             ''
@@ -267,38 +267,36 @@ let
         (mkFolder "Toggle" (
           let
             mkIndication = text: /* javascript */ ''
-              {
-                let indication = document.body.appendChild(document.createElement("div"));
-                indication.textContent = ${text};
+              let indication = document.body.appendChild(document.createElement("div"));
+              indication.textContent = ${text};
 
-                Object.assign(indication.style, {
-                  position: "fixed",
-                  top: "0",
-                  left: "0",
+              Object.assign(indication.style, {
+                position: "fixed",
+                top: "0",
+                left: "0",
 
-                  zIndex: "calc(infinity)",
+                zIndex: "calc(infinity)",
 
-                  padding: "8px 16px",
-                  borderRadius: "8px",
+                padding: "8px 16px",
+                borderRadius: "8px",
 
-                  colorScheme: "light dark",
-                  background: "Canvas",
-                  color: "CanvasText",
-                  font: "14px/1 system-ui",
+                colorScheme: "light dark",
+                background: "Canvas",
+                color: "CanvasText",
+                font: "14px/1 system-ui",
 
-                  pointerEvents: "none",
-                });
+                pointerEvents: "none",
+              });
 
-                indication.animate(
-                  [
-                    { opacity: 1, offset: 0.6, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
-                    { opacity: 0, offset: 1 },
-                  ],
-                  { duration: 1500, fill: "forwards" },
-                )
-                .finished
-                .then(() => indication.remove());
-              }
+              indication.animate(
+                [
+                  { opacity: 1, offset: 0.6, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
+                  { opacity: 0, offset: 1 },
+                ],
+                { duration: 1500, fill: "forwards" },
+              )
+              .finished
+              .then(() => indication.remove());
             '';
           in
           [
