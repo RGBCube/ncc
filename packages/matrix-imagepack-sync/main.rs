@@ -244,7 +244,7 @@ async fn pull(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
 
         eprintln!(
             "pulled '{display_name}' ('{name}') -> {pack_directory}",
-            pack_dir = pack_directory.display(),
+            pack_directory = pack_directory.display(),
         );
     }
     Ok(())
@@ -483,10 +483,9 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
         };
         client
             .send(
-                send_state_event::v3::Request::new(room.to_owned(), name.as_str(), &content)
-                    .with_context(|| {
-                        format!("failed to build image pack state event for room '{room}'")
-                    })?,
+                send_state_event::v3::Request::new(room.to_owned(), name, &content).with_context(
+                    || format!("failed to build image pack state event for room '{room}'"),
+                )?,
             )
             .await
             .with_context(|| format!("failed to send image pack state event to room '{room}'"))?;
