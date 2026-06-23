@@ -35,6 +35,11 @@ macro_rules! bailp {
     };
 }
 
+const DEFAULT_PACK_DIRECTORY: &str = "__default__";
+const PACK_DESCRIPTION_FILE: &str = "__description__.txt";
+const PACK_USAGE_FILE: &str = "__usage__.txt";
+const PACK_ICON_STEM: &str = "__icon__";
+
 #[derive(Parser)]
 #[command(about = "Sync Matrix image packs to/from a room")]
 struct Cli {
@@ -146,7 +151,7 @@ async fn pull(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
             .context("failed to parse image pack state key")?
             .context("image pack state event missing state_key")?;
         let name = match &*name {
-            "" => "default".to_owned(),
+            "" => DEFAULT_PACK_DIRECTORY.to_owned(),
             _ => name,
         };
 
@@ -171,8 +176,7 @@ async fn pull(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
                     .await
                     .with_context(|| format!("failed to download pack icon '{avatar}'"))?;
                 let icon_path = pack_directory
-                    .join(display_name)
-                    .with_added_extension("icon")
+                    .join(PACK_ICON_STEM)
                     .with_added_extension(extension);
                 fs::write(&icon_path, bytes).with_context(|| {
                     formatp!("failed to write pack icon to '", icon_path.display(), "'")
@@ -180,7 +184,7 @@ async fn pull(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
             }
 
             if let Some(attribution) = &pack.attribution {
-                let description_path = pack_directory.join("description.txt");
+                let description_path = pack_directory.join(PACK_DESCRIPTION_FILE);
                 fs::write(&description_path, attribution).with_context(|| {
                     formatp!(
                         "failed to write pack description to '",
@@ -191,7 +195,7 @@ async fn pull(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
             }
 
             if !pack.usage.is_empty() {
-                let usage_path = pack_directory.join("usage.txt");
+                let usage_path = pack_directory.join(PACK_USAGE_FILE);
                 fs::write(
                     &usage_path,
                     pack.usage.iter().fold(String::new(), |mut output, usage| {
@@ -320,7 +324,7 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
                 )
             })?;
         let name = match display_name {
-            "default" => "",
+            DEFAULT_PACK_DIRECTORY => "",
             _ => display_name,
         };
 
@@ -372,7 +376,7 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
                 })?;
 
             match entry_name {
-                "description.txt" => {
+                PACK_DESCRIPTION_FILE => {
                     info.attribution = Some(
                         fs::read_to_string(&entry_path)
                             .with_context(|| {
@@ -386,7 +390,7 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
                             .to_owned(),
                     );
                 }
-                "usage.txt" => {
+                PACK_USAGE_FILE => {
                     info.usage = fs::read_to_string(&entry_path)
                         .with_context(|| {
                             formatp!(
@@ -400,8 +404,7 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
                         .collect();
                 }
                 entry_name
-                    if let Some((stem, _extension)) = entry_name.rsplit_once('.')
-                        && stem.strip_suffix(".icon").is_some() =>
+                    if let Some((PACK_ICON_STEM, _extension)) = entry_name.rsplit_once('.') =>
                 {
                     info.avatar_url = Some(
                         upload(client, &entry_path, entry_name)
