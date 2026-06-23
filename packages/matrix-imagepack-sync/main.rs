@@ -194,10 +194,12 @@ async fn pull(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
                 let usage_path = pack_directory.join("usage.txt");
                 fs::write(
                     &usage_path,
-                    pack.usage
-                        .iter()
-                        .map(|usage| usage.to_string() + "\n")
-                        .fold(String::new(), |acc, next| acc + next),
+                    pack.usage.iter().fold(String::new(), |mut output, usage| {
+                        use std::fmt::Write as _;
+
+                        writeln!(&mut output, "{usage}").expect("writing to String cannot fail");
+                        output
+                    }),
                 )
                 .with_context(|| {
                     formatp!("failed to write pack usage to '", usage_path.display(), "'")
@@ -306,7 +308,7 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
             );
         }
 
-        let name = pack_directory
+        let display_name = pack_directory
             .file_name()
             .expect("image pack directory path has a base name")
             .to_str()
@@ -317,12 +319,13 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
                     "' is not valid UTF-8",
                 )
             })?;
-        let name = match &*name {
+        let name = match display_name {
             "default" => "",
-            _ => name,
+            _ => display_name,
         };
 
         let (mut images, mut info) = (BTreeMap::new(), PackInfo::new());
+        info.display_name = Some(display_name.to_owned());
 
         let mut body_files = BTreeSet::new();
 
@@ -398,9 +401,8 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
                 }
                 entry_name
                     if let Some((stem, _extension)) = entry_name.rsplit_once('.')
-                        && let Some(display_name) = stem.strip_suffix(".icon") =>
+                        && stem.strip_suffix(".icon").is_some() =>
                 {
-                    info.display_name = Some(display_name.to_owned());
                     info.avatar_url = Some(
                         upload(client, &entry_path, entry_name)
                             .await
@@ -477,10 +479,8 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
             bailp!("unused image body sidecar '", body.display(), "'",);
         }
 
-        let content = RoomImagePackEventContent {
-            images,
-            pack: Some(info),
-        };
+        let mut content = RoomImagePackEventContent::new(images);
+        content.pack = Some(info);
         client
             .send(
                 send_state_event::v3::Request::new(room.to_owned(), name, &content).with_context(
@@ -491,11 +491,7 @@ async fn push(client: &Client, room: &RoomId, directory: &path::Path) -> Result<
             .with_context(|| format!("failed to send image pack state event to room '{room}'"))?;
 
         eprintln!(
-            "pushed {label} ({len} images)",
-            label = match name {
-                "" => format_args!("(default)"),
-                name => format_args!("'{name}'"),
-            },
+            "pushed {display_name} ({len} images)",
             len = content.images.len(),
         );
     }
