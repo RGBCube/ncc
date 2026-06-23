@@ -46,7 +46,7 @@
           ($argument in $exact) or ($prefixes | any {|prefix| $argument | str starts-with $prefix })
         }
 
-        def --wrapped main [...arguments] {
+        def --wrapped main [...arguments: string] {
           let command = match $arguments {
             ["--version"] => ["--version"]
             ["help", ..$rest] => ["help", ...$rest]

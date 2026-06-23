@@ -90,7 +90,7 @@
               }
             }
 
-            def --wrapped > [...arguments] {
+            def --wrapped > [...arguments: string] {
               nix shell ...($arguments | each {
                 if ($in | str contains "#") or ($in | str contains ":") {
                   $in
