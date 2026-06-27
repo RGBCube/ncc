@@ -183,34 +183,10 @@ in
         trim
         ;
       inherit (lib.trivial) const;
-
-      codex = pkgs.codex.overrideAttrs (
-        finalAttrs: _previousAttrs: {
-          version = "0.135.0";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "openai";
-            repo = "codex";
-            tag = "rust-v${finalAttrs.version}";
-            hash = "sha256-7Ak7rpogcN2kNezk7aMdMmkgNyPxH58f6lFdXOd/mgc=";
-          };
-
-          cargoHash = "sha256-v1ggzNoncBVcOiJDQNNKPxYqWASNGjVjLMCXhsIbrVI=";
-          cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
-            inherit (finalAttrs)
-              pname
-              version
-              src
-              sourceRoot
-              ;
-            hash = finalAttrs.cargoHash;
-          };
-        }
-      );
     in
     {
       packages = [
-        codex
+        pkgs.codex
         (mkNixs pkgs)
       ];
 
