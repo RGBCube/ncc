@@ -137,29 +137,30 @@
       packages = singleton pkgs.cinny-desktop;
     };
 
-  flake.homeModules.thunderbird =
-    {
-      lib,
-      osConfig,
-      pkgs,
-      ...
-    }:
-    let
-      inherit (lib.modules) mkIf;
-      inherit (lib.trivial) const flip;
-      inherit (lib.attrsets) genAttrs;
-      inherit (lib.lists) singleton;
-    in
-    {
-      xdg.mime-apps.default-applications =
-        mkIf osConfig.nixpkgs.hostPlatform.isLinux
-        <| flip genAttrs (const "thunderbird.desktop") [
-          "message/rfc822"
-          "x-scheme-handler/mailto"
-          "text/calendar"
-          "text/x-vcard"
-        ];
+  # TODO
+  # flake.homeModules.thunderbird =
+  #   {
+  #     lib,
+  #     osConfig,
+  #     pkgs,
+  #     ...
+  #   }:
+  #   let
+  #     inherit (lib.modules) mkIf;
+  #     inherit (lib.trivial) const flip;
+  #     inherit (lib.attrsets) genAttrs;
+  #     inherit (lib.lists) singleton;
+  #   in
+  #   {
+  #     xdg.mime-apps.default-applications =
+  #       mkIf osConfig.nixpkgs.hostPlatform.isLinux
+  #       <| flip genAttrs (const "thunderbird.desktop") [
+  #         "message/rfc822"
+  #         "x-scheme-handler/mailto"
+  #         "text/calendar"
+  #         "text/x-vcard"
+  #       ];
 
-      packages = singleton pkgs.thunderbird;
-    };
+  #     packages = singleton pkgs.thunderbird;
+  #   };
 }
