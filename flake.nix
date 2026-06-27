@@ -47,19 +47,21 @@
   inputs.hjem = {
     url = "github:feel-co/hjem";
     inputs.nixpkgs.follows = "nixpkgs";
-    inputs.nix-darwin.follows = "nix-darwin";
   };
   inputs.hjem-rum = {
     url = "github:snugnug/hjem-rum";
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.hjem.follows = "hjem";
-    inputs.ndg.follows = "";
-    inputs.treefmt-nix.follows = "";
   };
 
   inputs.flake-parts = {
     url = "github:hercules-ci/flake-parts";
     inputs.nixpkgs-lib.follows = "nixpkgs";
+  };
+
+  inputs.crate2nix = {
+    url = "github:nix-community/crate2nix";
+    inputs.nixpkgs.follows = "nixpkgs";
   };
 
   inputs.agenix = {
@@ -115,7 +117,23 @@
 
   outputs =
     inputs:
-    (import "${inputs.flake-parts}/lib.nix" { lib = import ./lib inputs.nixpkgs.lib; }).mkFlake
+    let
+      inherit (inputs.nixpkgs.lib.attrsets) filterAttrs mapAttrs' nameValuePair;
+      inherit (inputs.nixpkgs.lib.filesystem) readDir;
+      inherit (inputs.nixpkgs.lib.strings) hasSuffix removeSuffix;
+
+      readCoal =
+        directory:
+        readDir directory
+        |> filterAttrs (name: _: hasSuffix ".nix" name)
+        |> mapAttrs' (name: _: nameValuePair (removeSuffix ".nix" name) "${directory}/${name}");
+    in
+    (import "${inputs.flake-parts}/lib.nix" {
+      lib = import ./lib inputs.nixpkgs.lib;
+
+      builtinModules = readCoal "${inputs.flake-parts}/modules";
+      extraModules = readCoal "${inputs.flake-parts}/extras";
+    }).mkFlake
       { inherit inputs; }
       (
         { lib, ... }:
