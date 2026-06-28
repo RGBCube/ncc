@@ -1,15 +1,23 @@
 {
+  flake.darwinModules.use-xdg-dirs =
+    { lib, ... }:
+    let
+      inherit (lib.modules) mkAfter;
+    in
+    {
+      # On darwin, the login shell has to be zsh, so set ZDOTDIR before the user
+      # configuration is read.
+      environment.etc."zshenv".text = mkAfter /* zsh */ ''
+        export ZDOTDIR="''${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+      '';
+    };
+
   flake.homeModules.use-xdg-dirs =
     {
       config,
-      osConfig,
-      lib,
       pkgs,
       ...
     }:
-    let
-      inherit (lib.modules) mkBefore mkIf;
-    in
     {
       xdg.data.files."android".type = "directory";
       environment.sessionVariables.ANDROID_USER_HOME = "${config.xdg.data.directory}/android";
@@ -37,19 +45,8 @@
           Include ${config.xdg.config.directory}/ssh/config
         '';
 
-      xdg.cache.files."zsh".type = "directory";
+      xdg.data.files."zsh".type = "directory";
       environment.sessionVariables.ZDOTDIR = "${config.xdg.config.directory}/zsh";
-      xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
-        text = mkBefore /* zsh */ ''
-          autoload -Uz compinit
-          compinit -d "${config.xdg.cache.directory}/zsh/zcompdump-$ZSH_VERSION"
-        '';
-      };
-      files.".zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
-        text = /* zsh */ ''
-          [[ -f "${config.xdg.config.directory}/zsh/.zshrc" ]] && source "${config.xdg.config.directory}/zsh/.zshrc"
-        '';
-      };
 
       xdg.data.files."cargo".type = "directory";
       environment.sessionVariables.CARGO_HOME = "${config.xdg.data.directory}/cargo";
