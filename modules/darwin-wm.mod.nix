@@ -384,7 +384,7 @@
           let user = "${config.system.primaryUser}"
           let uid = sys users | where name == $user | get 0.id
 
-          ^/bin/launchctl asuser $uid /usr/bin/sudo --user $user -- ${
+          ^/bin/launchctl asuser $uid /usr/bin/sudo --set-home --user $user -- ${
             pkgs.writeScript "reload-symbolic-hotkeys-peruser.nu" /* nu */ ''
               #!${getExe pkgs.nushell}
               #
