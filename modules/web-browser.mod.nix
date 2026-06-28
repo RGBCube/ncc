@@ -455,6 +455,7 @@ in
       '';
       system.activationScripts.helium.text = asShell pkgs.nushell "helium-default-browser.nu" /* nu */ ''
         (^/usr/bin/sudo
+          --set-home
           --user (ls --long /dev/console | get 0.user)
           ${getExe pkgs.defaultbrowser} helium)
       '';
