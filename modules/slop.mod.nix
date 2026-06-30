@@ -1098,7 +1098,7 @@ in
               print --stderr $"(ansi yellow_bold)warn:(ansi reset) falling back to latest binary"
 
               try {
-                let latest = ls --long ($cache | path join "claude-code-*")
+                let latest = ls --long ($cache | path join "claude-code-*" | into glob)
                 | where { $in.type == "file" and ($in.mode | str substring 2..<3) == "x" }
                 | sort-by modified
                 | last
