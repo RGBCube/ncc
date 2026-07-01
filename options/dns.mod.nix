@@ -3,10 +3,12 @@ let
   inherit (lib.fixedPoints) fix;
   inherit (lib.attrsets)
     attrByPath
+    attrNames
     filterAttrs
     mapAttrsToList
     ;
   inherit (lib.lists)
+    all
     concatLists
     concatMap
     drop
@@ -24,6 +26,7 @@ let
     concatLines
     concatStringsSep
     escape
+    match
     stringLength
     substring
     ;
@@ -136,9 +139,15 @@ let
   node = submodule (
     { config, options, ... }:
     {
-      freeformType = (lazyAttrsOf node) // {
-        description = "DNS name trie";
-      };
+      # Child labels are lowercase, so an uppercase label here is a typo'd or
+      # unsupported record type (like AAA) rather than a subdomain.
+      freeformType =
+        addCheck (lazyAttrsOf node) (
+          children: children |> attrNames |> all (label: match ".*[A-Z].*" label == null)
+        )
+        // {
+          description = "DNS name trie with lowercase labels";
+        };
 
       options = fix (self: {
         A = mkStringRecord { } "IPv4 Address record.";
