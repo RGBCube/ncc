@@ -10,8 +10,6 @@
 !modules/**/
 !options/
 !options/**/
-!packages/
-!packages/**/
 !services/
 !services/**/
 
@@ -27,3 +25,10 @@
 !*.png
 !*.yml
 !*.json
+
+!packages/
+!packages/**/
+packages/*/target/
+!packages/**/*.rs
+!packages/**/*.toml
+!packages/**/Cargo.lock
