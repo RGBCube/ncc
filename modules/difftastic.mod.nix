@@ -8,8 +8,9 @@
     }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.generators) toGitINI;
+      inherit (lib.generators) toGitINI toTOML;
       inherit (lib.lists) singleton;
+      inherit (lib.modules) mkDefault;
 
       difft = pkgs.writeShellScriptBin "difft" /* bash */ ''
         exec ${getExe pkgs.difftastic} --background ${if config.theme.isDark then "dark" else "light"} "$@"
@@ -19,7 +20,7 @@
       packages = singleton difft;
 
       # GIT INTEGRATION
-      # xdg.config.files."git/config".generator = toGitINI; # FIXME
+      xdg.config.files."git/config".generator = mkDefault toGitINI;
       xdg.config.files."git/config".value = {
         diff.external = getExe difft;
         diff.tool = "difftastic";
@@ -28,7 +29,7 @@
       };
 
       # JUJUTSU INTEGRATION
-      # xdg.config.files."jj/config.toml".generator = toTOML; # FIXME
+      xdg.config.files."jj/config.toml".generator = mkDefault toTOML;
       xdg.config.files."jj/config.toml".value.ui.diff-formatter = [
         (getExe difft)
         "--color"
