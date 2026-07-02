@@ -8,14 +8,15 @@
       homebrew.casks = singleton "syncthing-app";
     };
 
-  flake.nixosModules.syncthing =
-    { lib, ... }:
-    let
-      inherit (lib.lists) singleton;
-    in
-    {
-      persist.mountpoints = singleton "/var/lib/syncthing";
+  # flake.nixosModules.syncthing =
+  #   { lib, ... }:
+  #   let
+  #     inherit (lib.lists) singleton;
+  #   in
+  #   {
+  #     # TODO
+  #     persist.mountpoints = singleton "/var/lib/syncthing";
 
-      services.syncthing.enable = true;
-    };
+  #     services.syncthing.enable = true;
+  #   };
 }
