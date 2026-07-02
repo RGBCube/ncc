@@ -107,17 +107,18 @@ in
       CNAME = apex.ns."0".FQDN;
 
       "0".A = "159.146.61.20";
-      # "0".AAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
+      # "0".AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
 
       "1".A = "159.146.61.20";
       # "1".AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
     };
 
     # CONTENT
-    xn--67-lubb0090b.HINFO = withClass "CH" {
-      cpu = "Tendril";
-      os = "hey, hater";
-    };
+    # TODO: Hickory does not support mixing classes in a zone.
+    # xn--67-lubb0090b.HINFO = withClass "CH" {
+    #   cpu = "Tendril";
+    #   os = "hey, hater";
+    # };
   };
 
   flake.commonModules.authoritative =

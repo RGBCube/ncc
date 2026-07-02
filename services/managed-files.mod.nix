@@ -1,3 +1,4 @@
+{ self, ... }:
 {
   flake.modularServices.managed-files =
     {
@@ -9,22 +10,12 @@
     }:
     let
       inherit (lib) baseNameOf dirOf toFile;
-      inherit (lib.attrsets)
-        attrNames
-        filterAttrs
-        mapAttrsToList
-        optionalAttrs
-        ;
-      inherit (lib.lists) any singleton;
+      inherit (lib.attrsets) filterAttrs mapAttrsToList;
+      inherit (lib.lists) optionals singleton;
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkDerivedConfig mkIf;
       inherit (lib.options) mkOption;
-      inherit (lib.strings)
-        escapeShellArgs
-        hasPrefix
-        optionalString
-        toJSON
-        ;
+      inherit (lib.strings) toJSON;
       inherit (lib.types)
         attrsOf
         enum
@@ -68,6 +59,8 @@
     in
     {
       _class = "service";
+
+      imports = singleton self.modularServices.base;
 
       options.managed-files = {
         smfh = mkOption {
@@ -149,7 +142,20 @@
         # We write the "last applied manifest" ourselves, so it cannot be generated declaratively.
         configData."manifest.json".enable = false;
 
-        process.argv =
+        limits.syscalls = singleton "@system-service";
+        limits.capabilities = [
+          "CAP_DAC_OVERRIDE"
+          "CAP_CHOWN"
+          "CAP_FOWNER"
+        ];
+
+        files."/" = [
+          "read"
+          "write"
+        ];
+
+        exec.again = "no";
+        exec.argv =
           singleton
           <| getExe
           <| cfg.nushell.stdenv.mkDerivation {
@@ -174,35 +180,23 @@
               install -D --mode 755 "$textPath" "$out/bin/managed-files"
             '';
           };
-      }
-      // optionalAttrs (options ? launchd) {
-        launchd = {
-          RunAtLoad = true;
-          ProgramArguments = [
-            "/bin/sh"
-            "-c"
-            (
-              /* sh */ ''
-                set -euo pipefail
 
-                /bin/wait4path /nix/store
-                ${escapeShellArgs config.process.argv}
-              ''
-              + optionalString (cfg.files |> attrNames |> any (hasPrefix "/Library/Managed Preferences/")) /* sh */ ''
-                uid=$(/usr/bin/id -u $(/usr/bin/stat -f %Su /dev/console))
+        exec.post.argv = optionals (options ? launchd) [
+          "/bin/sh"
+          "-c"
+          /* sh */ ''
+            set -euo pipefail
 
-                # If console is owned by root, there can't be a user logged in, so can't start this.
-                [ "$uid" != 0 ] && /bin/launchctl kickstart -k gui/$uid/com.apple.cfprefsd.xpc.agent
+            uid=$(/usr/bin/id -u $(/usr/bin/stat -f %Su /dev/console))
 
-                /bin/launchctl kickstart -k system/com.apple.cfprefsd.xpc.daemon
-              ''
-            )
-          ];
-        };
-      }
+            # If console is owned by root, there can't be a user logged in, so can't start this.
+            [ "$uid" != 0 ] && /bin/launchctl kickstart -k gui/$uid/com.apple.cfprefsd.xpc.agent
 
-      // optionalAttrs (options ? systemd) {
-        systemd.service = {
+            /bin/launchctl kickstart -k system/com.apple.cfprefsd.xpc.daemon
+          ''
+        ];
+
+        ${if options ? systemd then "systemd" else null}.service = {
           wantedBy = [
             "multi-user.target"
             "sysinit-reactivation.target"

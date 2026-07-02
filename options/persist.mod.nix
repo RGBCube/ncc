@@ -8,8 +8,10 @@
     }:
     let
       inherit (lib.attrsets)
+        filterAttrs
         genAttrs
         genAttrs'
+        mapAttrsToList
         nameValuePair
         optionalAttrs
         recursiveUpdate
@@ -137,6 +139,13 @@
             systemd.units = unitsFor "";
           }
         )
+
+        {
+          persist.mountpoints =
+            config.system.services
+            |> filterAttrs (_: service: service.limits.storage != null)
+            |> mapAttrsToList (name: _: "/var/lib/${name}");
+        }
       ]);
     };
 }
