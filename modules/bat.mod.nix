@@ -9,7 +9,7 @@
     let
       inherit (lib.generators) toCliFlagList;
       inherit (lib.lists) singleton;
-      inherit (lib.meta) getExe getExe';
+      inherit (lib.meta) getExe;
     in
     {
       environment.sessionVariables = {
@@ -19,7 +19,7 @@
           <| pkgs.writeScriptBin "man-pager" /* sh */ ''
             #!${getExe pkgs.bash}
 
-            ${getExe' pkgs.util-linux "col"} --no-backspaces --spaces \
+            ${getExe pkgs.unixtools.col} -bx \
               | ${getExe pkgs.bat} --language man --plain --color always --paging never \
               | "$PAGER"
           '';
