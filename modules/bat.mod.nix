@@ -32,7 +32,7 @@
           '';
 
         # Before v247, systemctl would spawn $PAGER, which was usually `less`,
-        # without setting `LESSECURE` even if both were launched as root.
+        # without setting `LESSSECURE` even if both were launched as root.
         #
         # All was fine until someone realized with a rule that removes the wheel
         # requirement for `sudo systemctl status <unit>`, anyone could run any
@@ -40,10 +40,10 @@
         #
         # As a result, systemd created a "pager secure" mode, where:
         # - It trusts your pager and exec's it. (happens regardless of the value of SYSTEMD_PAGERSECURE)
-        # - It sets LESSECURE in the pager environment, iff the SYSTEM_PAGERSECURE env var value is "1".
+        # - It sets LESSSECURE in the pager environment, iff the SYSTEM_PAGERSECURE env var value is "1".
         #
         # If the env var is unset, you're not in "pager secure" mode and $PAGER is not exec'd.
-        # (and instead falls back to less on path, and sets LESSECURE if running under sudo/etc)
+        # (and instead falls back to less on path, and sets LESSSECURE if running under sudo/etc)
         SYSTEMD_PAGERSECURE = "0";
       };
 
@@ -126,5 +126,4 @@
         }
       '';
     };
-
 }
