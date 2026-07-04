@@ -1,6 +1,6 @@
 {
   flake.darwinModules.use-xdg-dirs =
-    { lib, ... }:
+    { config, lib, ... }:
     let
       inherit (lib.modules) mkAfter;
     in
@@ -10,6 +10,12 @@
       environment.etc."zshenv".text = mkAfter /* zsh */ ''
         export ZDOTDIR="''${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
       '';
+
+      # The watchman daemon is spawned by launchd with a minimal environment,
+      # so WATCHMAN_CONFIG_FILE can't reach it. the compiled-in /etc path can.
+      environment.etc."watchman.json".source = "${
+        config.home.users.${config.system.primaryUser}.xdg.config.directory
+      }/watchman/watchman.json";
     };
 
   flake.homeModules.use-xdg-dirs =
@@ -74,5 +80,7 @@
 
       xdg.state.files."python".type = "directory";
       environment.sessionVariables.PYTHON_HISTORY = "${config.xdg.state.directory}/python/history";
+
+      environment.sessionVariables.WATCHMAN_CONFIG_FILE = "${config.xdg.config.directory}/watchman/watchman.json";
     };
 }

@@ -4,11 +4,10 @@
     { lib, pkgs, ... }:
     let
       inherit (lib.generators) toYAML;
+      inherit (lib.lists) singleton;
     in
     {
-      packages = [
-        pkgs.gh
-      ];
+      packages = singleton pkgs.gh;
 
       xdg.config.files."gh/config.yml".generator = toYAML { };
       xdg.config.files."gh/config.yml".value = {
@@ -46,14 +45,11 @@
       ...
     }:
     let
+      inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
     in
     {
-      packages = [
-        pkgs.jjui
-        pkgs.jujutsu
-        pkgs.mergiraf
-      ];
+      packages = singleton pkgs.jujutsu;
 
       xdg.config.files."jj/config.toml".generator = pkgs.writers.writeTOML "jj-config.toml";
       xdg.config.files."jj/config.toml".value = {
@@ -111,13 +107,6 @@
         aliases.r = [ "rebase" ];
 
         aliases.res = [ "resolve" ];
-
-        aliases.resa = [ "resolve-ast" ];
-        aliases.resolve-ast = [
-          "resolve"
-          "--tool"
-          "${getExe pkgs.mergiraf}"
-        ];
 
         aliases.s = [ "squash" ];
         aliases.si = [
@@ -201,11 +190,92 @@
           "rad"
         ];
         git.push = "origin";
+
+        # Drop signatures while editing, and sign on push.
+        # This is nicer as I don't have to connect a hardware key to author a commit.
+        signing.behavior = "drop";
         git.sign-on-push = true;
 
         signing.backend = "ssh";
-        signing.behavior = "drop"; # To not error on leftover signatures from the past.
         signing.key = self.keys.rgbcube;
+      };
+    };
+
+  flake.homeModules.difftastic =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (lib.meta) getExe;
+      inherit (lib.generators) toTOML;
+      inherit (lib.lists) singleton;
+      inherit (lib.modules) mkDefault;
+
+      difft = pkgs.writeShellScriptBin "difft" /* bash */ ''
+        exec ${getExe pkgs.difftastic} --background ${if config.theme.isDark then "dark" else "light"} "$@"
+      '';
+    in
+    {
+      packages = singleton difft;
+
+      xdg.config.files."jj/config.toml".generator = mkDefault toTOML;
+      xdg.config.files."jj/config.toml".value.ui.diff-formatter = [
+        (getExe difft)
+        "--color"
+        "always"
+        "$left"
+        "$right"
+      ];
+    };
+
+  flake.homeModules.mergiraf =
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.generators) toTOML;
+      inherit (lib.lists) singleton;
+      inherit (lib.meta) getExe;
+      inherit (lib.modules) mkDefault;
+    in
+    {
+      packages = singleton pkgs.mergiraf;
+
+      xdg.config.files."jj/config.toml".generator = mkDefault toTOML;
+      xdg.config.files."jj/config.toml".value = {
+        aliases.resa = [ "resolve-ast" ];
+        aliases.resolve-ast = [
+          "resolve"
+          "--tool"
+          "${getExe pkgs.mergiraf}"
+        ];
+      };
+    };
+
+  flake.homeModules.watchman =
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.generators) toJSON toTOML;
+      inherit (lib.lists) singleton;
+      inherit (lib.modules) mkDefault;
+    in
+    {
+      packages = singleton pkgs.watchman;
+
+      xdg.config.files."watchman/watchman.json".generator = toJSON { };
+      xdg.config.files."watchman/watchman.json".value = {
+        ignore_dirs = [
+          ".direnv"
+          "node_modules"
+          "target"
+        ];
+      };
+
+      xdg.config.files."jj/config.toml".generator = mkDefault toTOML;
+      xdg.config.files."jj/config.toml".value = {
+        fsmonitor.backend = "watchman";
+        fsmonitor.watchman.register-snapshot-trigger = true;
       };
     };
 }
