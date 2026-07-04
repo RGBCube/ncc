@@ -359,7 +359,9 @@ in
           def --wrapped main [...arguments] {
             try { ^/sbin/ifconfig lo0 inet6 ${address}/128 alias }
             $env.DYLD_INSERT_LIBRARIES = "${getLib bind}/lib/libbind.dylib"
-            exec ...$arguments
+
+            # dyld deletes DYLD_* when loading the platform /bin/sh in argv[0], so run it with nixpkgs bash instead.
+            exec ${getExe pkgs.bash} ...($arguments | skip 1)
           }
         ''}";
     };
