@@ -8,18 +8,43 @@
     }:
     let
       inherit (lib.generators) toCliFlagList;
-      inherit (lib.meta) getExe;
-
-      batPager = pkgs.writeScriptBin "bat-pager" /* bash */ ''
-        #!${getExe pkgs.bash}
-
-        ${getExe pkgs.bat} --plain
-      '';
+      inherit (lib.lists) singleton;
+      inherit (lib.meta) getExe getExe';
     in
     {
       environment.sessionVariables = {
-        MANPAGER = "${getExe batPager}";
-        PAGER = "${getExe batPager}";
+        MANROFFOPT = "-c"; # Prevent groff from emitting ANSI color, bat does the highlighting.
+        MANPAGER =
+          getExe
+          <| pkgs.writeScriptBin "man-pager" /* sh */ ''
+            #!${getExe pkgs.bash}
+
+            ${getExe' pkgs.util-linux "col"} --no-backspaces --spaces \
+              | ${getExe pkgs.bat} --language man --plain
+          '';
+
+        PAGER =
+          getExe
+          <| pkgs.writeScriptBin "bat-pager" /* sh */ ''
+            #!${getExe pkgs.bash}
+
+            exec ${getExe pkgs.bat} --plain
+          '';
+
+        # Before v247, systemctl would spawn $PAGER, which was usually `less`,
+        # without setting `LESSECURE` even if both were launched as root.
+        #
+        # All was fine until someone realized with a rule that removes the wheel
+        # requirement for `sudo systemctl status <unit>`, anyone could run any
+        # command as root.
+        #
+        # As a result, systemd created a "pager secure" mode, where:
+        # - It trusts your pager and exec's it. (happens regardless of the value of SYSTEMD_PAGERSECURE)
+        # - It sets LESSECURE in the pager environment, iff the SYSTEM_PAGERSECURE env var value is "1".
+        #
+        # If the env var is unset, you're not in "pager secure" mode and $PAGER is not exec'd.
+        # (and instead falls back to less on path, and sets LESSECURE if running under sudo/etc)
+        SYSTEMD_PAGERSECURE = "0";
       };
 
       programs.nushell.aliases = {
@@ -27,15 +52,24 @@
         less = "${getExe pkgs.bat} --plain";
       };
 
-      packages = [
-        pkgs.bat
-        pkgs.less
-      ];
+      packages = singleton pkgs.bat;
 
       xdg.config.files."bat/config".generator = toCliFlagList;
       xdg.config.files."bat/config".value = {
         theme = "base16";
-        pager = "${getExe pkgs.less} --quit-if-one-screen --quit-on-intr --RAW-CONTROL-CHARS";
+        pager =
+          getExe
+          <| pkgs.writeScriptBin "bats-pager" /* sh */ ''
+            #!${getExe pkgs.bash}
+
+            unset LESS # systemd likes to set LESS, which messes with our settings
+
+            exec ${getExe pkgs.less} \
+              --quit-if-one-screen --quit-on-intr \
+              --ignore-case --incsearch --LONG-PROMPT \
+              --chop-long-lines --HILITE-UNREAD --tilde \
+              --RAW-CONTROL-CHARS
+          '';
       };
 
       xdg.config.files."bat/themes/base16.tmTheme".text = config.theme.tmTheme;
