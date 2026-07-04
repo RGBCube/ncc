@@ -63,7 +63,7 @@
                   --to $"local?root=($mountpoint)"
                   ${inputs.self.nixosConfigurations.${hostName}.config.system.build.toplevel})
 
-                (^${getExe nixos-install}
+                (exec ${getExe nixos-install}
                   --no-channel-copy
                   --no-root-password
                   --system ${inputs.self.nixosConfigurations.${hostName}.config.system.build.toplevel}
