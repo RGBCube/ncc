@@ -9,57 +9,47 @@
       ...
     }:
     let
-      inherit (lib.attrsets)
-        attrValues
-        filterAttrs
-        mapAttrs
-        ;
-      inherit (lib.lists) head singleton;
+      inherit (lib.attrsets) filterAttrs mapAttrs;
+      inherit (lib.generators) toSSHConfig;
+      inherit (lib.lists) head;
+      inherit (lib.meta) getExe';
       inherit (lib.modules) mkAfter;
-      inherit (lib.strings) concatLines optionalString;
+      inherit (lib.strings) optionalString;
 
-      hosts =
-        self.nixosConfigurations
-        |> filterAttrs (_: value: value.config.services.openssh.enable)
-        |> mapAttrs (
-          name: value:
-          let
-            inherit (value) config;
-          in
-          # sshclientconfig
-          ''
-            Host ${name}
-              User root
-              HostName ${name}
-              Port ${toString <| head config.services.openssh.ports}
-          ''
-        );
+      echo = getExe' pkgs.uutils-coreutils-noprefix "echo";
     in
     {
-      xdg.config.files."ssh/config".text =
-        concatLines
-        <|
-          attrValues hosts
-          ++
-            singleton
-              # sshclientconfig
-              ''
-                Host best
-                  User root
-                  HostName rgbcu.be
-                  Port 2222
-              ''
-          ++
-            singleton
-              # sshclientconfig
-              ''
-                Host *
-                    SetEnv COLORTERM=truecolor TERM=xterm-256color
+      xdg.config.files."ssh/config".generator = toSSHConfig;
+      xdg.config.files."ssh/config".value.Host =
+        (
+          self.nixosConfigurations
+          |> filterAttrs (_: { config, ... }: config.services.openssh.enable)
+          |> mapAttrs (
+            name:
+            { config, ... }:
+            {
+              User = "root";
+              Port = head config.services.openssh.ports;
+              KnownHostsCommand = ''${echo} "%H ${self.machines.${name}.key}"'';
+            }
+          )
+        )
+        // {
+          best = {
+            User = "root";
+            HostName = "rgbcu.be";
+            Port = 2222;
+            KnownHostsCommand = ''${echo} "%H ${self.machines.best.key}"'';
+          };
 
-                    ControlMaster auto
-                    ControlPersist 60m
-                    ControlPath ${config.xdg.cache.directory}/ssh/%r@%n:%p
-              '';
+          "*" = {
+            SetEnv = "COLORTERM=truecolor TERM=xterm-256color";
+
+            ControlMaster = "auto";
+            ControlPersist = "60m";
+            ControlPath = "${config.xdg.cache.directory}/ssh/%r@%n:%p";
+          };
+        };
 
       xdg.cache.files."ssh".type = "directory";
 
