@@ -20,15 +20,22 @@
             #!${getExe pkgs.bash}
 
             ${getExe' pkgs.util-linux "col"} --no-backspaces --spaces \
-              | ${getExe pkgs.bat} --language man --plain
+              | ${getExe pkgs.bat} --language man --plain --color always --paging never \
+              | "$PAGER"
           '';
 
         PAGER =
           getExe
-          <| pkgs.writeScriptBin "bat-pager" /* sh */ ''
+          <| pkgs.writeScriptBin "pager" /* sh */ ''
             #!${getExe pkgs.bash}
 
-            exec ${getExe pkgs.bat} --plain
+            unset LESS # systemd likes to set LESS, which messes with our settings
+
+            exec ${getExe pkgs.less} \
+              --quit-if-one-screen --quit-on-intr \
+              --ignore-case --incsearch --LONG-PROMPT \
+              --chop-long-lines --HILITE-UNREAD --tilde \
+              --RAW-CONTROL-CHARS "$@"
           '';
 
         # Before v247, systemctl would spawn $PAGER, which was usually `less`,
@@ -48,30 +55,15 @@
       };
 
       programs.nushell.aliases = {
+        less = "^$env.PAGER";
+
         cat = getExe pkgs.bat;
-        less = "${getExe pkgs.bat} --plain";
       };
 
       packages = singleton pkgs.bat;
 
       xdg.config.files."bat/config".generator = toCliFlagList;
-      xdg.config.files."bat/config".value = {
-        theme = "base16";
-        pager =
-          getExe
-          <| pkgs.writeScriptBin "bats-pager" /* sh */ ''
-            #!${getExe pkgs.bash}
-
-            unset LESS # systemd likes to set LESS, which messes with our settings
-
-            exec ${getExe pkgs.less} \
-              --quit-if-one-screen --quit-on-intr \
-              --ignore-case --incsearch --LONG-PROMPT \
-              --chop-long-lines --HILITE-UNREAD --tilde \
-              --RAW-CONTROL-CHARS
-          '';
-      };
-
+      xdg.config.files."bat/config".value.theme = "base16";
       xdg.config.files."bat/themes/base16.tmTheme".text = config.theme.tmTheme;
     };
 
