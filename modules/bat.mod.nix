@@ -16,26 +16,30 @@
         MANROFFOPT = "-c"; # Prevent groff from emitting ANSI color, bat does the highlighting.
         MANPAGER =
           getExe
-          <| pkgs.writeScriptBin "man-pager" /* sh */ ''
-            #!${getExe pkgs.bash}
+          <| pkgs.writeScriptBin "man-pager" /* nu */ ''
+            #!${getExe pkgs.nushell}
+            #
 
-            ${getExe pkgs.unixtools.col} -bx \
-              | ${getExe pkgs.bat} --language man --plain --color always --paging never \
-              | "$PAGER"
+            ^${getExe pkgs.unixtools.col} -bx
+            | ^${getExe pkgs.bat} --language man --plain --color always --paging never
+            | ^$env.PAGER
           '';
 
         PAGER =
           getExe
-          <| pkgs.writeScriptBin "pager" /* sh */ ''
-            #!${getExe pkgs.bash}
+          <| pkgs.writeScriptBin "pager" /* nu */ ''
+            #!${getExe pkgs.nushell}
+            #
 
-            unset LESS # systemd likes to set LESS, which messes with our settings
+            def --wrapped main [...arguments: string] {
+              hide-env --ignore-errors LESS # systemd likes to set LESS, which messes with our settings
 
-            exec ${getExe pkgs.less} \
-              --quit-if-one-screen --quit-on-intr \
-              --ignore-case --incsearch --LONG-PROMPT \
-              --chop-long-lines --HILITE-UNREAD --tilde \
-              --RAW-CONTROL-CHARS "$@"
+              (exec ${getExe pkgs.less}
+                --quit-if-one-screen --quit-on-intr
+                --ignore-case --incsearch --LONG-PROMPT --no-edit-warn
+                --chop-long-lines --HILITE-UNREAD --tilde
+                --RAW-CONTROL-CHARS ...$arguments)
+            }
           '';
 
         # Before v247, systemctl would spawn $PAGER, which was usually `less`,
@@ -57,7 +61,27 @@
       programs.nushell.aliases = {
         less = "^$env.PAGER";
 
-        cat = getExe pkgs.bat;
+        cat =
+          getExe
+          <| pkgs.writeScriptBin "cat" /* nu */ ''
+            #!${getExe pkgs.nushell}
+            #
+
+            def --wrapped main [...arguments: string] {
+              let split = $arguments | group-by {|arg| if ($arg | path exists) { "files" } else { "options" } }
+
+              match ($split.files? | default [] | length) {
+                1 if (is-terminal --stdout) => {
+                  $env.LESSOPEN = $"||${getExe pkgs.bat} ($split.options? | default [] | str join ' ') --color always --paging never -- %s"
+                  exec $env.PAGER ...$split.files
+                }
+
+                _ => {
+                  exec ${getExe pkgs.bat} ...$arguments
+                }
+              }
+            }
+          '';
       };
 
       packages = singleton pkgs.bat;
