@@ -7,6 +7,7 @@ let
     filter
     foldl'
     listToAttrs
+    mapAttrs
     match
     readDir
     readFileType
@@ -15,6 +16,17 @@ let
   singleton = value: [ value ];
   optional = condition: consequence: if condition then [ consequence ] else [ ];
   uniq = list: list |> foldl' (acc: item: if elem item acc then acc else acc ++ singleton item) [ ];
+
+  filterAttrs =
+    predicate: set:
+    set
+    |> attrNames
+    |> filter (name: predicate name set.${name})
+    |> map (name: {
+      inherit name;
+      value = set.${name};
+    })
+    |> listToAttrs;
 
   listFilesRecursive =
     base: directory:
@@ -38,13 +50,13 @@ let
 
   isAge = name: match ".*\\.age$" name != null;
 
-  keysModule =
-    (import ./modules/keys.mod.nix {
-      self = keysModule;
-      lib.lists = { inherit singleton; };
+  entitiesModule =
+    (import ./modules/entities.mod.nix {
+      self = entitiesModule;
+      lib.attrsets = { inherit attrValues filterAttrs mapAttrs; };
     }).flake;
 
-  inherit (keysModule) keys keys-admin;
+  inherit (entitiesModule) keys keys-admin;
 
   hostSecrets =
     attrNames (readDir ./hosts)

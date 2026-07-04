@@ -26,8 +26,9 @@
 
       xdg.config.files."git/config".generator = toGitINI;
       xdg.config.files."git/config".value = {
-        user.name = "RGBCube";
-        user.email = "git@rgbcu.be";
+        user = {
+          inherit (self.people.self) name email;
+        };
 
         fetch.fsckObjects = true;
         receive.fsckObjects = true;
@@ -35,6 +36,52 @@
 
         url."ssh://git@github.com/".insteadOf = "https://github.com/";
       };
+    };
+
+  flake.commonModules.radicle =
+    { config, lib, ... }:
+    let
+      inherit (lib.attrsets) optionalAttrs;
+    in
+    {
+      secrets.radicle = {
+        file = ./radicle.age;
+      }
+      // optionalAttrs config.nixpkgs.hostPlatform.isDarwin {
+        owner = config.system.primaryUser;
+      };
+    };
+
+  flake.homeModules.radicle =
+    {
+      config,
+      osConfig,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      inherit (lib.generators) toJSON;
+      inherit (lib.lists) singleton;
+    in
+    {
+      packages = singleton pkgs.radicle-node;
+
+      xdg.data.files."radicle/config.json".generator = toJSON { };
+      xdg.data.files."radicle/config.json".value = {
+        publicExplorer = "https://radicle.network/nodes/$host/$rid$path";
+        preferredSeeds = [
+          "z6MkrLMMsiPWUcNPHcRajuMi9mDfYckSoJyPwwnknocNYPm7@iris.radicle.network:8776"
+          "z6Mkmqogy2qEM2ummccUthFEaaHvyYmYBYh3dbe9W4ebScxo@rosa.radicle.network:8776"
+        ];
+
+        node.alias = self.people.self.name;
+      };
+
+      xdg.data.files."radicle/keys/radicle".source = osConfig.secrets.radicle.path;
+      xdg.data.files."radicle/keys/radicle.pub".text = ''
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKl2Gn9hN40fRdk/l8rtPehYV5WfKjp1YaEUAzoWH9Wx radicle
+      '';
     };
 
   flake.homeModules.jujutsu =
@@ -47,14 +94,16 @@
     let
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
+      inherit (lib.strings) toLower;
     in
     {
       packages = singleton pkgs.jujutsu;
 
       xdg.config.files."jj/config.toml".generator = pkgs.writers.writeTOML "jj-config.toml";
       xdg.config.files."jj/config.toml".value = {
-        user.name = "RGBCube";
-        user.email = "git@rgbcu.be";
+        user = {
+          inherit (self.people.self) name email;
+        };
 
         aliases.".." = [
           "edit"
@@ -176,11 +225,11 @@
 
         templates.git_push_bookmark = # python
           ''
-            "rgbcube/change-" ++ change_id.short()
+            "${toLower self.people.self.name}/change-" ++ change_id.short()
           '';
 
         remotes."*" = {
-          auto-track-bookmarks = "rgbcube/*";
+          auto-track-bookmarks = "${toLower self.people.self.name}/*";
           push-new-bookmarks = true;
         };
 
@@ -197,7 +246,7 @@
         git.sign-on-push = true;
 
         signing.backend = "ssh";
-        signing.key = self.keys.rgbcube;
+        signing.key = self.people.self.key;
       };
     };
 

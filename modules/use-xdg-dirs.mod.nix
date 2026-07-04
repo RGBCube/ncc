@@ -81,6 +81,8 @@
       xdg.state.files."python".type = "directory";
       environment.sessionVariables.PYTHON_HISTORY = "${config.xdg.state.directory}/python/history";
 
+      environment.sessionVariables.RAD_HOME = "${config.xdg.data.directory}/radicle";
+
       environment.sessionVariables.WATCHMAN_CONFIG_FILE = "${config.xdg.config.directory}/watchman/watchman.json";
     };
 }
