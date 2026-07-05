@@ -7,7 +7,7 @@
       ...
     }:
     let
-      inherit (lib.generators) toCliFlagList;
+      inherit (lib.generators) toCliFlagList toLesskey;
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
     in
@@ -21,26 +21,11 @@
             #
 
             ^${getExe pkgs.unixtools.col} -bx
-            | ^${getExe pkgs.bat} --language man --plain --color always --paging never
+            | ^${getExe pkgs.bat} --language man --plain --color always
             | ^$env.PAGER
           '';
 
-        PAGER =
-          getExe
-          <| pkgs.writeScriptBin "pager" /* nu */ ''
-            #!${getExe pkgs.nushell}
-            #
-
-            def --wrapped main [...arguments: string] {
-              hide-env --ignore-errors LESS # systemd likes to set LESS, which messes with our settings
-
-              (exec ${getExe pkgs.less}
-                --quit-if-one-screen --quit-on-intr
-                --ignore-case --incsearch --LONG-PROMPT --no-edit-warn
-                --chop-long-lines --HILITE-UNREAD --tilde
-                --RAW-CONTROL-CHARS ...$arguments)
-            }
-          '';
+        PAGER = getExe pkgs.less;
 
         # Before v247, systemctl would spawn $PAGER, which was usually `less`,
         # without setting `LESSSECURE` even if both were launched as root.
@@ -58,6 +43,24 @@
         SYSTEMD_PAGERSECURE = "0";
       };
 
+      # `#env` assignments shadow the real environment, so systemd setting LESS can't mess with our settings.
+      xdg.config.files."lesskey".generator = toLesskey;
+      xdg.config.files."lesskey".value.env.LESS = [
+        "--quit-if-one-screen"
+        "--quit-on-intr"
+
+        "--ignore-case"
+        "--incsearch"
+        "--LONG-PROMPT"
+        "--no-edit-warn"
+
+        "--chop-long-lines"
+        "--HILITE-UNREAD"
+        "--tilde"
+
+        "--RAW-CONTROL-CHARS"
+      ];
+
       programs.nushell.aliases = {
         less = "^$env.PAGER";
 
@@ -72,7 +75,7 @@
 
               match ($split.files? | default [] | length) {
                 1 if (is-terminal --stdout) => {
-                  $env.LESSOPEN = $"||${getExe pkgs.bat} ($split.options? | default [] | str join ' ') --color always --paging never -- %s"
+                  $env.LESSOPEN = $"||${getExe pkgs.bat} ($split.options? | default [] | str join ' ') --color always -- %s"
                   exec $env.PAGER ...$split.files
                 }
 

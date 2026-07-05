@@ -2,7 +2,12 @@
 let
   inherit (self) attrNames isAttrs;
   inherit (self.attrsets) mapAttrsToList;
-  inherit (self.strings) concatLines replaceStrings stringLength;
+  inherit (self.strings)
+    concatLines
+    concatStringsSep
+    replaceStrings
+    stringLength
+    ;
   inherit (self.lists)
     flatten
     singleton
@@ -58,6 +63,23 @@ in
         |> sortOn (pattern: -(stringLength <| replaceStrings [ "*" "?" ] [ "" "" ] pattern))
         |> map (pattern: singleton "${name} ${pattern}" ++ toLines { indent = "\t"; } value.${pattern})
         |> flatten
+    )
+    |> flatten
+    |> concatLines;
+
+  # lesskey(1) config format used by less.
+  generators.toLesskey =
+    sections:
+    sections
+    |> mapAttrsToList (
+      section: entries:
+      let
+        separator = if section == "env" then " = " else " ";
+      in
+      singleton "#${section}"
+      ++ mapAttrsToList (
+        name: value: name + separator + (toList value |> map (value: "${value}") |> concatStringsSep " ")
+      ) entries
     )
     |> flatten
     |> concatLines;
