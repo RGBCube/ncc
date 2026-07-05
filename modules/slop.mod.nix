@@ -1124,7 +1124,7 @@ in
               if not ($binary_path | path exists) or $rebuild {
                 let archive = $"($binary_path).tar.gz"
 
-                if not ($archive | path exists) {
+                if not ($archive | path exists) or $rebuild {
                   let platform = detect-platform
 
                   try {
