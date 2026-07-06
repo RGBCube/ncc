@@ -1,5 +1,7 @@
 { self, lib, ... }:
 let
+  inherit (lib.attrsets) getAttr;
+  inherit (lib.lists) concatMap singleton;
   inherit (lib.strings) concatLines;
 
   mkNixs = pkgs: self.packages.${pkgs.stdenv.hostPlatform.system}.nixs;
@@ -80,18 +82,27 @@ let
     "nixs *"
   ];
 
-  forbidden.commands = [
+  forbidden.rules = [
     {
-      command = "git*";
+      commands = singleton "git*";
       justification = "Use `jj` for version control.";
     }
     {
-      command = "cargo check*";
+      commands = singleton "cargo check*";
       justification = "Use `cargo clippy` instead of `cargo check`.";
     }
     {
-      command = "cargo test*";
+      commands = singleton "cargo test*";
       justification = "Use `cargo nextest` instead of `cargo test`.";
+    }
+    {
+      commands = [
+        "find /nix/store"
+        "find /nix/store *"
+        "find /nix/store/"
+        "find /nix/store/ *"
+      ];
+      justification = "Do `find` over the entire `/nix/store`. Search specific store paths obtained from the flake instead.";
     }
   ];
 
@@ -104,7 +115,7 @@ let
       "Use `nixs path-info`."
       "Prefer nix3 commands over nix2 commands."
     ]
-    ++ (forbidden.commands |> map ({ justification, ... }: justification))
+    ++ (forbidden.rules |> map ({ justification, ... }: justification))
     |> map (instruction: ''
       - ${instruction}
     '')
@@ -156,7 +167,7 @@ in
           bash =
             { }
             // genAttrs allowed.commands (const "allow")
-            // genAttrs (forbidden.commands |> map ({ command, ... }: command)) (const "deny");
+            // genAttrs (forbidden.rules |> concatMap (getAttr "commands")) (const "deny");
         };
       };
 
@@ -219,23 +230,36 @@ in
 
       xdg.config.files."codex/rules/default.rules".text =
         (
-          forbidden.commands
+          forbidden.rules
           |> concatMapStringsSep "\n" (
-            { command, justification }:
-            /* starlark */ ''
+            { justification, ... }@rule:
+            rule.commands
+            |> concatMapStringsSep "\n" (command: /* starlark */ ''
               prefix_rule(
-                  pattern = ${command |> removeSuffix "*" |> trim |> splitString " " |> toJSON},
+                  pattern = ${
+                    command
+                    |> removeSuffix "*"
+                    |> trim
+                    |> splitString " "
+                    |> toJSON
+                  },
                   decision = "forbidden",
                   justification = ${toJSON justification},
               )
-            ''
+            '')
           )
         )
         + (
           allowed.commands
           |> concatMapStringsSep "\n" (command: /* starlark */ ''
             prefix_rule(
-                pattern = ${command |> removeSuffix "*" |> trim |> splitString " " |> toJSON},
+                pattern = ${
+                  command
+                  |> removeSuffix "*"
+                  |> trim
+                  |> splitString " "
+                  |> toJSON
+                },
                 decision = "allow",
             )
           '')
@@ -470,7 +494,8 @@ in
             "TaskOutput"
             "TaskStop"
           ];
-        permissions.deny = [ ] ++ map ({ command, ... }: "Bash(${command})") forbidden.commands;
+        permissions.deny =
+          forbidden.rules |> concatMap (rule: rule.commands |> map (command: "Bash(${command})"));
 
         env.CLAUDE_BASH_NO_LOGIN = "1";
         env.CLAUDE_CODE_EAGER_FLUSH = "1";
