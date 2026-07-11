@@ -1,11 +1,14 @@
 {
-  flake.nixosModules.documentation = {
+  flake.commonModules.documentation = {
     documentation = {
       man.enable = true;
 
       doc.enable = false;
       info.enable = false;
-      nixos.enable = false;
     };
+  };
+
+  flake.nixosModules.documentation = {
+    documentation.nixos.enable = false;
   };
 }
