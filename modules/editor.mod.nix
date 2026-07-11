@@ -1,8 +1,4 @@
 {
-  flake.nixosModules.nano = {
-    programs.nano.enable = false;
-  };
-
   flake.homeModules.helix =
     {
       lib,
