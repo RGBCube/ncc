@@ -20,7 +20,7 @@ in
           attrValues (removeAttrs self.commonModules [ "authoritative" ])
           ++ attrValues self.darwinModules
           ++ singleton {
-            home.extraModules = attrValues self.homeModules;
+            home.extraModules = attrValues (removeAttrs self.homeModules [ "codex" ]);
           };
 
         networking.knownNetworkServices = [
