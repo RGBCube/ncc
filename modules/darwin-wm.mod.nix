@@ -18,7 +18,7 @@
         AppleScrollerPagingBehavior = true; # Jump to the spot that was pressed in the scrollbar.
         AppleShowScrollBars = "WhenScrolling";
 
-        NSWindowShouldDragOnGesture = true; # CMD+CTRL click to drag window.
+        NSWindowShouldDragOnGesture = true; # CMD+CTRL click to drag window. PaperWM intercepts this for tiled windows.
         AppleEnableMouseSwipeNavigateWithScrolls = false;
         AppleEnableSwipeNavigateWithScrolls = false;
 
@@ -522,25 +522,28 @@
             local super_alt = { "cmd", "ctrl", "alt" }
             local super_shift = { "cmd", "ctrl", "shift" }
 
+            local actions = PaperWM.actions.actions()
+
             -- SPACES
             hs.hotkey.bind(super, "tab", function() changeSpaceBy(1) end)
             hs.hotkey.bind(super_shift, "tab", function() changeSpaceBy(-1) end)
 
             for index = 1, 9 do
               hs.hotkey.bind(super, tostring(index), function() gotoSpace(index) end)
-              hs.hotkey.bind(super_shift, tostring(index), PaperWM.actions["move_window_" .. index])
+              hs.hotkey.bind(super_shift, tostring(index), actions["move_window_" .. index])
             end
 
             -- FOCUS
+            PaperWM.drag_window = super
             hs.hotkey.bind(super, "left", function()
-              PaperWM.actions.focus_left()
-              PaperWM.actions.center_window()
+              actions.focus_left()
+              actions.center_window()
             end)
-            hs.hotkey.bind(super, "down", PaperWM.actions.focus_down)
-            hs.hotkey.bind(super, "up", PaperWM.actions.focus_up)
+            hs.hotkey.bind(super, "down", actions.focus_down)
+            hs.hotkey.bind(super, "up", actions.focus_up)
             hs.hotkey.bind(super, "right", function()
-              PaperWM.actions.focus_right()
-              PaperWM.actions.center_window()
+              actions.focus_right()
+              actions.center_window()
             end)
 
             -- RESIZE
@@ -567,17 +570,18 @@
               hs.hotkey.bind(super_alt, "right", function() windowResize(100, 0) end)
             end
 
-            hs.hotkey.bind(super_alt, "f", PaperWM.actions.full_width)
+            hs.hotkey.bind(super_alt, "f", actions.full_width)
 
             -- SWAP
-            hs.hotkey.bind(super_shift, "left", PaperWM.actions.swap_left)
-            hs.hotkey.bind(super_shift, "down", PaperWM.actions.swap_down)
-            hs.hotkey.bind(super_shift, "up", PaperWM.actions.swap_up)
-            hs.hotkey.bind(super_shift, "right", PaperWM.actions.swap_right)
+            PaperWM.lift_window = super_shift
+            hs.hotkey.bind(super_shift, "left", actions.swap_left)
+            hs.hotkey.bind(super_shift, "down", actions.swap_down)
+            hs.hotkey.bind(super_shift, "up", actions.swap_up)
+            hs.hotkey.bind(super_shift, "right", actions.swap_right)
 
             -- SLURP & BARF
-            hs.hotkey.bind(super_shift, "t", PaperWM.actions.slurp_in)
-            hs.hotkey.bind(super_shift, "g", PaperWM.actions.barf_out)
+            hs.hotkey.bind(super_shift, "t", actions.slurp_in)
+            hs.hotkey.bind(super_shift, "g", actions.barf_out)
 
             -- MISC
             hs.hotkey.bind(super, "q", function()
@@ -585,8 +589,8 @@
               if not window then return end
               window:close()
             end)
-            hs.hotkey.bind(super, "c", PaperWM.actions.center_window)
-            hs.hotkey.bind(super, "f", PaperWM.actions.toggle_floating)
+            hs.hotkey.bind(super, "c", actions.center_window)
+            hs.hotkey.bind(super, "f", actions.toggle_floating)
 
             -- APPLICATIONS
             hs.hotkey.bind(super, "w", function() hs.application.launchOrFocus("Helium") end)
