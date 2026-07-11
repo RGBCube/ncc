@@ -349,6 +349,24 @@ in
     {
       networking.dns = singleton address;
 
+      launchd.daemons.resolver-autorestart = {
+        serviceConfig.LaunchEvents."com.apple.notifyd.matching".network-change.Notification =
+          "com.apple.system.config.network_change";
+
+        command = pkgs.writeScript "resolver-autorestart" /* nu */ ''
+          #!${getExe pkgs.nushell}
+          #
+
+          def main [] {
+            let probe = ^${getExe pkgs.dig} +time=1 +tries=1 @${address} . | complete
+
+            if $probe.exit_code != 0 {
+              ^/bin/launchctl kickstart -k system/org.nixos.resolver
+            }
+          }
+        '';
+      };
+
       system.services.resolver.launchd.ProgramArguments =
         mkBefore
         <| singleton
