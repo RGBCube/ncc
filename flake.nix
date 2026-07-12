@@ -63,6 +63,14 @@
     url = "github:nix-community/crate2nix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
+  inputs.fenix = {
+    url = "github:nix-community/fenix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+  inputs.advisory-db = {
+    url = "github:rustsec/advisory-db";
+    flake = false;
+  };
 
   inputs.agenix = {
     url = "github:ryantm/agenix";

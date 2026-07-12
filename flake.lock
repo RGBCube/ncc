@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "advisory-db": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783840254,
+        "narHash": "sha256-XjyvZk0f3YiinVHmkGOotmLBAzvK+LwEJYj2QqJ5pn8=",
+        "owner": "rustsec",
+        "repo": "advisory-db",
+        "rev": "6e3286f4efa8c142fb33e5ea4342c8db6693cf34",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rustsec",
+        "repo": "advisory-db",
+        "type": "github"
+      }
+    },
     "agenix": {
       "inputs": {
         "darwin": [
@@ -157,6 +173,27 @@
         "owner": "RGBCube",
         "ref": "fix-bcachefs-unlock",
         "repo": "disko",
+        "type": "github"
+      }
+    },
+    "fenix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-analyzer-src": "rust-analyzer-src"
+      },
+      "locked": {
+        "lastModified": 1783844668,
+        "narHash": "sha256-3MOpw4y3reoErRLvFBDz0t9aG6FWXUj7leKvUns5eQA=",
+        "owner": "nix-community",
+        "repo": "fenix",
+        "rev": "4e49ef62eedaa5c149d62b63b3f53844e1cc45d7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "fenix",
         "type": "github"
       }
     },
@@ -534,10 +571,12 @@
     },
     "root": {
       "inputs": {
+        "advisory-db": "advisory-db",
         "agenix": "agenix",
         "crash": "crash",
         "crate2nix": "crate2nix",
         "disko": "disko",
+        "fenix": "fenix",
         "flake-parts": "flake-parts_2",
         "helium": "helium",
         "hjem": "hjem",
@@ -552,6 +591,23 @@
         "themes": "themes",
         "ublock": "ublock",
         "zmk-nix": "zmk-nix"
+      }
+    },
+    "rust-analyzer-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783779020,
+        "narHash": "sha256-vpm418WZa9l1KUl6HRs+Ga+SIfE+D2/sV4olwTlilYc=",
+        "owner": "rust-lang",
+        "repo": "rust-analyzer",
+        "rev": "5be5e89cf0145d73a85c805726821b4adfc3af48",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rust-lang",
+        "ref": "nightly",
+        "repo": "rust-analyzer",
+        "type": "github"
       }
     },
     "sudo-run0-shim": {
