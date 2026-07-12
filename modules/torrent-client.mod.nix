@@ -1,4 +1,14 @@
 {
+  # TODO: https://hydra.nixos.org/build/337045807
+  flake.darwinModules.torrent-client =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      homebrew.casks = singleton "qbittorrent";
+    };
+
   flake.homeModules.torrent-client =
     {
       lib,
@@ -20,7 +30,7 @@
           "x-scheme-handler/magnet"
         ];
 
-      packages = [
+      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
         pkgs.qbittorrent
       ];
 
