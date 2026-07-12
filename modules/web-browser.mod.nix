@@ -15,8 +15,11 @@ let
     optionalAttrs
     ;
   inherit (lib.lists)
+    elemAt
     filter
     foldr
+    head
+    isList
     singleton
     ;
   inherit (lib.trivial)
@@ -26,7 +29,15 @@ let
     flip
     ;
   inherit (lib.fixedPoints) fix;
-  inherit (lib.strings) hasInfix;
+  inherit (lib.strings)
+    concatStrings
+    concatStringsSep
+    hasInfix
+    isString
+    match
+    split
+    splitString
+    ;
 
   # UNSLOP
   extensions.consent-o-matic.id = "mdjildafknihdffpkfmmpnpoiajfjnjd";
@@ -55,15 +66,71 @@ let
           "https://raw.githubusercontent.com/yokoffing/filterlists/refs/heads/main/privacy_essentials.txt"
         ];
 
-      filters = [
-        # YOUTUBE SHORTS -> WATCH
+      mkStylesheet =
+        hostname: css:
+        let
+          normalize =
+            string:
+            split "[[:space:]]+" string |> filter (part: isString part && part != "") |> concatStringsSep " ";
+        in
+        split ''/\*([^*]|\*+[^*/])*\*+/'' css
+        |> filter isString
+        |> concatStrings
+        |> split ''([^{}]+)\{([^{}]*)\}''
+        |> filter isList
+        |> map (
+          rule:
+          let
+            selector = normalize (head rule);
+
+            declarations =
+              elemAt rule 1
+              |> splitString ";"
+              |> map normalize
+              |> filter (declaration: declaration != "")
+              |> map (
+                declaration:
+                if match ".*![[:space:]]*important" declaration == null then
+                  "${declaration} !important"
+                else
+                  declaration
+              );
+          in
+          if declarations == singleton "display: none !important" then
+            "${hostname}##${selector}"
+          else
+            "${hostname}##${selector}:style(${concatStringsSep "; " declarations})"
+        );
+    in
+    {
+      id = "blockjmkbacgjkknlgpkjjiijinjdanf";
+      preinstalled = true;
+
+      settings.toolbar_pin = "force_pinned";
+
+      policy.userSettings = singleton [
+        "userFiltersTrusted"
+        "true"
+      ];
+
+      policy.toOverwrite.filterLists =
+        filter (name: !(hasInfix "://" name || name == "user-filters" || hasAttr name assets)) filterLists
+        |> foldr (name: warn "helium: unknown ublock filter list: ${name}") filterLists;
+
+      policy.toOverwrite.filters = [
+        "dolap.com##.fancybox-wrap"
+      ]
+      # YOUTUBE
+      ++ [
+        # SHORTS -> WATCH
         ''||youtube.com/shorts/$document,uritransform=/^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([^\/?#]+)/https:\/\/www.youtube.com\/watch?v=\$1/''
 
         # TODO: Allow youtube embeds without click2load'ing, as they are broken: https://github.com/uBlockOrigin/uBlock-issues/issues/3868
         "@@||youtube.com/embed/$frame"
         "@@||youtube-nocookie.com/embed/$frame"
-
-        # OLD REDDIT
+      ]
+      # OLD REDDIT
+      ++ [
         "@@||reddit.com/media$document"
         "@@||reddit.com/mod$document"
         "@@||reddit.com/poll$document"
@@ -84,30 +151,70 @@ let
         ''||reddit.com^$document,uritransform=/^https:\/\/(?:www\.|np\.|amp\.|i\.)?reddit\.com\/(?!gallery\/)/https:\/\/old.reddit.com\//''
 
         "old.reddit.com##:is(#eu-cookie-policy, #redesign-beta-optin-btn)"
+      ]
+      # MAKE X ANONYMOUS: https://gist.github.com/sin-ack/5a6f7e34e78b6acf971d95808c9331d3
+      ++ mkStylesheet "x.com" /* css */ ''
+        /* user avatars */
+        [data-testid=tweet] .r-1mrc8m9.r-1awozwy {
+          display: none;
+        }
 
-        "dolap.com##.fancybox-wrap"
-      ];
-    in
-    {
-      id = "blockjmkbacgjkknlgpkjjiijinjdanf";
-      preinstalled = true;
+        [data-testid^="UserAvatar-Container-"] {
+          display: none;
+        }
 
-      settings.toolbar_pin = "force_pinned";
+        /* don't hide avatars on profile pages */
+        a[href$="header_photo"] + div [data-testid^="UserAvatar-Container-"] {
+          display: block;
+        }
 
-      policy = {
-        toOverwrite.filterLists =
-          filter (name: !(hasInfix "://" name || name == "user-filters" || hasAttr name assets)) filterLists
-          |> foldr (name: warn "helium: unknown ublock filter list: ${name}") filterLists;
+        /* Original username */
+        [data-testid="User-Name"] > :nth-child(1) [dir=ltr],
+        [data-testid="notification"] > :nth-child(1) [dir=ltr] a {
+          display: none;
+        }
 
-        toOverwrite.filters = filters;
+        /* Anonymous username */
+        [data-testid="User-Name"]::before,
+        [data-testid="notification"] > :nth-child(1) span[dir=ltr]::before {
+          content: "Anonymous";
+          opacity: 1;
+          font-weight: bold;
+          font-family: "TwitterChirp";
+        }
 
-        userSettings = [
-          [
-            "userFiltersTrusted"
-            "true"
-          ]
-        ];
-      };
+        [data-testid="User-Name"]:hover::before {
+          text-decoration: underline;
+        }
+
+        /* @handle */
+        [data-testid="User-Name"] > :nth-child(2) [tabindex="-1"] {
+          display: none;
+        }
+
+        /* "Replying to" message in tweet box */
+        .r-gu64tb button > span {
+          font-size: 0;
+        }
+
+        .r-136ojw6.r-1wbh5a2 button::after {
+          font-size: inherit;
+          content: "Anonymous";
+          color: inherit;
+        }
+
+        /* "Replying to" in tweets and notifs */
+
+        [id^="id__"][dir=ltr] a[dir=ltr] {
+          font-size: 0;
+        }
+
+        [id^="id__"][dir=ltr] a[dir=ltr]::after {
+          font-size: 1rem;
+          content: "Anonymous";
+          color: inherit;
+        }
+      '';
     };
 
   # YOUTUBE
