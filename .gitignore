@@ -28,7 +28,9 @@
 
 !packages/
 !packages/**/
+packages/*/.direnv/
 packages/*/target/
 !packages/**/*.rs
 !packages/**/*.toml
 !packages/**/Cargo.lock
+!packages/**/.envrc

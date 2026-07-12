@@ -3,7 +3,7 @@ let
   inherit (self) importTOML;
   inherit (self.attrsets) genAttrs optionalAttrs;
   inherit (self.lists) singleton;
-  inherit (self.meta) getExe;
+  inherit (self.meta) getExe getExe';
   inherit (self.trivial) const flip;
 
   mkPriority = priority: level: { inherit level priority; };
@@ -123,7 +123,6 @@ let
     };
   };
 
-  # Keys are `edition`-sensitive; the crate's edition is merged in per package.
   rustfmtConfiguration = {
     # float_literal_trailing_zero = "Always"; # TODO: Warning for some reason?
     condense_wildcard_suffixes = true;
@@ -223,10 +222,23 @@ in
               "clippy.toml" = toml.generate "clippy.toml" clippy.configuration;
             };
           });
+
+          rustfmtToml =
+            rustfmtConfiguration // { inherit (package) edition; } |> toml.generate "rustfmt.toml";
         in
         {
           packages.${package.name} = cargoNix.rootCrate.build;
           packages."${package.name}-debug" = cargoNixDebug.rootCrate.build;
+
+          packages."${package.name}-rustfmt" = pkgs.writeShellScriptBin "rustfmt" ''
+            exec ${getExe' toolchain "rustfmt"} --config-path ${rustfmtToml} "$@"
+          '';
+
+          devShells.${package.name} = pkgs.mkShell {
+            packages = singleton toolchain;
+
+            env.RUSTFMT = getExe self'.packages."${package.name}-rustfmt";
+          };
 
           checks."${package.name}-package" = self'.packages.${package.name};
           checks."${package.name}-test" = cargoNix.rootCrate.build.override { runTests = true; };
@@ -236,12 +248,12 @@ in
             pkgs.runCommand "${package.name}-fmt"
               {
                 nativeBuildInputs = singleton toolchain;
+
+                env.RUSTFMT = getExe self'.packages."${package.name}-rustfmt";
               }
               ''
                 cd ${source}
-                cargo fmt --check -- --config-path ${
-                  rustfmtConfiguration // { inherit (package) edition; } |> toml.generate "rustfmt.toml"
-                }
+                cargo fmt --check
                 touch $out
               '';
 
