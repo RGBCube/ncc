@@ -6,6 +6,12 @@
     in
     {
       homebrew.casks = singleton "syncthing-app";
+
+      system.defaults.CustomUserPreferences."com.github.xor-gate.syncthing-macosx" = {
+        SUEnableAutomaticChecks = false;
+        SUAutomaticallyUpdate = false;
+        SUSendProfileInfo = false;
+      };
     };
 
   # flake.nixosModules.syncthing =
