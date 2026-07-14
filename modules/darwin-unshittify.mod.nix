@@ -8,7 +8,6 @@
     }:
     let
       inherit (lib.modules) mkAfter;
-      inherit (lib.shell) asShell;
 
       shadowPath = "/Users/${config.system.primaryUser}/.local/share/shadow";
     in
@@ -17,7 +16,7 @@
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.shadow-xcode.text}
       '';
-      system.activationScripts.shadow-xcode.text = asShell pkgs.nushell "shadow-xcode.nu" /* nu */ ''
+      system.activationScripts.shadow-xcode.text = "${pkgs.writers.writeNu "shadow-xcode.nu" /* nu */ ''
         use std null_device
 
         print "shadowing xcode..."
@@ -43,7 +42,7 @@
         for shadowed in $shadoweds {
           ln --symbolic /usr/bin/false ($shadow_path | path join $shadowed)
         }
-      '';
+      ''}";
 
       # LOGIN WINDOW
       system.defaults.loginwindow = {

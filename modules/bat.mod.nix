@@ -98,16 +98,15 @@
     let
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;
-      inherit (lib.shell) asShell;
     in
     {
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.bat.text}
       '';
-      system.activationScripts.bat.text = asShell pkgs.nushell "bat-cache.nu" /* nu */ ''
+      system.activationScripts.bat.text = "${pkgs.writers.writeNu "bat-cache.nu" /* nu */ ''
         print "refreshing bat cache..."
         ^/usr/bin/sudo --set-home --user r###'${config.system.primaryUser}'### -- ${getExe pkgs.bat} cache --build
-      '';
+      ''}";
     };
 
   flake.nixosModules.bat =
@@ -120,11 +119,10 @@
     let
       inherit (lib.attrsets) filterAttrs mapAttrsToList;
       inherit (lib.meta) getExe;
-      inherit (lib.shell) asShell;
       inherit (lib.strings) toJSON;
     in
     {
-      system.activationScripts.bat.text = asShell pkgs.nushell "bat-cache.nu" /* nu */ ''
+      system.activationScripts.bat.text = "${pkgs.writers.writeNu "bat-cache.nu" /* nu */ ''
         print "refreshing bat cache..."
 
         let users = r###'${
@@ -137,6 +135,6 @@
         for user in $users {
           ^${pkgs.util-linux}/bin/runuser --user $user -- ${getExe pkgs.bat} cache --build
         }
-      '';
+      ''}";
     };
 }

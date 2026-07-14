@@ -533,7 +533,6 @@ in
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkAfter;
-      inherit (lib.shell) asShell;
     in
     {
       system.services.helium-policy = {
@@ -560,12 +559,12 @@ in
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.helium.text}
       '';
-      system.activationScripts.helium.text = asShell pkgs.nushell "helium-default-browser.nu" /* nu */ ''
+      system.activationScripts.helium.text = "${pkgs.writers.writeNu "helium-default-browser.nu" /* nu */ ''
         (^/usr/bin/sudo
           --set-home
           --user (ls --long /dev/console | get 0.user)
           ${getExe pkgs.defaultbrowser} helium)
-      '';
+      ''}";
     };
 
   flake.nixosModules.helium =

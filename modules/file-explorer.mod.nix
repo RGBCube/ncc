@@ -8,7 +8,6 @@
     }:
     let
       inherit (lib.modules) mkAfter;
-      inherit (lib.shell) asShell;
     in
     {
       system.defaults.NSGlobalDomain = {
@@ -60,10 +59,10 @@
       system.activationScripts.script.text = mkAfter ''
         ${config.system.activationScripts.unhide-library.text}
       '';
-      system.activationScripts.unhide-library.text = asShell pkgs.nushell "unhide-library.nu" /* nu */ ''
+      system.activationScripts.unhide-library.text = "${pkgs.writers.writeNu "unhide-library.nu" /* nu */ ''
         print "unhiding library..."
         ^/usr/bin/chflags nohidden r###'/Users/${config.system.primaryUser}/Library'###
-      '';
+      ''}";
     };
 
   flake.homeModules.file-explorer =

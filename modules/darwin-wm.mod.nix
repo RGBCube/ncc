@@ -297,7 +297,6 @@
           inherit (lib.attrsets) mapAttrsToList;
           inherit (lib.lists) map optionals;
           inherit (lib.meta) getExe;
-          inherit (lib.shell) asShell;
           inherit (lib.strings) toJSON;
 
           reload-symbolic-hotkey = pkgs.callPackage (
@@ -378,7 +377,7 @@
             }
           ) { };
         in
-        asShell pkgs.nushell "reload-symbolic-hotkeys.nu" /* nu */ ''
+        "${pkgs.writers.writeNu "reload-symbolic-hotkeys.nu" /* nu */ ''
           print "reloading symbolic hotkeys..."
 
           let user = "${config.system.primaryUser}"
@@ -408,7 +407,7 @@
               }
             ''
           }
-        '';
+        ''}";
 
       # TRACKPAD
       system.defaults.CustomSystemPreferences."com.apple.AppleMultitouchTrackpad" = {
