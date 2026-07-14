@@ -33,7 +33,7 @@
             with-env { HOME: "${config.xdg.data.directory}/android" } { ^adb ...$arguments }
           }
         ''
-      }\n";
+      }";
 
       xdg.config.files."aws".type = "directory";
       environment.sessionVariables.AWS_CONFIG_FILE = "${config.xdg.config.directory}/aws/config";

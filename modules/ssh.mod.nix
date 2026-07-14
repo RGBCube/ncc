@@ -61,7 +61,7 @@
               $env.SSH_AUTH_SOCK = ^launchctl getenv SSH_AUTH_SOCK | str trim
             }
           ''
-        }\n";
+        }";
     };
 
   flake.homeModules.ssh-client-desktop =

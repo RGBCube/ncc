@@ -7,16 +7,11 @@
       ...
     }:
     let
-      inherit (lib.modules) mkAfter;
-
       shadowPath = "/Users/${config.system.primaryUser}/.local/share/shadow";
     in
     {
       # SHADOW-XCODE
-      system.activationScripts.script.text = mkAfter ''
-        ${config.system.activationScripts.shadow-xcode.text}
-      '';
-      system.activationScripts.shadow-xcode.text = "${pkgs.writers.writeNu "shadow-xcode.nu" /* nu */ ''
+      system.activationScripts.postActivation.text = "${pkgs.writers.writeNu "shadow-xcode.nu" /* nu */ ''
         use std null_device
 
         print "shadowing xcode..."
@@ -97,9 +92,7 @@
       ];
 
       programs.nushell.extraConfig =
-        # For some reason mkIf does not work here.
-        optionalString osConfig.nixpkgs.hostPlatform.isDarwin
-        <| "source ${
+        optionalString osConfig.nixpkgs.hostPlatform.isDarwin "source ${
           pkgs.writeText "shadow-xcode-path.nu" /* nu */ ''
             do --env {
               let usr_bin_index = $env.PATH
@@ -111,6 +104,6 @@
               | insert $usr_bin_index "${shadowPath}";
             }
           ''
-        }\n";
+        }";
     };
 }

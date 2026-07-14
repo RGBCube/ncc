@@ -120,7 +120,7 @@
 
           extraInitNu = /* nu */ ''
             # Equivalent to the current NixOS environment.extraInit.
-            $env.PATH = $env.PATH | prepend ${nuString "${config.security.wrapperDir}"}
+            $env.PATH = $env.PATH | prepend ${nuString config.security.wrapperDir}
 
             $env.NIX_USER_PROFILE_DIR = $"/nix/var/nix/profiles/per-user/($env.USER)"
             $env.NIX_PROFILES = ${
@@ -225,7 +225,7 @@
               | if $in != null { path expand }
             }
           ''
-        }\n";
+        }";
 
         aliases = {
           e = "^$env.EDITOR";

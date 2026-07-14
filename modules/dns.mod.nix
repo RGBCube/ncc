@@ -366,8 +366,7 @@ in
 
       system.services.resolver.launchd.ProgramArguments =
         mkBefore
-        <| singleton
-        <| "${pkgs.writers.writeNu "resolver-setup" /* nu */ ''
+        <| singleton "${pkgs.writers.writeNu "resolver-setup" /* nu */ ''
           def --wrapped main [...arguments] {
             try { ^/sbin/ifconfig lo0 inet6 ${address}/128 alias }
             $env.DYLD_INSERT_LIBRARIES = "${getLib bind}/lib/libbind.dylib"

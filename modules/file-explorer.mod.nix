@@ -2,13 +2,9 @@
   flake.darwinModules.file-explorer =
     {
       config,
-      lib,
       pkgs,
       ...
     }:
-    let
-      inherit (lib.modules) mkAfter;
-    in
     {
       system.defaults.NSGlobalDomain = {
         AppleShowAllFiles = true;
@@ -56,10 +52,7 @@
       };
 
       # Unhide ~/Library.
-      system.activationScripts.script.text = mkAfter ''
-        ${config.system.activationScripts.unhide-library.text}
-      '';
-      system.activationScripts.unhide-library.text = "${pkgs.writers.writeNu "unhide-library.nu" /* nu */ ''
+      system.activationScripts.postActivation.text = "${pkgs.writers.writeNu "unhide-library.nu" /* nu */ ''
         print "unhiding library..."
         ^/usr/bin/chflags nohidden r###'/Users/${config.system.primaryUser}/Library'###
       ''}";

@@ -119,6 +119,6 @@
             $env.TRANSIENT_PROMPT_COMMAND_RIGHT = $env.PROMPT_COMMAND_RIGHT
           }
         ''
-      }\n";
+      }";
     };
 }

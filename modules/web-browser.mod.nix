@@ -522,7 +522,6 @@ in
 {
   flake.darwinModules.helium =
     {
-      config,
       lib,
       pkgs,
       ...
@@ -532,7 +531,6 @@ in
       inherit (lib.generators) toPlist;
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
-      inherit (lib.modules) mkAfter;
     in
     {
       system.services.helium-policy = {
@@ -556,10 +554,7 @@ in
         };
       };
 
-      system.activationScripts.script.text = mkAfter ''
-        ${config.system.activationScripts.helium.text}
-      '';
-      system.activationScripts.helium.text = "${pkgs.writers.writeNu "helium-default-browser.nu" /* nu */ ''
+      system.activationScripts.postActivation.text = "${pkgs.writers.writeNu "helium-default-browser.nu" /* nu */ ''
         (^/usr/bin/sudo
           --set-home
           --user (ls --long /dev/console | get 0.user)

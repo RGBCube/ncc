@@ -7,9 +7,6 @@
       pkgs,
       ...
     }:
-    let
-      inherit (lib.modules) mkAfter;
-    in
     {
       # NSGLOBALDOMAIN
       system.defaults.NSGlobalDomain = {
@@ -289,10 +286,7 @@
           "251".enabled = 0;
         };
 
-      system.activationScripts.script.text = mkAfter ''
-        ${config.system.activationScripts.symbolic-hotkeys.text}
-      '';
-      system.activationScripts.symbolic-hotkeys.text =
+      system.activationScripts.postActivation.text =
         let
           inherit (lib.attrsets) mapAttrsToList;
           inherit (lib.lists) map optionals;

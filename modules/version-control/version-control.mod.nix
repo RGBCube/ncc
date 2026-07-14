@@ -296,7 +296,7 @@
         aliases.resolve-ast = [
           "resolve"
           "--tool"
-          "${getExe pkgs.mergiraf}"
+          (getExe pkgs.mergiraf)
         ];
       };
     };
