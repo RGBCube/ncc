@@ -170,16 +170,21 @@
           "exec"
           "--"
           (pkgs.writers.writeNu "jj-fork" /* nu */ ''
-            gh repo fork --remote
-            gh repo set-default upstream
+            def remote-names [] {
+              jj git remote list | lines | parse "{name} {url}" | get name
+            }
 
-            let trunk = jj --ignore-working-copy config get 'revset-aliases."trunk()"'
-            jj --ignore-working-copy config set --repo 'revset-aliases."trunk()"' ($trunk | str replace "origin" "upstream")
+            if "upstream" not-in (remote-names) {
+              jj git remote rename origin upstream
+            }
+
+            if "origin" not-in (remote-names) {
+              gh repo fork --remote --remote-name origin
+            }
 
             jj git fetch
 
-            jj bookmark track ($trunk | split row "@" | first) --remote upstream
-            jj bookmark track ($trunk | split row "@" | first) --remote origin
+            jj bookmark track (jj config get 'revset-aliases."trunk()"' | split row "@" | first)
           '')
         ];
 
