@@ -157,17 +157,11 @@
           "::"
         ];
 
-        aliases.r = [ "rebase" ];
-
-        aliases.res = [ "resolve" ];
-
         aliases.s = [ "squash" ];
         aliases.si = [
           "squash"
           "--interactive"
         ];
-
-        aliases.sh = [ "show" ];
 
         aliases.u = [ "undo" ];
 
@@ -192,9 +186,14 @@
           '')
         ];
 
+        revsets.bookmark-advance-from = # python
+          ''
+            heads(::to & bookmarks() & ~immutable())
+          '';
+
         revsets.bookmark-advance-to = # python
           ''
-            heads(::@ & ~description(exact:"") & (~empty() | merges()))
+            heads(::@ & mutable() & ~description(exact:"") & (~empty() | merges()))
           '';
 
         revsets.log = # python
@@ -297,7 +296,6 @@
 
       xdg.config.files."jj/config.toml".generator = mkDefault toTOML;
       xdg.config.files."jj/config.toml".value = {
-        aliases.resa = [ "resolve-ast" ];
         aliases.resolve-ast = [
           "resolve"
           "--tool"
