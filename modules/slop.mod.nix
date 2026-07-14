@@ -280,9 +280,7 @@ in
       inherit (lib.meta) getExe getExe';
 
       # Also 100% slop.
-      statusLine = pkgs.writeScriptBin "claude-code-statusline" /* nu */ ''
-        #!${getExe pkgs.nushell}
-        #
+      statusLine = pkgs.writers.writeNuBin "claude-code-statusline" /* nu */ ''
         def format-duration [ms: int] {
           let total_s = $ms // 1000
           let h = $total_s // 3600
@@ -1062,10 +1060,7 @@ in
           '';
         in
         [
-          (pkgs.writeScriptBin "claude" /* nu */ ''
-            #!${getExe pkgs.nushell}
-            #
-
+          (pkgs.writers.writeNuBin "claude" /* nu */ ''
             def detect-platform []: nothing -> string {
               let arch = match ($nu.os-info.arch | str downcase) {
                 "x86_64" | "x64" | "amd64" => "x64"

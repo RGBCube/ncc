@@ -37,17 +37,13 @@
           packages."installer-${hostName}" = pkgs.callPackage (
             {
               lib,
-              nushell,
               nixos-install,
-              writeScriptBin,
+              writers,
             }:
             let
               inherit (lib.meta) getExe getExe';
             in
-            writeScriptBin "install-${hostName}" /* nu */ ''
-              #!${getExe nushell}
-              #
-
+            writers.writeNuBin "install-${hostName}" /* nu */ ''
               def main [] {
                 let mountpoint = "/mnt"
 

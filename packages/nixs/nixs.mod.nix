@@ -6,10 +6,7 @@
       inherit (lib.meta) getExe;
     in
     {
-      packages.nixs = pkgs.writeScriptBin "nixs" /* nu */ ''
-        #!${getExe pkgs.nushell}
-        #
-
+      packages.nixs = pkgs.writers.writeNuBin "nixs" /* nu */ ''
         def is-denied [ ]: string -> bool {
           let argument = $in
 

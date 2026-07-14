@@ -353,10 +353,7 @@ in
         serviceConfig.LaunchEvents."com.apple.notifyd.matching".network-change.Notification =
           "com.apple.system.config.network_change";
 
-        command = pkgs.writeScript "resolver-autorestart" /* nu */ ''
-          #!${getExe pkgs.nushell}
-          #
-
+        command = pkgs.writers.writeNu "resolver-autorestart" /* nu */ ''
           def main [] {
             let probe = ^${getExe pkgs.dig} +time=1 +tries=1 @${address} . | complete
 
@@ -370,10 +367,7 @@ in
       system.services.resolver.launchd.ProgramArguments =
         mkBefore
         <| singleton
-        <| "${pkgs.writeScript "resolver-setup" /* nu */ ''
-          #!${getExe pkgs.nushell}
-          #
-
+        <| "${pkgs.writers.writeNu "resolver-setup" /* nu */ ''
           def --wrapped main [...arguments] {
             try { ^/sbin/ifconfig lo0 inet6 ${address}/128 alias }
             $env.DYLD_INSERT_LIBRARIES = "${getLib bind}/lib/libbind.dylib"

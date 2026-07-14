@@ -54,9 +54,7 @@
 
         system.build.installBootLoader =
           mkForce
-          <| pkgs.writeScript "install-redundant-boot" /* nu */ ''
-            #!${getExe pkgs.nushell}
-            #
+          <| pkgs.writers.writeNu "install-redundant-boot" /* nu */ ''
             def main [toplevel: path] {
               let primary = r###'${toJSON primary}'### | from json
               let secondary = r###'${toJSON secondary}'### | from json

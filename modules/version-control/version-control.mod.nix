@@ -169,10 +169,7 @@
           "util"
           "exec"
           "--"
-          (pkgs.writeScript "jj-fork" /* nu */ ''
-            #!${getExe pkgs.nushell}
-            #
-
+          (pkgs.writers.writeNu "jj-fork" /* nu */ ''
             gh repo fork --remote
             gh repo set-default upstream
 

@@ -385,10 +385,7 @@
           let uid = sys users | where name == $user | get 0.id
 
           ^/bin/launchctl asuser $uid /usr/bin/sudo --set-home --user $user -- ${
-            pkgs.writeScript "reload-symbolic-hotkeys-peruser.nu" /* nu */ ''
-              #!${getExe pkgs.nushell}
-              #
-
+            pkgs.writers.writeNu "reload-symbolic-hotkeys-peruser.nu" /* nu */ ''
               let hotkeys = r###'${
                 config.system.defaults.CustomUserPreferences."com.apple.symbolichotkeys".AppleSymbolicHotKeys
                 |> mapAttrsToList (

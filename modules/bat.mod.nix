@@ -16,10 +16,7 @@
         MANROFFOPT = "-c"; # Prevent groff from emitting ANSI color, bat does the highlighting.
         MANPAGER =
           getExe
-          <| pkgs.writeScriptBin "man-pager" /* nu */ ''
-            #!${getExe pkgs.nushell}
-            #
-
+          <| pkgs.writers.writeNuBin "man-pager" /* nu */ ''
             ^${getExe pkgs.unixtools.col} -bx
             | ^${getExe pkgs.bat} --language man --plain --color always
             | ^$env.PAGER
@@ -66,10 +63,7 @@
 
         cat =
           getExe
-          <| pkgs.writeScriptBin "cat" /* nu */ ''
-            #!${getExe pkgs.nushell}
-            #
-
+          <| pkgs.writers.writeNuBin "cat" /* nu */ ''
             def --wrapped main [...arguments: string] {
               let split = $arguments | group-by {|arg| if ($arg | path exists) { "files" } else { "options" } }
 
