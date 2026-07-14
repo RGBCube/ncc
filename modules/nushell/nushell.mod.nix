@@ -103,7 +103,12 @@
               if name == "PATH" then
                 /* nu */ ''
                   $env.PATH = [
-                  ${segments |> concatMap (splitString ":") |> map (segment: "  ${nuString segment}") |> concatLines}
+                  ${
+                    segments
+                    |> concatMap (splitString ":")
+                    |> map (segment: "  ${nuString segment}")
+                    |> concatLines
+                  }
                   ]
                 ''
               else
@@ -119,7 +124,10 @@
 
             $env.NIX_USER_PROFILE_DIR = $"/nix/var/nix/profiles/per-user/($env.USER)"
             $env.NIX_PROFILES = ${
-              config.environment.profiles |> reverseList |> concatStringsSep " " |> nuString
+              config.environment.profiles
+              |> reverseList
+              |> concatStringsSep " "
+              |> nuString
             }
           '';
         in
@@ -207,6 +215,14 @@
               mkdir $path
               cd $path
               jj git init
+            }
+
+            # Get the realpath of a program on PATH.
+            def realwhich [application: string]: nothing -> any {
+              which --all $application
+              | where type == external
+              | get 0?.path
+              | if $in != null { path expand }
             }
           ''
         }\n";
