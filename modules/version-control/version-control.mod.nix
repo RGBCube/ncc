@@ -3,8 +3,10 @@
   flake.homeModules.gh =
     { lib, pkgs, ... }:
     let
-      inherit (lib.generators) toYAML;
+      inherit (lib.generators) toGitINI toYAML;
       inherit (lib.lists) singleton;
+      inherit (lib.meta) getExe;
+      inherit (lib.modules) mkDefault;
     in
     {
       packages = singleton pkgs.gh;
@@ -13,13 +15,17 @@
       xdg.config.files."gh/config.yml".value = {
         version = 1;
       };
+
+      xdg.config.files."git/config".generator = mkDefault toGitINI;
+      xdg.config.files."git/config".value.credential."https://github.com".helper =
+        "!${getExe pkgs.gh} auth git-credential";
     };
 
   flake.homeModules.git =
     { lib, pkgs, ... }:
     let
-      inherit (lib.lists) singleton;
       inherit (lib.generators) toGitINI;
+      inherit (lib.lists) singleton;
     in
     {
       packages = singleton pkgs.gitMinimal;
@@ -33,8 +39,6 @@
         fetch.fsckObjects = true;
         receive.fsckObjects = true;
         transfer.fsckobjects = true;
-
-        url."ssh://git@github.com/".insteadOf = "https://github.com/";
       };
     };
 
