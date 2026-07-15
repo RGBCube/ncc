@@ -206,11 +206,6 @@
         ui.default-command = "log";
 
         ui.diff-editor = ":builtin";
-        ui.pager = [
-          (getExe pkgs.bash)
-          "-c"
-          "exec \${PAGER:-less}"
-        ];
 
         ui.conflict-marker-style = "snapshot";
         ui.graph.style = if config.theme.cornerRadius > 0 then "curved" else "square";
