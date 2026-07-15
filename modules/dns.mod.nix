@@ -347,6 +347,16 @@ in
       ) { };
     in
     {
+      # When the DNS server is at a v6 address and NOT "::1", MacOS will ignore
+      # it if we are on a v4-only network, because it assumes any v6 address not
+      # loopback itself require WAN reachability. It performs no actual reachability
+      # checks, and if it did, it would see that our ULA address is bound to `lo`, and
+      # we would not need to perform such a horrible, terrifyingly despicable hack.
+      imports = singleton {
+        networking.dns = singleton "::1";
+        system.services.resolver.hickory-dns.settings.listen_addrs_ipv6 = singleton "::1";
+      };
+
       networking.dns = singleton address;
 
       launchd.daemons.resolver-autorestart = {
