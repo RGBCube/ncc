@@ -7,12 +7,13 @@
       ...
     }:
     let
+      inherit (lib.fixedPoints) fix;
       inherit (lib.generators) toCliFlagList toLesskey;
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
     in
     {
-      environment.sessionVariables = {
+      environment.sessionVariables = fix (variables: {
         MANROFFOPT = "-c"; # Prevent groff from emitting ANSI color, bat does the highlighting.
         MANPAGER =
           getExe
@@ -22,6 +23,7 @@
             | ^$env.PAGER
           '';
 
+        JJ_PAGER = variables.PAGER;
         PAGER = getExe pkgs.less;
 
         # Before v247, systemctl would spawn $PAGER, which was usually `less`,
@@ -38,7 +40,7 @@
         # If the env var is unset, you're not in "pager secure" mode and $PAGER is not exec'd.
         # (and instead falls back to less on path, and sets LESSSECURE if running under sudo/etc)
         SYSTEMD_PAGERSECURE = "0";
-      };
+      });
 
       # `#env` assignments shadow the real environment, so systemd setting LESS can't mess with our settings.
       xdg.config.files."lesskey".generator = toLesskey;

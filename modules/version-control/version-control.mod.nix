@@ -97,7 +97,6 @@
     }:
     let
       inherit (lib.lists) singleton;
-      inherit (lib.meta) getExe;
       inherit (lib.strings) toLower;
     in
     {
