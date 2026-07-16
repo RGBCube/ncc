@@ -367,7 +367,7 @@ in
           def main [] {
             let probe = ^${getExe pkgs.dig} +time=1 +tries=1 @${address} . | complete
 
-            if $probe.exit_code != 0 {
+            if $probe.exit_code != 0 or not ($probe.stdout | str contains "status: NOERROR") {
               ^/bin/launchctl kickstart -k system/org.nixos.resolver
             }
           }
