@@ -25,7 +25,6 @@
     {
       environment.systemPackages = [
         pkgs.nh
-        pkgs.nix-index
         pkgs.nix-output-monitor
       ];
 
