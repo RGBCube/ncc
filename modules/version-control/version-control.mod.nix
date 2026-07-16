@@ -295,8 +295,11 @@
         aliases.resolve-ast = [
           "resolve"
           "--tool"
-          (getExe pkgs.mergiraf)
+          "mergiraf"
         ];
+
+        # Override the program with the absolute binary path.
+        merge-tools.mergiraf.program = getExe pkgs.mergiraf;
       };
     };
 
