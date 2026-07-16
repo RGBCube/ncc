@@ -11,7 +11,9 @@ let
     filterAttrs
     getAttr
     hasAttr
+    mapAttrs'
     mapAttrsToList
+    nameValuePair
     optionalAttrs
     ;
   inherit (lib.lists)
@@ -226,7 +228,11 @@ let
   extensions.refined-github.id = "hlepfoohegkhhmjieoechaddaejaokhf";
 
   # NAVIGATION
-  extensions.violentmonkey.id = "jinjaccalgkegednnccohejagnlnfdag";
+  extensions.violentmonkey = {
+    id = "jinjaccalgkegednnccohejagnlnfdag";
+
+    preferences.user_scripts_enabled = true;
+  };
   extensions.vimium-c.id = "hfjbmagddngcpeloejdejnfgbamkjaeg";
 
   # SERVICES
@@ -513,10 +519,12 @@ let
     download.prompt_for_download = true; # Ask where to save each time.
 
     # `extensions.settings` is HMAC-tracked. Writing it externally trips Chromium's reset popup warning.
-    # No policy equivalent for per-extension incognito. Toggle manually in helium://extensions for now.
-    #
+    # Toggle it all manually in helium://extensions for now.
     # extensions.settings =
-    #   extensions |> concatMapAttrs (_: extension: { ${extension.id}.incognito = true; });
+    #   extensions
+    #   |> mapAttrs' (
+    #     _: extension: nameValuePair extension.id ({ incognito = true; } // extension.preferences or { })
+    #   );
   };
 in
 {
@@ -554,12 +562,14 @@ in
         };
       };
 
-      system.activationScripts.postActivation.text = "${pkgs.writers.writeNu "helium-default-browser.nu" /* nu */ ''
-        (^/usr/bin/sudo
-          --set-home
-          --user (ls --long /dev/console | get 0.user)
-          ${getExe pkgs.defaultbrowser} helium)
-      ''}";
+      system.activationScripts.postActivation.text = "${pkgs.writers.writeNu "helium-default-browser.nu"
+        /* nu */ ''
+          (^/usr/bin/sudo
+            --set-home
+            --user (ls --long /dev/console | get 0.user)
+            ${getExe pkgs.defaultbrowser} helium)
+        ''
+      }";
     };
 
   flake.nixosModules.helium =
