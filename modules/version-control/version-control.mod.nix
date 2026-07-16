@@ -189,7 +189,10 @@
 
         revsets.bookmark-advance-from = # python
           ''
-            heads(::to & bookmarks() & ~immutable())
+            coalesce(
+              heads(::to & bookmarks() & ~immutable()),
+              heads(::to & bookmarks()),
+            )
           '';
 
         revsets.bookmark-advance-to = # python
