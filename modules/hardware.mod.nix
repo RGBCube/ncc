@@ -1,5 +1,6 @@
-{ inputs, ... }:
+{ inputs, self, ... }:
 {
+  flake.nixosModules.hardware = self.nixosModules.hardware-report;
   flake.nixosModules.hardware-report =
     { lib, ... }:
     let
@@ -13,6 +14,10 @@
       ];
     };
 
+  flake.nixosModules.desktop.imports = [
+    self.nixosModules.bluetooth-gui
+    self.nixosModules.sound
+  ];
   flake.nixosModules.bluetooth-gui =
     { config, lib, ... }:
     let

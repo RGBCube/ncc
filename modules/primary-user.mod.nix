@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.primary-user;
   flake.darwinModules.primary-user =
     { config, lib, ... }:
     let

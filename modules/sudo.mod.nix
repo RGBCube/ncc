@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, self, ... }:
 {
   flake.homeModules.sudo-run0-shim =
     { osConfig, lib, ... }:
@@ -11,11 +11,15 @@
       ];
     };
 
+  flake.nixosModules.default = self.nixosModules.sudo;
   flake.nixosModules.sudo = {
     security.sudo.enable = false;
     security.polkit.enable = true;
+
+    home.extraModules = [ self.homeModules.sudo-run0-shim ];
   };
 
+  flake.nixosModules.desktop = self.nixosModules.sudo-desktop;
   flake.nixosModules.sudo-desktop = {
     security.polkit.extraConfig = # js
       ''
@@ -33,6 +37,7 @@
       '';
   };
 
+  flake.darwinModules.default = self.darwinModules.sudo;
   flake.darwinModules.sudo = {
     security.pam.services.sudo_local = {
       enable = true;

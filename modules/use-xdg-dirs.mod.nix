@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.use-xdg-dirs;
   flake.darwinModules.use-xdg-dirs =
     { config, lib, ... }:
     let
@@ -18,6 +20,7 @@
       }/watchman/watchman.json";
     };
 
+  flake.homeModules.default = self.homeModules.use-xdg-dirs;
   flake.homeModules.use-xdg-dirs =
     {
       config,

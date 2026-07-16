@@ -1,5 +1,6 @@
-{ inputs, ... }:
+{ inputs, self, ... }:
 {
+  flake.nixosModules.shell = self.nixosModules.nushell;
   flake.nixosModules.nushell =
     {
       lib,
@@ -140,6 +141,38 @@
         '';
     };
 
+  flake.homeModules.shell.imports = [
+    self.homeModules.nushell
+    self.homeModules.shell-utils
+  ];
+
+  flake.homeModules.shell-utils =
+    {
+      osConfig,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (lib.lists) optionals;
+    in
+    {
+      packages = [
+        pkgs.fd
+        pkgs.hyperfine
+        pkgs.openssl
+        pkgs.p7zip
+        pkgs.rclone
+        pkgs.tokei
+        pkgs.typos
+        pkgs.yazi
+      ]
+      ++ optionals osConfig.nixpkgs.hostPlatform.isLinux [
+        pkgs.strace
+        pkgs.usbutils
+      ];
+    };
+
   flake.homeModules.nushell =
     {
       config,
@@ -151,8 +184,13 @@
     let
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkIf mkAfter mkBefore;
+      inherit (lib.lists) singleton;
     in
     {
+      files.".hushlogin" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin { text = ""; };
+
+      packages = singleton pkgs.uutils-coreutils-noprefix;
+
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
         text = mkAfter /* zsh */ ''
           # Nested exec for the true shell to see the variables.

@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.homeModules.desktop = self.homeModules.video-player;
   flake.homeModules.video-player =
     {
       lib,

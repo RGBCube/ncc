@@ -1,5 +1,10 @@
-{ config, inputs, ... }:
 {
+  config,
+  inputs,
+  ...
+}:
+{
+  commonModules.default = config.commonModules.theme;
   commonModules.theme =
     { lib, pkgs, ... }:
     let
@@ -40,5 +45,4 @@
           };
     };
 
-  flake.homeModules.theme = config.commonModules.theme;
 }

@@ -276,6 +276,7 @@ in
       };
     };
 
+  flake.darwinModules.networking = self.darwinModules.resolver;
   flake.darwinModules.resolver =
     { lib, pkgs, ... }:
     let
@@ -387,6 +388,7 @@ in
         ''}";
     };
 
+  flake.nixosModules.networking = self.nixosModules.resolver;
   flake.nixosModules.resolver =
     { lib, ... }:
     let

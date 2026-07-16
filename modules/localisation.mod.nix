@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.localisation;
   flake.darwinModules.localisation = {
     system.defaults.NSGlobalDomain = {
       AppleICUForce24HourTime = true;
@@ -9,6 +11,7 @@
     };
   };
 
+  flake.nixosModules.default = self.nixosModules.localisation;
   flake.nixosModules.localisation =
     { pkgs, ... }:
     {
@@ -27,6 +30,7 @@
       i18n.defaultLocale = "C.UTF-8";
     };
 
+  flake.homeModules.default = self.homeModules.localisation;
   flake.homeModules.localisation =
     { osConfig, lib, ... }:
     let

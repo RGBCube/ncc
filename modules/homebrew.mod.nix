@@ -1,5 +1,6 @@
-{ inputs, ... }:
+{ inputs, self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.homebrew;
   flake.darwinModules.homebrew =
     { config, lib, ... }:
     let

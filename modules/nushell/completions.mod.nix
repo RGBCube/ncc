@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.homeModules.shell = self.homeModules.completions;
   flake.homeModules.completions =
     { pkgs, lib, ... }:
     let

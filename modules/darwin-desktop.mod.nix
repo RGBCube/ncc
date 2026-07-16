@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.desktop = self.darwinModules.darwin-desktop;
   flake.darwinModules.darwin-desktop = {
     # DOCK
     system.defaults.dock = {

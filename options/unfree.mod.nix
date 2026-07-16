@@ -1,4 +1,6 @@
+{ config, ... }:
 {
+  commonModules.default = config.commonModules.unfree;
   commonModules.unfree =
     { config, lib, ... }:
     let

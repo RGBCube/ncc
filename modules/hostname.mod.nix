@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.hostname;
   flake.darwinModules.hostname =
     { config, ... }:
     {

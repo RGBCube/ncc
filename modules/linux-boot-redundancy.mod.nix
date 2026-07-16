@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.nixosModules.boot = self.nixosModules.linux-boot-redundancy;
   flake.nixosModules.linux-boot-redundancy =
     {
       lib,

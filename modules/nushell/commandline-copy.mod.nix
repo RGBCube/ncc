@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.homeModules.shell = self.homeModules.commandline-copy;
   flake.homeModules.commandline-copy =
     { pkgs, ... }:
     {

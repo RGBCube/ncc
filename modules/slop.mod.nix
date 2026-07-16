@@ -266,6 +266,10 @@ in
         );
     };
 
+  flake.homeModules.ai.imports = [
+    self.homeModules.claude-code
+    self.homeModules.opencode
+  ];
   flake.homeModules.claude-code =
     {
       config,

@@ -1,7 +1,8 @@
+{ self, ... }:
 {
+  flake.homeModules.desktop = self.homeModules.ghostty;
   flake.homeModules.ghostty =
     {
-      config,
       lib,
       osConfig,
       pkgs,
@@ -25,11 +26,11 @@
         package = if osConfig.nixpkgs.hostPlatform.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
 
         settings = {
-          font-size = config.theme.font.size.normal;
-          font-family = config.theme.font.mono.name;
+          font-size = osConfig.theme.font.size.normal;
+          font-family = osConfig.theme.font.mono.name;
 
-          window-padding-x = config.theme.padding;
-          window-padding-y = config.theme.padding;
+          window-padding-x = osConfig.theme.padding;
+          window-padding-y = osConfig.theme.padding;
 
           # 100 MiB
           scrollback-limit = 100 * 1024 * 1024;
@@ -43,7 +44,7 @@
 
           macos-option-as-alt = mkIf osConfig.nixpkgs.hostPlatform.isDarwin "left";
 
-          config-file = "${pkgs.writeText "base16-config" config.theme.ghosttyConfig}";
+          config-file = "${pkgs.writeText "base16-config" osConfig.theme.ghosttyConfig}";
 
           keybind =
             mapAttrsToList (name: value: "ctrl+shift+${name}=${value}") {

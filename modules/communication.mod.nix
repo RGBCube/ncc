@@ -1,4 +1,11 @@
+{ self, ... }:
 {
+  flake.darwinModules.communication.imports = [
+    self.darwinModules.discord
+    self.darwinModules.signal-desktop
+    self.darwinModules.whatsapp
+    self.darwinModules.zulip
+  ];
   flake.darwinModules.discord =
     { lib, ... }:
     let
@@ -12,7 +19,6 @@
     {
       osConfig,
       config,
-
       lib,
       pkgs,
       ...
@@ -46,7 +52,7 @@
           })
       );
 
-      xdg.config.files."Vencord/settings/quickCss.css".text = config.theme.discordCss;
+      xdg.config.files."Vencord/settings/quickCss.css".text = osConfig.theme.discordCss;
     };
 
   flake.darwinModules.signal-desktop =
@@ -128,6 +134,13 @@
       packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.zulip;
     };
 
+  flake.homeModules.communication.imports = [
+    self.homeModules.cinny
+    self.homeModules.discord
+    self.homeModules.signal-desktop
+    self.homeModules.whatsapp
+    self.homeModules.zulip
+  ];
   flake.homeModules.cinny =
     { lib, pkgs, ... }:
     let

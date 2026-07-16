@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.desktop = self.darwinModules.hammerspoon;
   flake.darwinModules.hammerspoon =
     { lib, ... }:
     let

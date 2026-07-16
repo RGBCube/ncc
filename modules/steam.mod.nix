@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.nixosModules.gaming = self.nixosModules.steam;
   flake.nixosModules.steam =
     { lib, ... }:
     let

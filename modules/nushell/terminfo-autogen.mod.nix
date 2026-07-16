@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.homeModules.shell = self.homeModules.terminfo-autogen;
   flake.homeModules.terminfo-autogen =
     { pkgs, lib, ... }:
     let

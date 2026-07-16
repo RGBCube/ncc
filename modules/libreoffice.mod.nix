@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.desktop = self.darwinModules.libreoffice;
   flake.darwinModules.libreoffice =
     { lib, ... }:
     let
@@ -8,6 +10,7 @@
       homebrew.casks = singleton "libreoffice";
     };
 
+  flake.homeModules.desktop = self.homeModules.libreoffice;
   flake.homeModules.libreoffice =
     {
       osConfig,

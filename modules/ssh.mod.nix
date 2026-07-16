@@ -1,5 +1,6 @@
 { self, ... }:
 {
+  flake.homeModules.default = self.homeModules.ssh-client;
   flake.homeModules.ssh-client =
     {
       config,
@@ -64,6 +65,7 @@
         }";
     };
 
+  flake.homeModules.desktop = self.homeModules.ssh-client-desktop;
   flake.homeModules.ssh-client-desktop =
     { pkgs, ... }:
     {
@@ -74,6 +76,10 @@
       programs.nushell.aliases.mosh = "mosh --no-init";
     };
 
+  flake.nixosModules.server.imports = [
+    self.nixosModules.ssh-server
+    self.nixosModules.endlessh-go
+  ];
   flake.nixosModules.ssh-server =
     {
       config,

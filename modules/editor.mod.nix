@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.homeModules.shell = self.homeModules.helix;
   flake.homeModules.helix =
     {
       lib,
@@ -45,7 +47,43 @@
 
       packages = [
         package
+
+        # CMAKE
+        pkgs.cmake-language-server
+
+        # GO
+        pkgs.gopls
+
+        # HTML
+        pkgs.vscode-langservers-extracted
+
+        # LATEX
+        pkgs.texlab
+
+        # LUA
+        pkgs.lua-language-server
+
+        # MARKDOWN
+        pkgs.markdown-oxide
+
+        # NIX
+        pkgs.nixfmt
+        pkgs.nil
+
+        # PYTHON
+        pkgs.basedpyright
+
+        # RUST
+        pkgs.rust-analyzer
+        pkgs.lldb
+
+        # TYPESCRIPT & OTHERS
+        pkgs.deno
+
+        # YAML
+        pkgs.yaml-language-server
       ];
+
       xdg.config.files."helix/config.toml".generator = pkgs.writers.writeTOML "helix-config.toml";
       xdg.config.files."helix/config.toml".value = {
         theme = "gruvbox_dark_hard";
@@ -241,46 +279,5 @@
             }
           ];
       };
-    };
-
-  flake.homeModules.helix-desktop =
-    { pkgs, ... }:
-    {
-      packages = [
-        # CMAKE
-        pkgs.cmake-language-server
-
-        # GO
-        pkgs.gopls
-
-        # HTML
-        pkgs.vscode-langservers-extracted
-
-        # LATEX
-        pkgs.texlab
-
-        # LUA
-        pkgs.lua-language-server
-
-        # MARKDOWN
-        pkgs.markdown-oxide
-
-        # NIX
-        pkgs.nixfmt
-        pkgs.nil
-
-        # PYTHON
-        pkgs.basedpyright
-
-        # RUST
-        pkgs.rust-analyzer
-        pkgs.lldb
-
-        # TYPESCRIPT & OTHERS
-        pkgs.deno
-
-        # YAML
-        pkgs.yaml-language-server
-      ];
     };
 }

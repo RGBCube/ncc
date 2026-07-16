@@ -1,5 +1,6 @@
 { self, ... }:
 {
+  flake.darwinModules.desktop = self.darwinModules.darwin-wm;
   flake.darwinModules.darwin-wm =
     {
       config,

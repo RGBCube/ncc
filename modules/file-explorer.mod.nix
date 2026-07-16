@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.desktop = self.darwinModules.file-explorer;
   flake.darwinModules.file-explorer =
     {
       config,
@@ -58,6 +60,7 @@
       ''}";
     };
 
+  flake.homeModules.desktop = self.homeModules.file-explorer;
   flake.homeModules.file-explorer =
     {
       lib,

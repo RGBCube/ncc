@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.unshittify;
   flake.darwinModules.unshittify =
     {
       config,
@@ -10,6 +12,8 @@
       shadowPath = "/Users/${config.system.primaryUser}/.local/share/shadow";
     in
     {
+      home.extraModules = [ self.homeModules.shadow-xcode ];
+
       # SHADOW-XCODE
       system.activationScripts.postActivation.text = "${pkgs.writers.writeNu "shadow-xcode.nu" /* nu */ ''
         use std null_device

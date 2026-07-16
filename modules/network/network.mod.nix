@@ -1,4 +1,9 @@
+{ self, ... }:
 {
+  flake.nixosModules.networking.imports = [
+    self.nixosModules.mac
+    self.nixosModules.network
+  ];
   flake.nixosModules.mac =
     { config, lib, ... }:
     let
@@ -51,6 +56,7 @@
       };
     };
 
+  flake.homeModules.cli = self.homeModules.network-tools;
   flake.homeModules.network-tools =
     {
       osConfig,

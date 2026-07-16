@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.nixosModules.hardware = self.nixosModules.persist;
   flake.nixosModules.persist =
     {
       lib,

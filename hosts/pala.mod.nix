@@ -10,17 +10,14 @@ in
   imports =
     singleton
     <| lib.systems.darwinSystem "pala" (
-      { lib, ... }:
-      let
-        inherit (lib.attrsets) attrValues removeAttrs;
-        inherit (lib.lists) singleton;
-      in
       {
-        imports =
-          attrValues (removeAttrs self.darwinModules [ "authoritative" ])
-          ++ singleton {
-            home.extraModules = attrValues (removeAttrs self.homeModules [ "codex" ]);
-          };
+        imports = [
+          self.darwinModules.communication
+          self.darwinModules.media
+          {
+            home.extraModules = singleton self.homeModules.ai;
+          }
+        ];
 
         networking.knownNetworkServices = [
           "Wi-Fi"

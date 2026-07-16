@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.homeModules.shell = self.homeModules.last;
   flake.homeModules.last =
     { pkgs, ... }:
     {

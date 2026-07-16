@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.nixosModules.desktop = self.nixosModules.fonts;
   flake.nixosModules.fonts =
     { config, lib, pkgs, ... }:
     let
@@ -22,6 +24,7 @@
       ];
     };
 
+  flake.nixosModules.server = self.nixosModules.fonts-disable;
   flake.nixosModules.fonts-disable = {
     fonts.fontconfig.enable = false;
   };

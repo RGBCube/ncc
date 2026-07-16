@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.nixosModules.boot = self.nixosModules.linux-kernel;
   flake.nixosModules.linux-kernel =
     { lib, pkgs, ... }:
     {

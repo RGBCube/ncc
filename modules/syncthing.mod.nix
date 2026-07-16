@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.syncthing;
   flake.darwinModules.syncthing =
     { lib, ... }:
     let

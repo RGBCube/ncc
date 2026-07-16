@@ -1,5 +1,6 @@
-{ inputs, ... }:
+{ inputs, self, ... }:
 {
+  flake.homeModules.default = self.homeModules.home;
   flake.homeModules.home =
     {
       config,
@@ -42,6 +43,7 @@
       home.clobberByDefault = true;
     };
 
+  flake.nixosModules.default = self.nixosModules.home;
   flake.nixosModules.home =
     { lib, ... }:
     let
@@ -53,5 +55,6 @@
       home.users.root = { };
     };
 
+  flake.darwinModules.default = self.darwinModules.home;
   flake.darwinModules.home = inputs.hjem.darwinModules.hjem;
 }

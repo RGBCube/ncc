@@ -1,5 +1,6 @@
+{ self, ... }:
 {
-
+  flake.darwinModules.media = self.darwinModules.obs-studio;
   flake.darwinModules.obs-studio =
     { lib, ... }:
     let
@@ -9,6 +10,7 @@
       homebrew.casks = singleton "obs";
     };
 
+  flake.homeModules.media = self.homeModules.obs-studio;
   flake.homeModules.obs-studio =
     {
       osConfig,

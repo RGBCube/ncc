@@ -1,5 +1,7 @@
+{ self, ... }:
 {
-  flake.nixosModules.boot =
+  flake.nixosModules.boot = self.nixosModules.linux-boot;
+  flake.nixosModules.linux-boot =
     { lib, ... }:
     let
       inherit (lib.modules) mkDefault;

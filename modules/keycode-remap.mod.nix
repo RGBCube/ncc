@@ -1,3 +1,4 @@
+{ self, ... }:
 let
   allBasic = map (x: x // { type = "basic"; });
 
@@ -181,6 +182,7 @@ let
   ];
 in
 {
+  flake.darwinModules.desktop = self.darwinModules.keycode-remap;
   flake.darwinModules.keycode-remap =
     { lib, ... }:
     let

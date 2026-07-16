@@ -1,4 +1,7 @@
+{ self, ... }:
 {
+
+  flake.homeModules.shell = self.homeModules.colors;
   flake.homeModules.colors =
     { lib, pkgs, ... }:
     let

@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.media = self.darwinModules.krita;
   flake.darwinModules.krita =
     { lib, ... }:
     let
@@ -8,6 +10,7 @@
       homebrew.casks = singleton "krita";
     };
 
+  flake.homeModules.media = self.homeModules.krita;
   flake.homeModules.krita =
     {
       lib,

@@ -103,6 +103,7 @@
       };
     };
 
+  flake.nixosModules.default = self.nixosModules.nix;
   flake.nixosModules.nix =
     { lib, ... }:
     let
@@ -117,6 +118,7 @@
       };
     };
 
+  flake.darwinModules.default = self.darwinModules.nix;
   flake.darwinModules.nix =
     { lib, ... }:
     let

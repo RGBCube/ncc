@@ -1,7 +1,9 @@
+{ self, ... }:
 {
+  flake.homeModules.shell = self.homeModules.bat;
   flake.homeModules.bat =
     {
-      config,
+      osConfig,
       lib,
       pkgs,
       ...
@@ -87,9 +89,10 @@
 
       xdg.config.files."bat/config".generator = toCliFlagList;
       xdg.config.files."bat/config".value.theme = "base16";
-      xdg.config.files."bat/themes/base16.tmTheme".text = config.theme.tmTheme;
+      xdg.config.files."bat/themes/base16.tmTheme".text = osConfig.theme.tmTheme;
     };
 
+  flake.darwinModules.shell = self.darwinModules.bat;
   flake.darwinModules.bat =
     {
       config,
@@ -107,6 +110,7 @@
       ''}";
     };
 
+  flake.nixosModules.shell = self.nixosModules.bat;
   flake.nixosModules.bat =
     {
       config,

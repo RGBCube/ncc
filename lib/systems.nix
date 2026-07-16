@@ -8,6 +8,8 @@
         lib = self;
 
         modules = [
+          inputs.self.darwinModules.default
+
           module
 
           {
@@ -23,6 +25,8 @@
     {
       flake.nixosConfigurations.${hostName} = self.nixosSystem {
         modules = [
+          inputs.self.nixosModules.default
+
           module
 
           {

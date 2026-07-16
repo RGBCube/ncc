@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.clipboard;
   flake.darwinModules.clipboard =
     { lib, pkgs, ... }:
     let

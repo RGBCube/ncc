@@ -528,6 +528,7 @@ let
   };
 in
 {
+  flake.darwinModules.desktop = self.darwinModules.helium;
   flake.darwinModules.helium =
     {
       lib,
@@ -572,6 +573,7 @@ in
       }";
     };
 
+  flake.nixosModules.desktop = self.nixosModules.helium;
   flake.nixosModules.helium =
     { lib, ... }:
     let
@@ -581,6 +583,7 @@ in
       environment.etc."chromium/policies/managed/policies.json".text = toJSON policy;
     };
 
+  flake.homeModules.desktop = self.homeModules.helium;
   flake.homeModules.helium =
     {
       lib,

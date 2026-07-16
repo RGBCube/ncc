@@ -1,5 +1,6 @@
 { self, ... }:
 {
+  flake.homeModules.default = self.homeModules.inputs-gcroot;
   flake.homeModules.inputs-gcroot =
     { lib, ... }:
     let

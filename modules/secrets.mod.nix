@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, self, ... }:
 {
   commonModules.secrets =
     { lib, ... }:
@@ -10,6 +10,7 @@
       imports = singleton <| mkAliasOptionModule [ "secrets" ] [ "age" "secrets" ];
     };
 
+  flake.nixosModules.default = self.nixosModules.secrets;
   flake.nixosModules.secrets =
     { config, lib, ... }:
     let
@@ -48,6 +49,7 @@
       ];
     };
 
+  flake.darwinModules.default = self.darwinModules.secrets;
   flake.darwinModules.secrets =
     { config, lib, ... }:
     let
@@ -59,6 +61,7 @@
       age.identityPaths = singleton "/Users/${config.system.primaryUser}/.ssh/id"; # FIXME: This path shouldn't exist, but does because of agenix (sigh)
     };
 
+  flake.homeModules.default = self.homeModules.secrets-manager;
   flake.homeModules.secrets-manager =
     { pkgs, lib, ... }:
     let

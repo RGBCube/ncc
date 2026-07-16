@@ -12,52 +12,13 @@ in
     <| lib.systems.nixosSystem "vienna" (
       { config, lib, ... }:
       let
-        inherit (lib.attrsets) attrValues removeAttrs;
         inherit (lib.lists) singleton;
-        inherit (lib.trivial) flip;
       in
       {
-        imports =
-          (
-            self.nixosModules
-            |> flip removeAttrs [
-              "bluetooth-gui"
-              "fonts"
-              "helium"
-              "iso"
-              "packages-debugging-gui"
-              "sound"
-              "steam"
-              "sudo-desktop"
-            ]
-            |> attrValues
-          )
-          ++ singleton {
-            home.extraModules =
-              self.homeModules
-              |> flip removeAttrs [
-                "cinny"
-                "codex"
-                "darwin-wm"
-                "discord"
-                "file-explorer"
-                "ghostty"
-                "helium"
-                "helix-desktop"
-                "keepassxc"
-                "krita"
-                "libreoffice"
-                "obs-studio"
-                "signal-desktop"
-                "ssh-client-desktop"
-                "thunderbird"
-                "torrent-client"
-                "video-player"
-                "whatsapp"
-                "zulip"
-              ]
-              |> attrValues;
-          };
+        imports = [
+          self.nixosModules.server
+          self.nixosModules.authoritative
+        ];
 
         networking = {
           macPolicy = "hostname";

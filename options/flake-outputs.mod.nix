@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (lib.attrsets) mapAttrs;
+  inherit (lib.attrsets) mapAttrs optionalAttrs;
   inherit (lib.lists) singleton;
   inherit (lib.options) mkOption;
   inherit (lib.fixedPoints) fix;
@@ -19,6 +19,17 @@ let
       key = module._file;
       imports = singleton value;
     });
+
+  wrapSystem =
+    { key, class }:
+    name: value:
+    wrap key name value
+    // {
+      _class = class;
+    }
+    // optionalAttrs (config.flake.homeModules ? ${name}) {
+      home.extraModules = singleton config.flake.homeModules.${name};
+    };
 in
 {
   # flake-parts doesn't declare `key`, so deduplication doesn't happen.
@@ -29,14 +40,24 @@ in
   options.flake.nixosModules = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
-    apply = mapAttrs (name: value: wrap "nixosModules" name value // { _class = "nixos"; });
+    apply =
+      mapAttrs
+      <| wrapSystem {
+        key = "nixosModules";
+        class = "nixos";
+      };
     description = "NixOS modules.";
   };
 
   options.flake.darwinModules = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
-    apply = mapAttrs (name: value: wrap "darwinModules" name value // { _class = "darwin"; });
+    apply =
+      mapAttrs
+      <| wrapSystem {
+        key = "darwinModules";
+        class = "darwin";
+      };
     description = "Darwin modules.";
   };
 

@@ -1,5 +1,7 @@
+{ self, ... }:
 {
   # TODO: https://hydra.nixos.org/build/337045807
+  flake.darwinModules.media = self.darwinModules.torrent-client;
   flake.darwinModules.torrent-client =
     { lib, ... }:
     let
@@ -9,6 +11,7 @@
       homebrew.casks = singleton "qbittorrent";
     };
 
+  flake.homeModules.media = self.homeModules.torrent-client;
   flake.homeModules.torrent-client =
     {
       lib,

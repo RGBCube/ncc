@@ -1,5 +1,15 @@
-{ self, ... }:
+{ self, config, ... }:
 {
+  flake.homeModules.version-control.imports = [
+    self.homeModules.difftastic
+    self.homeModules.gh
+    self.homeModules.git
+    self.homeModules.jujutsu
+    self.homeModules.mergiraf
+    self.homeModules.radicle
+    self.homeModules.watchman
+  ];
+
   flake.homeModules.gh =
     { lib, pkgs, ... }:
     let
@@ -42,6 +52,7 @@
       };
     };
 
+  commonModules.version-control = config.commonModules.radicle;
   commonModules.radicle =
     { config, lib, ... }:
     let
@@ -90,7 +101,7 @@
 
   flake.homeModules.jujutsu =
     {
-      config,
+      osConfig,
       lib,
       pkgs,
       ...
@@ -210,7 +221,7 @@
         ui.diff-editor = ":builtin";
 
         ui.conflict-marker-style = "snapshot";
-        ui.graph.style = if config.theme.cornerRadius > 0 then "curved" else "square";
+        ui.graph.style = if osConfig.theme.cornerRadius > 0 then "curved" else "square";
 
         templates.draft_commit_description = # python
           ''
@@ -254,7 +265,7 @@
 
   flake.homeModules.difftastic =
     {
-      config,
+      osConfig,
       lib,
       pkgs,
       ...
@@ -266,7 +277,9 @@
       inherit (lib.modules) mkDefault;
 
       difft = pkgs.writeShellScriptBin "difft" /* bash */ ''
-        exec ${getExe pkgs.difftastic} --background ${if config.theme.isDark then "dark" else "light"} "$@"
+        exec ${getExe pkgs.difftastic} --background ${
+          if osConfig.theme.isDark then "dark" else "light"
+        } "$@"
       '';
     in
     {

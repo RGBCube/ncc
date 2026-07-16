@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.darwinModules.desktop = self.darwinModules.keepassxc;
   flake.darwinModules.keepassxc =
     { lib, ... }:
     let
@@ -8,6 +10,7 @@
       homebrew.casks = singleton "keepassxc";
     };
 
+  flake.homeModules.desktop = self.homeModules.keepassxc;
   flake.homeModules.keepassxc =
     {
       osConfig,

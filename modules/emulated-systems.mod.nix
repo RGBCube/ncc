@@ -1,4 +1,6 @@
+{ self, ... }:
 {
+  flake.nixosModules.server = self.nixosModules.emulated-systems;
   flake.nixosModules.emulated-systems =
     { config, lib, ... }:
     let
