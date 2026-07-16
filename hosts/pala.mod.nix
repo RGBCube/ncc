@@ -17,8 +17,7 @@ in
       in
       {
         imports =
-          attrValues (removeAttrs self.commonModules [ "authoritative" ])
-          ++ attrValues self.darwinModules
+          attrValues (removeAttrs self.darwinModules [ "authoritative" ])
           ++ singleton {
             home.extraModules = attrValues (removeAttrs self.homeModules [ "codex" ]);
           };

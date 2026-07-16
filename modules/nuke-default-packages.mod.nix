@@ -1,5 +1,5 @@
 {
-  flake.commonModules.nuke-default-packages = {
+  commonModules.nuke-default-packages = {
     environment.defaultPackages = [ ];
   };
 

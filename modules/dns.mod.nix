@@ -121,7 +121,7 @@ in
     # };
   };
 
-  flake.commonModules.authoritative =
+  commonModules.authoritative =
     {
       lib,
       pkgs,
@@ -183,7 +183,7 @@ in
         });
     };
 
-  flake.commonModules.resolver =
+  commonModules.resolver =
     {
       config,
       lib,

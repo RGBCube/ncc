@@ -26,7 +26,7 @@
       };
     };
 
-  flake.commonModules.home =
+  commonModules.home =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;

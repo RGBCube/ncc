@@ -1,5 +1,5 @@
 {
-  flake.commonModules.documentation = {
+  commonModules.documentation = {
     documentation = {
       man.enable = true;
 

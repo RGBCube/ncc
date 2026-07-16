@@ -42,7 +42,7 @@
       };
     };
 
-  flake.commonModules.radicle =
+  commonModules.radicle =
     { config, lib, ... }:
     let
       inherit (lib.attrsets) optionalAttrs;

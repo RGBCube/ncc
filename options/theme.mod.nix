@@ -1,6 +1,6 @@
-{ self, inputs, ... }:
+{ config, inputs, ... }:
 {
-  flake.commonModules.theme =
+  commonModules.theme =
     { lib, pkgs, ... }:
     let
       inherit (lib.modules) mkDefault;
@@ -40,5 +40,5 @@
           };
     };
 
-  flake.homeModules.theme = self.commonModules.theme;
+  flake.homeModules.theme = config.commonModules.theme;
 }

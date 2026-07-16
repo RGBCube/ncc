@@ -1,5 +1,5 @@
 {
-  flake.commonModules.unfree =
+  commonModules.unfree =
     { config, lib, ... }:
     let
       inherit (lib.lists) elem;

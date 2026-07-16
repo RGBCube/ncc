@@ -18,8 +18,7 @@ in
       in
       {
         imports =
-          attrValues self.commonModules
-          ++ (
+          (
             self.nixosModules
             |> flip removeAttrs [
               "bluetooth-gui"

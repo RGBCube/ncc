@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  flake.commonModules.secrets =
+  commonModules.secrets =
     { lib, ... }:
     let
       inherit (lib.lists) singleton;

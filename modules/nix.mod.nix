@@ -1,6 +1,6 @@
 { self, inputs, ... }:
 {
-  flake.commonModules.nix =
+  commonModules.nix =
     {
       config,
       lib,
