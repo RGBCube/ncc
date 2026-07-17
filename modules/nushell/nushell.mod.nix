@@ -37,7 +37,7 @@
       assertions = singleton {
         assertion =
           hashString "sha256" config.environment.extraInit
-          == "36e519c7ce90530ada79c273393c0990b6f26faa4d54376d6a8eb30c872855a1";
+          == "a9821b1c10a863d80fb60b639194548fbcb46a1fa57726beb777cbfd0b79a32c";
         message = ''
           nushell: environment.extraInit changed, update system.build.setEnvironmentNu's Nu translation.
 

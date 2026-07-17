@@ -12,7 +12,7 @@
     let
       inherit (lib.attrsets) filterAttrs mapAttrs;
       inherit (lib.generators) toSSHConfig;
-      inherit (lib.lists) head;
+      inherit (lib.lists) head singleton;
       inherit (lib.meta) getExe';
       inherit (lib.modules) mkAfter;
       inherit (lib.strings) optionalString;
@@ -20,6 +20,8 @@
       echo = getExe' pkgs.uutils-coreutils-noprefix "echo";
     in
     {
+      packages = singleton pkgs.openssh;
+
       xdg.config.files."ssh/config".generator = toSSHConfig;
       xdg.config.files."ssh/config".value.Host =
         (
