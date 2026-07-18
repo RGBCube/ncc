@@ -15,11 +15,8 @@
         optionalAttrs
         ;
       inherit (lib.lists) optional singleton;
-      inherit (lib.strings) concatStringsSep;
-      inherit (lib.trivial) const flip id;
+      inherit (lib.trivial) const flip;
       inherit (lib.types) isType;
-
-      registryMap = filterAttrs (const <| isType "flake") inputs;
     in
     {
       environment.systemPackages = [
@@ -28,32 +25,27 @@
       ];
 
       system = optionalAttrs config.nixpkgs.hostPlatform.isLinux {
-        # We use `nh` and don't need nixos-rebuild, nixos-generate-config, etc.
         disableInstallerTools = true;
       };
 
-      nix.channel.enable = false;
-
-      nix.gc = {
-        automatic = true;
-        options = "--delete-older-than 3d";
-      };
-
-      nix.nixPath =
-        registryMap
-        |> mapAttrsToList (name: value: "${name}=${value}")
-        |> (if config.nixpkgs.hostPlatform.isDarwin then concatStringsSep ":" else id);
-
-      nix.registry =
-        registryMap // { default = inputs.nixpkgs; } |> mapAttrs (_: flake: { inherit flake; });
+      nix.package = pkgs.nixVersions.latest;
 
       nix.settings =
         (import <| self + /flake.nix).nixConfig
         |> flip removeAttrs (optional config.nixpkgs.hostPlatform.isDarwin "use-cgroups");
 
+      nix.channel.enable = false;
+
       nix.optimise.automatic = true;
 
-      nix.package = pkgs.nixVersions.latest;
+      nix.gc.automatic = true;
+      nix.gc.options = "--delete-older-than 3d";
+
+      nix.registry =
+        filterAttrs (const <| isType "flake") inputs // { default = inputs.nixpkgs; }
+        |> mapAttrs (_: flake: { inherit flake; });
+
+      nix.nixPath = config.nix.registry |> mapAttrsToList (name: const "${name}=flake:${name}");
 
       home.extraModules = singleton {
         programs.nushell.extraConfig = "source ${
