@@ -9,13 +9,12 @@
     }:
     let
       inherit (lib.attrsets)
-        attrsToList
         filterAttrs
         mapAttrs
         mapAttrsToList
         optionalAttrs
         ;
-      inherit (lib.lists) filter optional singleton;
+      inherit (lib.lists) optional singleton;
       inherit (lib.strings) concatStringsSep;
       inherit (lib.trivial) const flip id;
       inherit (lib.types) isType;
@@ -32,28 +31,6 @@
         # We use `nh` and don't need nixos-rebuild, nixos-generate-config, etc.
         disableInstallerTools = true;
       };
-
-      nix.distributedBuilds = true;
-      nix.buildMachines =
-        self.nixosConfigurations
-        |> attrsToList
-        |> filter ({ name, value }: name != config.networking.hostName && value.config.users.users ? build)
-        |> map (
-          { name, value }:
-          {
-            hostName = name;
-            maxJobs = 20;
-            protocol = "ssh-ng";
-            sshUser = "build";
-            supportedFeatures = [
-              "benchmark"
-              "big-parallel"
-              "kvm"
-              "nixos-test"
-            ];
-            system = value.config.nixpkgs.hostPlatform.system;
-          }
-        );
 
       nix.channel.enable = false;
 
