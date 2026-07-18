@@ -36,6 +36,7 @@
           scrollback-limit = 100 * 1024 * 1024;
 
           mouse-hide-while-typing = true;
+          mouse-scroll-multiplier = "discrete:1";
 
           quit-after-last-window-closed = true;
 
