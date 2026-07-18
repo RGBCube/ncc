@@ -9,12 +9,14 @@
     }:
     let
       inherit (lib.attrsets)
+        attrNames
         filterAttrs
         mapAttrs
         mapAttrsToList
         optionalAttrs
         ;
       inherit (lib.lists) optional singleton;
+      inherit (lib.strings) toJSON;
       inherit (lib.trivial) const flip;
       inherit (lib.types) isType;
     in
@@ -50,22 +52,22 @@
       home.extraModules = singleton {
         programs.nushell.extraConfig = "source ${
           pkgs.writeText "nix-run-shortcuts.nu" /* nu */ ''
-            def --wrapped * [program: string = "", ...arguments] {
-              if ($program | str contains "#") or ($program | str contains ":") {
-                nix run $program -- ...$arguments
+            def >? []: string -> string {
+              if ($in | str contains "#") or ($in | str contains ":") {
+                $in
+              } else if $in in ${toJSON <| attrNames self.packages.${config.nixpkgs.hostPlatform.system}} {
+                "path:${self}#" + $in
               } else {
-                nix run ("default#" + $program) -- ...$arguments
+                "path:${inputs.nixpkgs}#" + $in
               }
             }
 
+            def --wrapped * [program: string = "", ...arguments] {
+              nix run ($program | >?) -- ...$arguments
+            }
+
             def --wrapped > [...arguments: string] {
-              nix shell ...($arguments | each {
-                if ($in | str contains "#") or ($in | str contains ":") {
-                  $in
-                } else {
-                  "default#" + $in
-                }
-              })
+              nix shell ...($arguments | each { $in | >? })
             }
           ''
         }";
