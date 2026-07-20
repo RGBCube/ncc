@@ -45,9 +45,6 @@
       cfg = config.monerod;
     in
     {
-      # https://nixos.org/manual/nixos/unstable/#modular-services
-      _class = "service";
-
       imports = singleton self.modularServices.base;
 
       options.monerod = {

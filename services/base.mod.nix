@@ -144,9 +144,6 @@
         |> filter (port: port != null);
     in
     {
-      # https://nixos.org/manual/nixos/unstable/#modular-services
-      _class = "service";
-
       options = {
         exec.allow = mkOption {
           type =

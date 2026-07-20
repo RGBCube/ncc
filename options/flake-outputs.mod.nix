@@ -13,20 +13,27 @@ let
   inherit (lib.types) deferredModule lazyAttrsOf;
 
   wrap =
-    kind: name: value:
+    {
+      kind,
+      class ? null,
+    }:
+    name: value:
     fix (module: {
       _file = "${toString moduleLocation}#${kind}.${name}";
       key = module._file;
+
+      ${if class == null then null else "_class"} = class;
+
       imports = singleton value;
     });
 
   wrapSystem =
-    { key, class }:
+    {
+      kind,
+      class ? null,
+    }:
     name: value:
-    wrap key name value
-    // {
-      _class = class;
-    }
+    wrap { inherit kind class; } name value
     // optionalAttrs (config.flake.homeModules ? ${name}) {
       home.extraModules = singleton config.flake.homeModules.${name};
     };
@@ -43,7 +50,7 @@ in
     apply =
       mapAttrs
       <| wrapSystem {
-        key = "nixosModules";
+        kind = "nixosModules";
         class = "nixos";
       };
     description = "NixOS modules.";
@@ -55,7 +62,7 @@ in
     apply =
       mapAttrs
       <| wrapSystem {
-        key = "darwinModules";
+        kind = "darwinModules";
         class = "darwin";
       };
     description = "Darwin modules.";
@@ -64,14 +71,24 @@ in
   options.flake.homeModules = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
-    apply = mapAttrs (name: value: wrap "homeModules" name value // { _class = "hjem"; });
+    apply =
+      mapAttrs
+      <| wrap {
+        kind = "homeModules";
+        class = "hjem";
+      };
     description = "Home modules.";
   };
 
   options.flake.modularServices = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
-    apply = mapAttrs (name: value: wrap "modularServices" name value // { _class = "service"; });
+    apply =
+      mapAttrs
+      <| wrap {
+        kind = "modularServices";
+        class = "services";
+      };
     description = "Modular service modules.";
   };
 
@@ -79,7 +96,7 @@ in
   options.commonModules = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
-    apply = mapAttrs <| wrap "commonModules";
+    apply = mapAttrs <| wrap { kind = "commonModules"; };
     description = "Modules shared between NixOS and Darwin.";
   };
 

@@ -6,6 +6,15 @@
     self.darwinModules.whatsapp
     self.darwinModules.zulip
   ];
+
+  flake.homeModules.communication.imports = [
+    self.homeModules.cinny
+    self.homeModules.discord
+    self.homeModules.signal-desktop
+    self.homeModules.whatsapp
+    self.homeModules.zulip
+  ];
+
   flake.darwinModules.discord =
     { lib, ... }:
     let
@@ -134,13 +143,6 @@
       packages = optional osConfig.nixpkgs.hostPlatform.isLinux pkgs.zulip;
     };
 
-  flake.homeModules.communication.imports = [
-    self.homeModules.cinny
-    self.homeModules.discord
-    self.homeModules.signal-desktop
-    self.homeModules.whatsapp
-    self.homeModules.zulip
-  ];
   flake.homeModules.cinny =
     { lib, pkgs, ... }:
     let

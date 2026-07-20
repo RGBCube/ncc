@@ -61,9 +61,6 @@
           value;
     in
     {
-      # https://nixos.org/manual/nixos/unstable/#modular-services
-      _class = "service";
-
       imports = singleton self.modularServices.base;
 
       options.hickory-dns = {

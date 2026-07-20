@@ -1,27 +1,31 @@
 { inputs, self, ... }:
 {
-  flake.homeModules.sudo-run0-shim =
-    { osConfig, lib, ... }:
+  flake.nixosModules.default = self.nixosModules.sudo;
+  flake.nixosModules.sudo =
+    { lib, ... }:
     let
-      inherit (lib.modules) mkIf;
+      inherit (lib.lists) singleton;
     in
     {
-      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
-        inputs.sudo-run0-shim.packages.${osConfig.nixpkgs.hostPlatform.system}.run0-sudo-shim
-      ];
+      security.sudo.enable = false;
+      security.polkit.enable = true;
+
+      home.extraModules = singleton (
+        { osConfig, lib, ... }:
+        let
+          inherit (lib.lists) singleton;
+        in
+        {
+          packages =
+            singleton
+              inputs.sudo-run0-shim.packages.${osConfig.nixpkgs.hostPlatform.system}.run0-sudo-shim;
+        }
+      );
     };
 
-  flake.nixosModules.default = self.nixosModules.sudo;
-  flake.nixosModules.sudo = {
-    security.sudo.enable = false;
-    security.polkit.enable = true;
-
-    home.extraModules = [ self.homeModules.sudo-run0-shim ];
-  };
-
-  flake.nixosModules.desktop = self.nixosModules.sudo-desktop;
-  flake.nixosModules.sudo-desktop = {
-    security.polkit.extraConfig = # js
+  flake.nixosModules.desktop = self.nixosModules.sudo-auth-keep;
+  flake.nixosModules.sudo-auth-keep = {
+    security.polkit.extraConfig = # javascript
       ''
         polkit.addRule(function(action, subject) {
           if (action.id == "org.freedesktop.policykit.exec") {

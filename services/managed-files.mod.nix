@@ -58,8 +58,6 @@
       smfh = getExe cfg.smfh;
     in
     {
-      _class = "service";
-
       imports = singleton self.modularServices.base;
 
       options.managed-files = {
