@@ -543,7 +543,7 @@ in
     in
     {
       system.services.helium-policy = {
-        imports = singleton self.modularServices.managed-files;
+        imports = singleton self.serviceModules.managed-files;
 
         managed-files = {
           inherit (pkgs) smfh nushell;

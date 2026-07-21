@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  flake.modularServices.monerod =
+  flake.serviceModules.monerod =
     {
       config,
       lib,
@@ -45,7 +45,7 @@
       cfg = config.monerod;
     in
     {
-      imports = singleton self.modularServices.base;
+      imports = singleton self.serviceModules.base;
 
       options.monerod = {
         package = mkOption {

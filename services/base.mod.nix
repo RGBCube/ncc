@@ -1,5 +1,5 @@
 {
-  flake.modularServices.base =
+  flake.serviceModules.base =
     {
       config,
       lib,

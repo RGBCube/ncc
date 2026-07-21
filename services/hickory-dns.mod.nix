@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  flake.modularServices.hickory-dns =
+  flake.serviceModules.hickory-dns =
     {
       config,
       lib,
@@ -61,7 +61,7 @@
           value;
     in
     {
-      imports = singleton self.modularServices.base;
+      imports = singleton self.serviceModules.base;
 
       options.hickory-dns = {
         package = mkOption {

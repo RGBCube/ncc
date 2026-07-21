@@ -133,7 +133,7 @@ in
     in
     {
       system.services.authoritative = {
-        imports = singleton self.modularServices.hickory-dns;
+        imports = singleton self.serviceModules.hickory-dns;
 
         hickory-dns = {
           package = mkPackage { inherit pkgs lib; };
@@ -234,7 +234,7 @@ in
     in
     {
       system.services.resolver = {
-        imports = singleton self.modularServices.hickory-dns;
+        imports = singleton self.serviceModules.hickory-dns;
 
         hickory-dns = {
           package = mkPackage { inherit pkgs lib; };

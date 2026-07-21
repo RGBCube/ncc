@@ -1,6 +1,6 @@
 { self, ... }:
 {
-  flake.modularServices.managed-files =
+  flake.serviceModules.managed-files =
     {
       config,
       lib,
@@ -58,7 +58,7 @@
       smfh = getExe cfg.smfh;
     in
     {
-      imports = singleton self.modularServices.base;
+      imports = singleton self.serviceModules.base;
 
       options.managed-files = {
         smfh = mkOption {
