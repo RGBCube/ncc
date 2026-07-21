@@ -2,18 +2,24 @@
 {
   flake.homeModules.shell = self.homeModules.direnv;
   flake.homeModules.direnv =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.modules) mkBefore;
+      inherit (lib.lists) singleton;
+    in
     {
-      packages = [
-        pkgs.direnv
-        pkgs.nix-direnv
-      ];
+      packages = singleton pkgs.direnv;
 
-      programs.direnv = {
-        enable = true;
+      xdg.config.files."direnv/lib/nix-direnv.sh".source = "${pkgs.nix-direnv}/share/nix-direnv/direnvrc";
 
-        integrations.nix-direnv.enable = true;
-        integrations.nushell.enable = true;
-      };
+      programs.nushell.extraConfig = mkBefore "source ${
+        pkgs.writeText "direnv-hook.nu" /* nu */ ''
+          $env.config.hooks.env_change.PWD = [
+            { ||
+              ^direnv export json | from json | default {} | load-env
+            }
+          ]
+        ''
+      }";
     };
 }
