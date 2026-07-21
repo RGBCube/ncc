@@ -12,7 +12,7 @@
 
       xdg.config.files."direnv/lib/nix-direnv.sh".source = "${pkgs.nix-direnv}/share/nix-direnv/direnvrc";
 
-      programs.nushell.extraConfig = mkBefore "source ${
+      xdg.config.files."nushell/config.nu".text = mkBefore "source ${
         pkgs.writeText "direnv-hook.nu" /* nu */ ''
           $env.config.hooks.env_change.PWD = [
             { ||

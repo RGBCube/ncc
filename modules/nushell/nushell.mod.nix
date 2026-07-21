@@ -183,58 +183,99 @@
     }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.modules) mkIf mkAfter mkBefore;
-      inherit (lib.lists) singleton;
+      inherit (lib.modules)
+        mkIf
+        mkAfter
+        mkMerge
+        mkOrder
+        ;
+      inherit (lib.attrsets) mapAttrsToList;
+      inherit (lib.strings) concatLines toJSON;
+
+      package = pkgs.nushell;
     in
     {
       files.".hushlogin" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin { text = ""; };
 
-      packages = singleton pkgs.uutils-coreutils-noprefix;
+      packages = [
+        package
+        pkgs.uutils-coreutils-noprefix
+      ];
 
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
         text = mkAfter /* zsh */ ''
           # Nested exec for the true shell to see the variables.
-          SHELL=${getExe config.programs.nushell.package} exec ${getExe config.programs.nushell.package} \
+          SHELL=${getExe package} exec ${getExe package} \
             --login \
-            --config '${config.environment.sessionVariables.XDG_CONFIG_HOME}/nushell/config.nu' \
+            --config ${config.xdg.config.files."nushell/config.nu".source} \
             --execute 'exec $env.SHELL'
         '';
       };
 
-      xdg.config.files."nushell/config.nu".text =
-        mkIf osConfig.nixpkgs.hostPlatform.isLinux
-        <| mkBefore /* nu */ ''
-          source ${osConfig.system.build.setEnvironmentNu}
-        '';
+      xdg.config.files."nushell/settings.nu".generator = settings: /* nu */ ''
+        $env.config = $env.config | merge deep (r###'${toJSON settings}'### | from json)
+      '';
+      xdg.config.files."nushell/settings.nu".value = {
+        history.file_format = "sqlite";
+        history.max_size = 1 * 1000 * 1000;
 
-      programs.nushell = {
-        enable = true;
+        show_banner = false;
 
-        settings = {
-          history.file_format = "sqlite";
-          history.max_size = 1 * 1000 * 1000;
+        edit_mode = "vi";
 
-          show_banner = false;
+        cursor_shape.emacs = "line";
+        cursor_shape.vi_insert = "line";
+        cursor_shape.vi_normal = "block";
 
-          edit_mode = "vi";
+        completions.algorithm = "substring";
 
-          cursor_shape.emacs = "line";
-          cursor_shape.vi_insert = "line";
-          cursor_shape.vi_normal = "block";
+        use_kitty_protocol = true;
+        shell_integration.osc9_9 = true;
 
-          completions.algorithm = "substring";
+        highlight_resolved_externals = true;
 
-          use_kitty_protocol = true;
-          shell_integration.osc9_9 = true;
+        table.mode = "single";
+        table.header_on_separator = true;
+        table.footer_inheritance = true;
+      };
 
-          highlight_resolved_externals = true;
+      xdg.config.files."nushell/aliases.nu".generator =
+        aliases: aliases |> mapAttrsToList (name: body: "alias ${name} = ${body}") |> concatLines;
+      xdg.config.files."nushell/aliases.nu".value = {
+        e = "^$env.EDITOR";
 
-          table.mode = "single";
-          table.header_on_separator = true;
-          table.footer_inheritance = true;
-        };
+        la = "ls --all";
+        ll = "ls --long";
+        lla = "ls --long --all";
 
-        extraConfig = mkAfter "source ${
+        cp = "cp --recursive --verbose --progress";
+        mv = "mv --verbose";
+        rm = "rm --recursive --verbose";
+
+        pstree = "${getExe pkgs.pstree} -g 3";
+        tree = "${getExe pkgs.eza} --tree --git-ignore --group-directories-first";
+      };
+
+      xdg.config.files."nushell/config.nu".text = mkMerge [
+        (
+          mkIf osConfig.nixpkgs.hostPlatform.isLinux
+          <| mkOrder 100 /* nu */ ''
+            source ${osConfig.system.build.setEnvironmentNu}
+          ''
+        )
+
+        (mkOrder 200 /* nu */ ''
+          load-env (r###'${toJSON config.environment.sessionVariables}'### | from json)
+        '')
+
+        (mkOrder 300 /* nu */ ''
+          source ${config.xdg.config.files."nushell/settings.nu".source}
+        '')
+        (mkOrder 400 /* nu */ ''
+          source ${config.xdg.config.files."nushell/aliases.nu".source}
+        '')
+
+        (mkAfter "source ${
           pkgs.writeText "nushell-extra.nu" /* nu */ ''
             ulimit --file-descriptor-count hard
 
@@ -263,22 +304,7 @@
               | if $in != null { path expand }
             }
           ''
-        }";
-
-        aliases = {
-          e = "^$env.EDITOR";
-
-          la = "ls --all";
-          ll = "ls --long";
-          lla = "ls --long --all";
-
-          cp = "cp --recursive --verbose --progress";
-          mv = "mv --verbose";
-          rm = "rm --recursive --verbose";
-
-          pstree = "${getExe pkgs.pstree} -g 3";
-          tree = "${getExe pkgs.eza} --tree --git-ignore --group-directories-first";
-        };
-      };
+        }")
+      ];
     };
 }

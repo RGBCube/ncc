@@ -30,7 +30,7 @@
     {
       xdg.data.files."android".type = "directory";
       environment.sessionVariables.ANDROID_USER_HOME = "${config.xdg.data.directory}/android";
-      programs.nushell.extraConfig = "source ${
+      xdg.config.files."nushell/config.nu".text = "source ${
         pkgs.writeText "adb-wrapper.nu" /* nu */ ''
           def --wrapped adb [...arguments] {
             with-env { HOME: "${config.xdg.data.directory}/android" } { ^adb ...$arguments }

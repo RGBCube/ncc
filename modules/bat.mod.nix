@@ -62,7 +62,7 @@
         "--RAW-CONTROL-CHARS"
       ];
 
-      programs.nushell.aliases = {
+      xdg.config.files."nushell/aliases.nu".value = {
         less = "^$env.PAGER";
 
         cat =

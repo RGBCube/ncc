@@ -4,7 +4,7 @@
   flake.homeModules.prompt =
     { pkgs, ... }:
     {
-      programs.nushell.extraConfig = "source ${
+      xdg.config.files."nushell/config.nu".text = "source ${
         pkgs.writeText "prompt.nu" /* nu */ ''
           do --env {
             use std null_device

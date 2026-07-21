@@ -15,12 +15,12 @@
     {
       packages = singleton pkgs.vivid;
 
-      programs.nushell.settings = {
+      xdg.config.files."nushell/settings.nu".value = {
         color_config.row_index = "light_yellow_bold";
         color_config.header = "light_yellow_bold";
       };
 
-      programs.nushell.extraConfig = "source ${
+      xdg.config.files."nushell/config.nu".text = "source ${
         pkgs.writeText "colors.nu" /* nu */ ''
           $env.LS_COLORS = open --raw ${lsColors}
 

@@ -17,7 +17,7 @@
 
       environment.sessionVariables.CARAPACE_BRIDGES = "inshellisense,carapace,zsh,fish,bash";
 
-      programs.nushell.extraConfig = "source ${
+      xdg.config.files."nushell/config.nu".text = "source ${
         pkgs.writeText "completions.nu" /* nu */ ''
           let menus = [
             {

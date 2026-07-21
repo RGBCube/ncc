@@ -11,7 +11,7 @@
     {
       packages = singleton pkgs.zoxide;
 
-      programs.nushell.extraConfig = mkAfter "source ${
+      xdg.config.files."nushell/config.nu".text = mkAfter "source ${
         pkgs.runCommand "zoxide.nu" { } /* bash */ ''
           ${getExe pkgs.zoxide} init nushell --cmd cd > $out
         ''

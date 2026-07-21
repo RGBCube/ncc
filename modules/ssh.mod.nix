@@ -56,7 +56,7 @@
 
       xdg.cache.files."ssh".type = "directory";
 
-      programs.nushell.extraConfig =
+      xdg.config.files."nushell/config.nu".text =
         mkAfter
         <| optionalString osConfig.nixpkgs.hostPlatform.isDarwin "source ${
           pkgs.writeText "ssh-auth-sock.nu" /* nu */ ''
@@ -75,7 +75,7 @@
         pkgs.mosh
       ];
 
-      programs.nushell.aliases.mosh = "mosh --no-init";
+      xdg.config.files."nushell/aliases.nu".value.mosh = "mosh --no-init";
     };
 
   flake.nixosModules.server.imports = [

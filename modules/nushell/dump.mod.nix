@@ -120,7 +120,7 @@
       '';
     in
     {
-      programs.nushell.extraConfig = # nu
+      xdg.config.files."nushell/config.nu".text = # nu
         ''
           use ${dump}/dump.nu
         '';

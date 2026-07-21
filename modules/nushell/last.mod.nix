@@ -4,7 +4,7 @@
   flake.homeModules.last =
     { pkgs, ... }:
     {
-      programs.nushell.extraConfig = "source ${
+      xdg.config.files."nushell/config.nu".text = "source ${
         pkgs.writeText "last.nu" /* nu */ ''
           $env.config.hooks.display_output = {||
             tee { table --expand | print }

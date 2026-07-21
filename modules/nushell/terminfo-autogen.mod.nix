@@ -146,7 +146,7 @@
       '';
     in
     {
-      programs.nushell.extraConfig = # nu
+      xdg.config.files."nushell/config.nu".text = # nu
         ''
           use ${terminfo-autogen}/terminfo-autogen.nu
           # try { terminfo-autogen } # FIXME: Works later but not in-config

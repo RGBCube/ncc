@@ -48,11 +48,6 @@
     url = "github:feel-co/hjem";
     inputs.nixpkgs.follows = "nixpkgs";
   };
-  inputs.hjem-rum = {
-    url = "github:snugnug/hjem-rum";
-    inputs.nixpkgs.follows = "nixpkgs";
-    inputs.hjem.follows = "hjem";
-  };
 
   inputs.flake-parts = {
     url = "github:hercules-ci/flake-parts";

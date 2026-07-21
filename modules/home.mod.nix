@@ -2,18 +2,8 @@
 {
   flake.homeModules.default = self.homeModules.home;
   flake.homeModules.home =
+    { config, ... }:
     {
-      config,
-      lib,
-      ...
-    }:
-    let
-      inherit (lib.lists) singleton;
-      inherit (lib.modules) mkAliasOptionModule;
-    in
-    {
-      imports = singleton <| mkAliasOptionModule [ "programs" ] [ "rum" "programs" ];
-
       # FORCE XDG ENV VARS
       # hjem only exports XDG_*_HOME when config value != option default.
       # The defaults do not match platform realities and setting the Linux
@@ -37,8 +27,6 @@
       imports = singleton <| mkAliasOptionModule [ "home" ] [ "hjem" ];
 
       home.specialArgs = { inherit lib; };
-
-      home.extraModules = singleton inputs.hjem-rum.hjemModules.hjem-rum;
 
       home.clobberByDefault = true;
     };

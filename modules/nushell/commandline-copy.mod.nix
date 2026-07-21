@@ -4,7 +4,7 @@
   flake.homeModules.commandline-copy =
     { pkgs, ... }:
     {
-      programs.nushell.extraConfig = "source ${
+      xdg.config.files."nushell/config.nu".text = "source ${
         pkgs.writeText "commandline-copy.nu" /* nu */ ''
           use std/clip
 

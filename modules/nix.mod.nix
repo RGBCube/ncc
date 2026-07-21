@@ -50,7 +50,7 @@
       nix.nixPath = config.nix.registry |> mapAttrsToList (name: const "${name}=flake:${name}");
 
       home.extraModules = singleton {
-        programs.nushell.extraConfig = "source ${
+        xdg.config.files."nushell/config.nu".text = "source ${
           pkgs.writeText "nix-run-shortcuts.nu" /* nu */ ''
             def >? []: string -> string {
               if ($in | str contains "#") or ($in | str contains ":") {
