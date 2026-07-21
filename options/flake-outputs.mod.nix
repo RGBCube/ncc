@@ -87,7 +87,7 @@ in
       mapAttrs
       <| wrap {
         kind = "modularServices";
-        class = "services";
+        class = "service";
       };
     description = "Modular service modules.";
   };
