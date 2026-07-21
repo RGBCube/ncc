@@ -12,11 +12,9 @@ in
     <| lib.systems.darwinSystem "pala" (
       {
         imports = [
+          self.darwinModules.ai
           self.darwinModules.communication
           self.darwinModules.media
-          {
-            home.extraModules = singleton self.homeModules.ai;
-          }
         ];
 
         networking.knownNetworkServices = [

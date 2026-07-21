@@ -6,10 +6,11 @@
   ...
 }:
 let
-  inherit (lib.attrsets) mapAttrs optionalAttrs;
+  inherit (lib.attrsets) mapAttrs;
   inherit (lib.lists) singleton;
   inherit (lib.options) mkOption;
   inherit (lib.fixedPoints) fix;
+  inherit (lib.modules) mkMerge;
   inherit (lib.types) deferredModule lazyAttrsOf;
 
   wrap =
@@ -26,17 +27,6 @@ let
 
       imports = singleton value;
     });
-
-  wrapSystem =
-    {
-      kind,
-      class ? null,
-    }:
-    name: value:
-    wrap { inherit kind class; } name value
-    // optionalAttrs (config.flake.homeModules ? ${name}) {
-      home.extraModules = singleton config.flake.homeModules.${name};
-    };
 in
 {
   # flake-parts doesn't declare `key`, so deduplication doesn't happen.
@@ -49,7 +39,7 @@ in
     default = { };
     apply =
       mapAttrs
-      <| wrapSystem {
+      <| wrap {
         kind = "nixosModules";
         class = "nixos";
       };
@@ -61,7 +51,7 @@ in
     default = { };
     apply =
       mapAttrs
-      <| wrapSystem {
+      <| wrap {
         kind = "darwinModules";
         class = "darwin";
       };
@@ -80,13 +70,13 @@ in
     description = "Home modules.";
   };
 
-  options.flake.modularServices = mkOption {
+  options.flake.serviceModules = mkOption {
     type = lazyAttrsOf deferredModule;
     default = { };
     apply =
       mapAttrs
       <| wrap {
-        kind = "modularServices";
+        kind = "serviceModules";
         class = "service";
       };
     description = "Modular service modules.";
@@ -100,6 +90,12 @@ in
     description = "Modules shared between NixOS and Darwin.";
   };
 
-  config.flake.nixosModules = config.commonModules;
-  config.flake.darwinModules = config.commonModules;
+  config.flake.nixosModules = mkMerge [
+    config.commonModules
+    (config.flake.homeModules |> mapAttrs (_: module: { home.extraModules = singleton module; }))
+  ];
+  config.flake.darwinModules = mkMerge [
+    config.commonModules
+    (config.flake.homeModules |> mapAttrs (_: module: { home.extraModules = singleton module; }))
+  ];
 }
