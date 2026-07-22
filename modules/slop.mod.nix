@@ -1164,7 +1164,7 @@ in
                 rm --recursive --force $workdir
                 mkdir $workdir
 
-                ^${getExe pkgs.gnutar} --extract --gzip --file $archive --directory $workdir
+                ^${getExe pkgs.gnutar} --extract --use-compress-program ${getExe pkgs.gzip} --file $archive --directory $workdir
                 rm $archive
 
                 let cli = $workdir | path join "cli.cjs"
