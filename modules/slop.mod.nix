@@ -2,9 +2,35 @@
 let
   inherit (lib.attrsets) getAttr;
   inherit (lib.lists) concatMap singleton;
-  inherit (lib.strings) concatLines;
+  inherit (lib.strings) concatLines makeBinPath;
 
   mkNixs = pkgs: self.packages.${pkgs.stdenv.hostPlatform.system}.nixs;
+
+  mkExtraPath =
+    pkgs: package:
+    pkgs.symlinkJoin {
+      inherit (package) name;
+
+      paths = singleton package;
+      nativeBuildInputs = singleton pkgs.makeWrapper;
+
+      postBuild = /* bash */ ''
+        for binary in $out/bin/*; do
+          wrapProgram "$binary" --suffix PATH : ${
+            makeBinPath [
+              pkgs.gnused
+              pkgs.gawk
+              pkgs.jq
+              pkgs.gnutar
+              pkgs.gzip
+              pkgs.ugrep
+              pkgs.bfs
+              pkgs.ripgrep
+            ]
+          }
+        done
+      '';
+    };
 
   allowed.commands = [
     "rg*"
@@ -137,7 +163,7 @@ in
     in
     {
       packages = [
-        pkgs.opencode
+        (mkExtraPath pkgs pkgs.opencode)
         (mkNixs pkgs)
       ];
 
@@ -197,7 +223,7 @@ in
     in
     {
       packages = [
-        pkgs.codex
+        (mkExtraPath pkgs pkgs.codex)
         (mkNixs pkgs)
       ];
 
@@ -281,7 +307,7 @@ in
       inherit (lib) strings;
       inherit (lib.generators) toJSON;
       inherit (lib.lists) singleton;
-      inherit (lib.meta) getExe getExe';
+      inherit (lib.meta) getExe;
 
       # Also 100% slop.
       statusLine = pkgs.writers.writeNuBin "claude-code-statusline" /* nu */ ''
@@ -939,14 +965,14 @@ in
               lambda m: m[1] + b'({name:"claude-api",isEnabled:()=>!1,menuDescription:',
             )
 
-            # --- grep/find/rg shim: delegate to absolute Nix store paths ---
+            # --- grep/find/rg shim: delegate to PATH ---
             # claude-code ships a shell shim factory that emits bash functions
             # which redefine `grep`/`find`/`rg` to re-exec the claude binary
             # with argv[0]=ugrep/bfs/rg. In Bun "ant-native" builds this
             # dispatches to bundled native tools. The Deno repack drops those,
             # so invocations fail with `error: unknown option '-G'`. Replace the
-            # factory's body so it emits bash that calls the real tools directly
-            # via their Nix store paths.
+            # factory's body so it emits bash that calls the real tools by name;
+            # `withExtraPath` puts ugrep/bfs/rg on the wrapper's PATH.
             #
             # 2.1.181 rewrote the factory (a38 `(H,_,q=[])` → `Fzr(e,t,n=[],r=[])`):
             # e=command name (grep/find/rg), t=ARGV0/real-tool name (ugrep/bfs/rg),
@@ -960,8 +986,9 @@ in
             # rotate across versions). Brace-balanced parsing finds the body end so
             # internal restructures don't break us. We reconstruct the whole function
             # with our own param names (call sites pass positionally) so it emits a
-            # single-line bash function that execs the real store tool, falling back
-            # to `command <name>` when the store path is missing.
+            # single-line bash function that runs the real tool via `command`
+            # (which bypasses the shim function itself when the names collide,
+            # as they do for rg).
 
             def scan_js_block(blob: bytes, pos: int) -> int:
               """Return the offset just past the `}` closing the `{` at pos-1.
@@ -1021,10 +1048,7 @@ in
               fzr_new: bytes = (
                 b"function " + fn_name + b"(e,t,n=[],r=[]){"
                 b'let o=n.length>0?n.join(" ")+\' "$@"\':\'"$@"\';'
-                b'let P=({ugrep:"${getExe' pkgs.ugrep "ugrep"}",'
-                b'bfs:"${getExe pkgs.bfs}",'
-                b'rg:"${getExe pkgs.ripgrep}"})[t]||t;'
-                b'return "function "+e+" { if ! [ -x "+P+" ]; then command "+e+\' "$@"; return; fi; \'+P+" "+o+"; }"}'
+                b'return "function "+e+" { command "+t+" "+o+"; }"}'
               )
               data = data[:fzr_match.start()] + fzr_new + data[body_end:]
               log(f"grep/find/rg shim: replaced {fn_name.decode()}")
@@ -1064,159 +1088,162 @@ in
           '';
         in
         [
-          (pkgs.writers.writeNuBin "claude" /* nu */ ''
-            def detect-platform []: nothing -> string {
-              let arch = match ($nu.os-info.arch | str downcase) {
-                "x86_64" | "x64" | "amd64" => "x64"
-                "aarch64" | "arm64" => "arm64"
-                $arch => {
-                  print --stderr $"(ansi red_bold)error:(ansi reset) unsupported arch: ($arch)"
-                  exit 67
+          (
+            mkExtraPath pkgs
+            <| pkgs.writers.writeNuBin "claude" /* nu */ ''
+              def detect-platform []: nothing -> string {
+                let arch = match ($nu.os-info.arch | str downcase) {
+                  "x86_64" | "x64" | "amd64" => "x64"
+                  "aarch64" | "arm64" => "arm64"
+                  $arch => {
+                    print --stderr $"(ansi red_bold)error:(ansi reset) unsupported arch: ($arch)"
+                    exit 67
+                  }
+                }
+
+                match ($nu.os-info.name | str downcase) {
+                  "linux" => $"linux-($arch)"
+                  "macos" | "darwin" => $"darwin-($arch)"
+                  $os => {
+                    print --stderr $"(ansi red_bold)error:(ansi reset) unsupported os: ($os)"
+                    exit 67
+                  }
                 }
               }
 
-              match ($nu.os-info.name | str downcase) {
-                "linux" => $"linux-($arch)"
-                "macos" | "darwin" => $"darwin-($arch)"
-                $os => {
-                  print --stderr $"(ansi red_bold)error:(ansi reset) unsupported os: ($os)"
-                  exit 67
+              def detect-version [--cache: directory, --rebuild]: nothing -> string {
+                let version_file = $cache | path join "latest-version"
+
+                match ($rebuild or (try { (date now) - (ls $version_file | get 0.modified) > 6hr } | default true)) {
+                  # Version older than 6h or doesn't exist.
+                  true | null => {
+                    let version = try {
+                      http get --max-time 5sec https://registry.npmjs.org/@anthropic-ai/claude-code/latest | get version
+                    } catch {
+                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) fetched version older than 6hr, but can't re-fetch"
+                      return ""
+                    }
+
+                    try {
+                      $version_file | path parse | get parent | mkdir $in
+                      $version | save --force $version_file
+                    } catch {
+                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to save latest fetched version"
+                    }
+
+                    $version
+                  },
+
+                  # Version fetched within 6h.
+                  false => { try {
+                    open $version_file
+                  } catch {
+                    print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to read latest fetched version"
+                    ""
+                  } },
                 }
               }
-            }
 
-            def detect-version [--cache: directory, --rebuild]: nothing -> string {
-              let version_file = $cache | path join "latest-version"
+              def run-latest [--cache: directory, ...arguments] {
+                print --stderr $"(ansi yellow_bold)warn:(ansi reset) falling back to latest binary"
 
-              match ($rebuild or (try { (date now) - (ls $version_file | get 0.modified) > 6hr } | default true)) {
-                # Version older than 6h or doesn't exist.
-                true | null => {
-                  let version = try {
-                    http get --max-time 5sec https://registry.npmjs.org/@anthropic-ai/claude-code/latest | get version
-                  } catch {
-                    print --stderr $"(ansi yellow_bold)warn:(ansi reset) fetched version older than 6hr, but can't re-fetch"
-                    return ""
-                  }
-
-                  try {
-                    $version_file | path parse | get parent | mkdir $in
-                    $version | save --force $version_file
-                  } catch {
-                    print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to save latest fetched version"
-                  }
-
-                  $version
-                },
-
-                # Version fetched within 6h.
-                false => { try {
-                  open $version_file
+                try {
+                  let latest = ls --long ($cache | path join "claude-code-*" | into glob)
+                  | where { $in.type == "file" and ($in.mode | str substring 2..<3) == "x" }
+                  | sort-by modified
+                  | last
+                  | get name
+                  exec $latest ...$arguments
                 } catch {
-                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to read latest fetched version"
-                  ""
-                } },
-              }
-            }
-
-            def run-latest [--cache: directory, ...arguments] {
-              print --stderr $"(ansi yellow_bold)warn:(ansi reset) falling back to latest binary"
-
-              try {
-                let latest = ls --long ($cache | path join "claude-code-*" | into glob)
-                | where { $in.type == "file" and ($in.mode | str substring 2..<3) == "x" }
-                | sort-by modified
-                | last
-                | get name
-                exec $latest ...$arguments
-              } catch {
-                print --stderr $"(ansi red_bold)error:(ansi reset) no binary found"
-                exit 67
-              }
-            }
-
-            def --wrapped main [--rebuild, ...arguments] {
-              let cache = $env
-              | get --optional "XDG_CACHE_HOME"
-              | default ($env.HOME | path join ".cache")
-              | path join "claude-code"
-
-              let version = detect-version --cache $cache --rebuild=($rebuild)
-              if ($version | is-empty) { run-latest --cache $cache ...$arguments }
-
-              let binary_path = $cache | path join $"claude-code-($version)"
-
-              if not ($binary_path | path exists) or $rebuild {
-                let archive = $"($binary_path).tar.gz"
-
-                if not ($archive | path exists) or $rebuild {
-                  let platform = detect-platform
-
-                  try {
-                    http get --raw $"https://registry.npmjs.org/@anthropic-ai/claude-code-($platform)/-/claude-code-($platform)-($version).tgz"
-                    | save --force --raw $archive
-                  } catch {
-                    print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to download tarball"
-                    run-latest --cache $cache ...$arguments
-                  }
+                  print --stderr $"(ansi red_bold)error:(ansi reset) no binary found"
+                  exit 67
                 }
+              }
 
-                let workdir = $cache | path join $"claude-code-($version)-workdir"
-                rm --recursive --force $workdir
-                mkdir $workdir
+              def --wrapped main [--rebuild, ...arguments] {
+                let cache = $env
+                | get --optional "XDG_CACHE_HOME"
+                | default ($env.HOME | path join ".cache")
+                | path join "claude-code"
 
-                ^${getExe pkgs.gnutar} --extract --use-compress-program ${getExe pkgs.gzip} --file $archive --directory $workdir
-                rm $archive
+                let version = detect-version --cache $cache --rebuild=($rebuild)
+                if ($version | is-empty) { run-latest --cache $cache ...$arguments }
 
-                let cli = $workdir | path join "cli.cjs"
-                ^${getExe lift} ($workdir | path join "package" "claude") $cli
-                ^${getExe patch} $cli
+                let binary_path = $cache | path join $"claude-code-($version)"
+
+                if not ($binary_path | path exists) or $rebuild {
+                  let archive = $"($binary_path).tar.gz"
+
+                  if not ($archive | path exists) or $rebuild {
+                    let platform = detect-platform
+
+                    try {
+                      http get --raw $"https://registry.npmjs.org/@anthropic-ai/claude-code-($platform)/-/claude-code-($platform)-($version).tgz"
+                      | save --force --raw $archive
+                    } catch {
+                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to download tarball"
+                      run-latest --cache $cache ...$arguments
+                    }
+                  }
+
+                  let workdir = $cache | path join $"claude-code-($version)-workdir"
+                  rm --recursive --force $workdir
+                  mkdir $workdir
+
+                  ^${getExe pkgs.gnutar} --extract --use-compress-program ${getExe pkgs.gzip} --file $archive --directory $workdir
+                  rm $archive
+
+                  let cli = $workdir | path join "cli.cjs"
+                  ^${getExe lift} ($workdir | path join "package" "claude") $cli
+                  ^${getExe patch} $cli
+
+                  r###'${
+                    strings.toJSON {
+                      name = "claude-code-lifted";
+                      type = "commonjs";
+                      dependencies = {
+                        ws = "^8";
+                        undici = "^6";
+                        node-fetch = "^3";
+                        ajv = "^8";
+                        ajv-formats = "^3";
+                        yaml = "^2";
+                        # Bun shim deps (see "Bun runtime polyfill" in patch script).
+                        # Pinned to CJS-compatible majors: ESM-only releases
+                        # (string-width@5+, strip-ansi@7+, wrap-ansi@8+) break
+                        # require() inside cli.cjs.
+                        string-width = "^4";
+                        strip-ansi = "^6";
+                        wrap-ansi = "^7";
+                        semver = "^7";
+                      };
+                    }
+                  }'### | save --force ($workdir | path join "package.json")
+
+                  $env.DENO_DIR = ($workdir | path join ".deno")
+                  (^"${getExe pkgs.deno}" install
+                    --quiet
+                    --node-modules-dir=auto
+                    --entrypoint $cli)
+                  (^"${getExe pkgs.deno}" compile
+                    --quiet
+                    --allow-all
+                    --node-modules-dir=auto
+                    --include ($workdir | path join "node_modules")
+                    --output $binary_path
+                    $cli)
+
+                  rm --recursive --force $workdir
+                }
 
                 r###'${
-                  strings.toJSON {
-                    name = "claude-code-lifted";
-                    type = "commonjs";
-                    dependencies = {
-                      ws = "^8";
-                      undici = "^6";
-                      node-fetch = "^3";
-                      ajv = "^8";
-                      ajv-formats = "^3";
-                      yaml = "^2";
-                      # Bun shim deps (see "Bun runtime polyfill" in patch script).
-                      # Pinned to CJS-compatible majors: ESM-only releases
-                      # (string-width@5+, strip-ansi@7+, wrap-ansi@8+) break
-                      # require() inside cli.cjs.
-                      string-width = "^4";
-                      strip-ansi = "^6";
-                      wrap-ansi = "^7";
-                      semver = "^7";
-                    };
-                  }
-                }'### | save --force ($workdir | path join "package.json")
+                  strings.toJSON config.xdg.config.files."claude-code/settings.json".value.env
+                }'### | from json | load-env
 
-                $env.DENO_DIR = ($workdir | path join ".deno")
-                (^"${getExe pkgs.deno}" install
-                  --quiet
-                  --node-modules-dir=auto
-                  --entrypoint $cli)
-                (^"${getExe pkgs.deno}" compile
-                  --quiet
-                  --allow-all
-                  --node-modules-dir=auto
-                  --include ($workdir | path join "node_modules")
-                  --output $binary_path
-                  $cli)
-
-                rm --recursive --force $workdir
+                exec $binary_path ...$arguments
               }
-
-              r###'${
-                strings.toJSON config.xdg.config.files."claude-code/settings.json".value.env
-              }'### | from json | load-env
-
-              exec $binary_path ...$arguments
-            }
-          '')
+            ''
+          )
 
           (mkNixs pkgs)
         ];
