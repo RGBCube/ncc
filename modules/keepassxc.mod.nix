@@ -1,15 +1,5 @@
 { self, ... }:
 {
-  flake.darwinModules.desktop = self.darwinModules.keepassxc;
-  flake.darwinModules.keepassxc =
-    { lib, ... }:
-    let
-      inherit (lib.lists) singleton;
-    in
-    {
-      homebrew.casks = singleton "keepassxc";
-    };
-
   flake.homeModules.desktop = self.homeModules.keepassxc;
   flake.homeModules.keepassxc =
     {
@@ -20,17 +10,10 @@
     }:
     let
       inherit (lib.modules) mkIf;
+      inherit (lib.lists) singleton;
       inherit (lib.trivial) const flip;
       inherit (lib.attrsets) genAttrs optionalAttrs;
       inherit (lib.generators) toINI;
-
-      # TODO: Re-enable package override after upstream darwin YubiKey build is fixed.
-      #
-      # Also remove the config that disables update checking, as nixpkgs compiles that out.
-      #
-      # package = pkgs.keepassxc.override {
-      #   withKeePassYubiKey = true;
-      # };
 
       keepassConfig.generator = toINI { };
       keepassConfig.value = {
@@ -69,9 +52,7 @@
           "application/x-keepass2"
         ];
 
-      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
-        pkgs.keepassxc
-      ];
+      packages = singleton pkgs.keepassxc;
 
       files."Library/Application Support/KeePassXC/keepassxc.ini" =
         mkIf osConfig.nixpkgs.hostPlatform.isDarwin keepassConfig;
