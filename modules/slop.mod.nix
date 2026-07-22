@@ -1092,7 +1092,7 @@ in
             mkExtraPath pkgs
             <| pkgs.writers.writeNuBin "claude" /* nu */ ''
               def detect-platform []: nothing -> string {
-                let arch = match ($nu.os-info.arch | str downcase) {
+                let arch = match ($nu.os-info.arch | str lowercase) {
                   "x86_64" | "x64" | "amd64" => "x64"
                   "aarch64" | "arm64" => "arm64"
                   $arch => {
@@ -1101,7 +1101,7 @@ in
                   }
                 }
 
-                match ($nu.os-info.name | str downcase) {
+                match ($nu.os-info.name | str lowercase) {
                   "linux" => $"linux-($arch)"
                   "macos" | "darwin" => $"darwin-($arch)"
                   $os => {

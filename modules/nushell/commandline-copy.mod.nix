@@ -31,7 +31,7 @@
               "```"
             ]
             | str join (char nl)
-            | clip copy --ansi
+            | clip copy52 --ansi
           }
 
           $env.config.keybindings ++= [
