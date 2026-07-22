@@ -56,6 +56,10 @@
 
   inputs.crate2nix = {
     url = "github:nix-community/crate2nix";
+    inputs.cachix.follows = "";
+    inputs.flake-compat.follows = "";
+    inputs.flake-parts.follows = "flake-parts";
+    inputs.nix-test-runner.follows = "";
     inputs.nixpkgs.follows = "nixpkgs";
   };
   inputs.fenix = {
