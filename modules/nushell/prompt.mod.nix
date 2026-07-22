@@ -21,13 +21,7 @@
               }
 
               let hostname = if ($env.SSH_CONNECTION? | is-not-empty) {
-                let hostname = try {
-                  hostname
-                } catch {
-                  "remote"
-                }
-
-                $"(ansi light_green_bold)@($hostname)(ansi reset) "
+                $"(ansi light_green_bold)@(sys host | get hostname)(ansi reset) "
               } else {
                 ""
               }
