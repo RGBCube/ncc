@@ -1,16 +1,5 @@
 { self, ... }:
 {
-  # TODO: https://hydra.nixos.org/build/337045807
-  flake.darwinModules.media = self.darwinModules.torrent-client;
-  flake.darwinModules.torrent-client =
-    { lib, ... }:
-    let
-      inherit (lib.lists) singleton;
-    in
-    {
-      homebrew.casks = singleton "qbittorrent";
-    };
-
   flake.homeModules.media = self.homeModules.torrent-client;
   flake.homeModules.torrent-client =
     {
@@ -21,6 +10,7 @@
     }:
     let
       inherit (lib.modules) mkIf;
+      inherit (lib.lists) singleton;
       inherit (lib.trivial) const flip;
       inherit (lib.attrsets) genAttrs mapAttrsToList;
       inherit (lib.generators) toINI;
@@ -33,9 +23,7 @@
           "x-scheme-handler/magnet"
         ];
 
-      packages = mkIf osConfig.nixpkgs.hostPlatform.isLinux [
-        pkgs.qbittorrent
-      ];
+      packages = singleton pkgs.qbittorrent;
 
       xdg.config.files."qBittorrent/qBittorrent.${
         if osConfig.nixpkgs.hostPlatform.isDarwin then "ini" else "conf"
