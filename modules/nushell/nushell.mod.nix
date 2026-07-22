@@ -12,7 +12,6 @@
       inherit (lib) hashString;
       inherit (lib.meta) getExe;
       inherit (lib.trivial) const;
-      inherit (lib.modules) mkForce;
       inherit (lib.attrsets)
         genAttrs
         mapAttrs
@@ -47,13 +46,13 @@
       };
 
       users.defaultUserShell = inputs.crash.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      environment.sessionVariables.SHELLS = config.environment.shells |> concatStringsSep ":";
-      environment.shells =
-        mkForce
-        <| map getExe [
+      environment.sessionVariables.SHELLS =
+        [
           pkgs.nushell
           pkgs.bash
-        ];
+        ]
+        |> map getExe
+        |> concatStringsSep ":";
 
       environment.shellAliases = genAttrs [ "ls" "ll" "l" ] (const null);
 
