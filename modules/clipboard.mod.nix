@@ -37,6 +37,7 @@
         searchMode = "fuzzy";
 
         showFooter = 0;
+        showInStatusBar = 0;
         showSearch = 1;
         showTitle = 0;
       };
