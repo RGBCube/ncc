@@ -9,10 +9,12 @@
       ...
     }:
     let
+      inherit (lib.cli) toCommandLine;
       inherit (lib.fixedPoints) fix;
-      inherit (lib.generators) toCliFlagList toLesskey;
+      inherit (lib.generators) toLesskey;
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
+      inherit (lib.strings) concatLines;
     in
     {
       environment.sessionVariables = fix (variables: {
@@ -87,7 +89,15 @@
 
       packages = singleton pkgs.bat;
 
-      xdg.config.files."bat/config".generator = toCliFlagList;
+      xdg.config.files."bat/config".generator =
+        attrs:
+        attrs
+        |> toCommandLine (name: {
+          option = "--${name}";
+          sep = "=";
+          explicitBool = false;
+        })
+        |> concatLines;
       xdg.config.files."bat/config".value.theme = "base16";
       xdg.config.files."bat/themes/base16.tmTheme".text = osConfig.theme.tmTheme;
     };

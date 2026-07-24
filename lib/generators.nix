@@ -84,16 +84,6 @@ in
     |> flatten
     |> concatLines;
 
-  # CLI flag config format used by bat.
-  # true -> --flag, string/int -> --flag 'value'
-  generators.toCliFlagList =
-    attrs:
-    attrs
-    |> mapAttrsToList (
-      name: value: if value == true then "--${name}" else "--${name} '${toString value}'"
-    )
-    |> concatLines;
-
   # CLI flag config format used by ripgrep.
   # true -> --flag, string/int -> --flag<newline>value
   generators.toCliArgumentList =
