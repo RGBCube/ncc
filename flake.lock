@@ -290,15 +290,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1784734418,
-        "narHash": "sha256-JrRhQawr8nsOcPMbYGLH1PzZ3WG+LssT3fm9ockZ6Fc=",
+        "lastModified": 1784896526,
+        "narHash": "sha256-VmIZoKoFBeQRv7rD4B/51WLptTvYcxac6zl++jydU8U=",
         "owner": "RGBCube",
         "repo": "nix-darwin",
-        "rev": "cf8c1b8df82051df807468112727baf25522163c",
+        "rev": "75b5eaad90f492da351f5cf6a73b62b4eded0763",
         "type": "github"
       },
       "original": {
         "owner": "RGBCube",
+        "ref": "master-with-modular-services",
         "repo": "nix-darwin",
         "type": "github"
       }
@@ -320,11 +321,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1784538064,
-        "narHash": "sha256-yJMXyy5q4wuOd7Z09Xe5AIK7dMQu7EKSH9yT8KGBce8=",
+        "lastModified": 1784894772,
+        "narHash": "sha256-uKQWdGaeSJBspAx3eFG3BNATQ4+7q9LZz62XyiJHEKM=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "ae9994806ca939447a8a6adc4f94d12cbdf06e01",
+        "rev": "3a5370418d3a7008e8aa3779ace1b40d7f1cc343",
         "type": "github"
       },
       "original": {
