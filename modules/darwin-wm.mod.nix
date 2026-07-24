@@ -375,7 +375,7 @@
         "${pkgs.writers.writeNu "reload-symbolic-hotkeys.nu" /* nu */ ''
           print "reloading symbolic hotkeys..."
 
-          let user = "${config.system.primaryUser}"
+          let user = r###'${config.system.primaryUser}'###
           let uid = sys users | where name == $user | get 0.id
 
           ^/bin/launchctl asuser $uid /usr/bin/sudo --set-home --user $user -- ${
