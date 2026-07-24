@@ -37,6 +37,8 @@
             GUI."Log\\Enabled" = true;
 
             Preferences."Advanced\\updateCheck" = false;
+            Preferences."Desktop\\ShowMacOSMenuBarIcon" = false;
+
             Preferences."Search\\SearchEnabled" = true;
 
             BitTorrent."Session\\Port" = 7035;
