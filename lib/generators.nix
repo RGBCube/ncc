@@ -83,22 +83,4 @@ in
     )
     |> flatten
     |> concatLines;
-
-  # CLI flag config format used by ripgrep.
-  # true -> --flag, string/int -> --flag<newline>value
-  generators.toCliArgumentList =
-    attrs:
-    attrs
-    |> mapAttrsToList (
-      name: value:
-      if value == true then
-        singleton "--${name}"
-      else
-        [
-          "--${name}"
-          (toString value)
-        ]
-    )
-    |> flatten
-    |> concatLines;
 }
