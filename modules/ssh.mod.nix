@@ -146,7 +146,11 @@
         imports = singleton self.serviceModules.endlessh-go;
 
         endlessh-go = {
-          package = pkgs.endlessh-go;
+          # TODO: Stop overriding when go >= 1.27.
+          package = pkgs.endlessh-go.override {
+            buildGoModule = pkgs.buildGoModule.override { go = pkgs.go_1_27; };
+          };
+
           settings = {
             host = "::";
             port = singleton 22;
