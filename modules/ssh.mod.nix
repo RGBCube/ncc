@@ -61,7 +61,7 @@
         <| optionalString osConfig.nixpkgs.hostPlatform.isDarwin "source ${
           pkgs.writeText "ssh-auth-sock.nu" /* nu */ ''
             try {
-              $env.SSH_AUTH_SOCK = ^launchctl getenv SSH_AUTH_SOCK | str trim
+              $env.SSH_AUTH_SOCK = /bin/launchctl getenv SSH_AUTH_SOCK | str trim
             }
           ''
         }";
@@ -69,29 +69,25 @@
 
   flake.homeModules.desktop = self.homeModules.ssh-client-desktop;
   flake.homeModules.ssh-client-desktop =
-    { pkgs, ... }:
+    { pkgs, lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
     {
-      packages = [
-        pkgs.mosh
-      ];
+      packages = singleton pkgs.mosh;
 
       xdg.config.files."nushell/aliases.nu".value.mosh = "mosh --no-init";
     };
 
-  flake.nixosModules.server.imports = [
-    self.nixosModules.ssh-server
-    self.nixosModules.endlessh-go
-  ];
+  flake.nixosModules.default = self.nixosModules.ssh-server;
   flake.nixosModules.ssh-server =
     {
       config,
       lib,
-      pkgs,
       ...
     }:
     let
-      inherit (lib.lists) head singleton;
-      inherit (lib.modules) mkForce;
+      inherit (lib.lists) singleton;
     in
     {
       programs.mosh.enable = true;
@@ -119,36 +115,9 @@
       };
 
       users.users.root.openssh.authorizedKeys.keys = self.keys-admin;
-
-      boot.initrd.systemd.network = {
-        enable = true;
-        networks."10-wired" = {
-          matchConfig.Type = "ether";
-          networkConfig.DHCP = "yes";
-        };
-      };
-
-      boot.initrd.network.ssh = {
-        enable = true;
-        port = head config.services.openssh.ports;
-
-        hostKeys = config.age.identityPaths |> map (path: "/sysroot${path}");
-        authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
-      };
-
-      boot.initrd.systemd.services.sshd = {
-        unitConfig.RequiresMountsFor = config.boot.initrd.network.ssh.hostKeys;
-
-        # Nixpkgs tries to run `chmod`, but the key is on a readonly partition so it fails.
-        #
-        # Nuke it.
-        preStart = mkForce "";
-      };
-
-      # The `hostKey` is already a runtime path, not a Nix store path.
-      boot.initrd.secrets = mkForce { };
     };
 
+  flake.nixosModules.server = self.nixosModules.endlessh-go;
   flake.nixosModules.endlessh-go =
     {
       config,
@@ -158,21 +127,40 @@
     }:
     let
       inherit (lib.lists) singleton;
+      inherit (lib.magic) ula;
     in
     {
-      config.networking.firewall.allowedTCPPorts = singleton config.services.endlessh-go.port;
+      networking.interfaces.lo.ipv6.addresses = singleton {
+        address = config.system.services.endlessh-go.endlessh-go.settings.prometheus_host;
+        prefixLength = 128;
+      };
 
-      config.services.endlessh-go = {
-        enable = true;
+      systemd.services.endlessh-go = {
+        after = singleton "network-addresses-lo.service";
+        bindsTo = singleton "network-addresses-lo.service";
+      };
 
-        listenAddress = "[::]";
-        port = 22;
+      networking.firewall.allowedTCPPorts = config.system.services.endlessh-go.endlessh-go.settings.port;
 
-        extraOptions = [
-          "-alsologtostderr"
-          "-geoip_supplier max-mind-db"
-          "-max_mind_db ${pkgs.dbip-country-lite}/share/dbip/dbip-country-lite.mmdb"
-        ];
+      system.services.endlessh-go = {
+        imports = singleton self.serviceModules.endlessh-go;
+
+        endlessh-go = {
+          package = pkgs.endlessh-go;
+          settings = {
+            host = "::";
+            port = singleton 22;
+
+            enable_prometheus = true;
+            prometheus_host = "${ula "endlessh-go/prometheus"}::1";
+            prometheus_port = 80;
+
+            geoip_supplier = "max-mind-db";
+            max_mind_db = "${pkgs.dbip-country-lite}/share/dbip/dbip-country-lite.mmdb";
+
+            alsologtostderr = true;
+          };
+        };
       };
     };
 }
