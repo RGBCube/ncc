@@ -61,7 +61,7 @@
         <| optionalString osConfig.nixpkgs.hostPlatform.isDarwin "source ${
           pkgs.writeText "ssh-auth-sock.nu" /* nu */ ''
             try {
-              $env.SSH_AUTH_SOCK = /bin/launchctl getenv SSH_AUTH_SOCK | str trim
+              $env.SSH_AUTH_SOCK = ^/bin/launchctl getenv SSH_AUTH_SOCK | str trim
             }
           ''
         }";
