@@ -250,6 +250,7 @@ in
               zone_type = "External";
 
               stores.type = "forward";
+              stores.options.validate = true;
               stores.name_servers =
                 [
                   # { # FIXME: Slow.
