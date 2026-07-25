@@ -10,7 +10,7 @@
       };
 
       # SCREENSAVER PASSWORD
-      system.defaults.CustomSystemPreferences."com.apple.screensaver" = {
+      system.defaults.CustomUserPreferences."com.apple.screensaver" = {
         askForPassword = 1;
         askForPasswordDelay = 0;
       };
@@ -25,7 +25,7 @@
       system.defaults.SoftwareUpdate.AutomaticallyInstallMacOSUpdates = false;
 
       # AD TRACKING
-      system.defaults.CustomSystemPreferences."com.apple.AdLib" = {
+      system.defaults.CustomUserPreferences."com.apple.AdLib" = {
         allowApplePersonalizedAdvertising = false;
         allowIdentifierForAdvertising = false;
         forceLimitAdTracking = true;

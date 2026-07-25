@@ -25,19 +25,22 @@
     {
       environment.systemPackages = singleton stats;
 
-      system.defaults.CustomSystemPreferences."eu.exelban.Stats" = {
+      system.defaults.CustomUserPreferences."eu.exelban.Stats" = {
         update-interval = "Never";
         setupProcess = 1;
 
-        CPU_widget = "line_chart,label";
+        CPU_widget = "line_chart";
         CPU_line_chart_box = 0;
+        CPU_line_chart_label = 1;
 
         GPU_state = 1;
-        GPU_widget = "line_chart,label";
+        GPU_widget = "line_chart";
         GPU_line_chart_box = 0;
+        GPU_line_chart_label = 1;
 
-        RAM_widget = "line_chart,label";
+        RAM_widget = "line_chart";
         RAM_line_chart_box = 0;
+        RAM_line_chart_label = 1;
 
         Disk_state = 0;
 
@@ -60,7 +63,7 @@
         enable-spring-load-actions-on-all-items = true;
       };
 
-      system.defaults.CustomSystemPreferences."com.apple.dock" = {
+      system.defaults.CustomUserPreferences."com.apple.dock" = {
         autohide-time-modifier = 0.0;
         autohide-delay = 0.0;
         expose-animation-duration = 0.0;

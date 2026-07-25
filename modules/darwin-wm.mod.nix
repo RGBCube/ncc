@@ -48,10 +48,10 @@
       };
 
       # DOCK
-      system.defaults.CustomSystemPreferences."com.apple.dock".workspaces-auto-swoosh = false;
+      system.defaults.CustomUserPreferences."com.apple.dock".workspaces-auto-swoosh = false;
 
       # KEYBOARD BACKLIGHT
-      system.defaults.CustomSystemPreferences."com.apple.CoreBrightness" = {
+      system.defaults.CustomUserPreferences."com.apple.CoreBrightness" = {
         "Keyboard Dim Time" = 60;
         KeyboardBacklight.KeyboardBacklightIdleDimTime = 60;
       };
@@ -405,7 +405,7 @@
         ''}";
 
       # TRACKPAD
-      system.defaults.CustomSystemPreferences."com.apple.AppleMultitouchTrackpad" = {
+      system.defaults.CustomUserPreferences."com.apple.AppleMultitouchTrackpad" = {
         TrackpadThreeFingerVertSwipeGesture = 0; # Four finger swipe up for mission control.
 
         # Disable 3 finger horizontal stuff.
@@ -418,7 +418,7 @@
       };
 
       # ACCESSIBILITY
-      system.defaults.CustomSystemPreferences."com.apple.Accessibility".ReduceMotionEnabled = 1;
+      system.defaults.CustomUserPreferences."com.apple.Accessibility".ReduceMotionEnabled = 1;
       system.defaults.universalaccess.reduceMotion = true;
 
       # WINDOW MANAGER

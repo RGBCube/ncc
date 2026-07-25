@@ -16,7 +16,7 @@
         "com.apple.springing.delay" = 0.0;
       };
 
-      system.defaults.CustomSystemPreferences."com.apple.desktopservices" = {
+      system.defaults.CustomUserPreferences."com.apple.desktopservices" = {
         DSDontWriteNetworkStores = true;
         DSDontWriteUSBStores = true;
       };
@@ -44,7 +44,7 @@
         ShowStatusBar = true;
       };
 
-      system.defaults.CustomSystemPreferences."com.apple.finder" = {
+      system.defaults.CustomUserPreferences."com.apple.finder" = {
         DisableAllAnimations = true;
 
         FXArrangeGroupViewBy = "Name";

@@ -11,7 +11,7 @@
         pkgs.maccy
       ];
 
-      system.defaults.CustomSystemPreferences."org.p0deje.Maccy" = {
+      system.defaults.CustomUserPreferences."org.p0deje.Maccy" = {
         KeyboardShortcuts_delete = 0;
         KeyboardShortcuts_pin = 0;
 
