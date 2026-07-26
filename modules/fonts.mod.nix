@@ -2,17 +2,8 @@
 {
   flake.nixosModules.desktop = self.nixosModules.fonts;
   flake.nixosModules.fonts =
-    { config, lib, pkgs, ... }:
-    let
-      inherit (lib.lists) singleton;
-    in
+    { config, pkgs, ... }:
     {
-      console = {
-        earlySetup = true;
-        font = "Lat2-Terminus16";
-        packages = singleton pkgs.terminus_font;
-      };
-
       fonts.packages = [
         config.theme.font.sans.package
         config.theme.font.mono.package

@@ -1,6 +1,5 @@
-{ self, ... }:
-{
-  flake.nixosModules.boot = self.nixosModules.linux-boot;
+{ self, ... }: {
+  flake.nixosModules.default = self.nixosModules.linux-boot;
   flake.nixosModules.linux-boot = {
     boot.initrd.systemd.enable = true;
 

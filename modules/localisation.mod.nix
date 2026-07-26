@@ -15,18 +15,6 @@
   flake.nixosModules.localisation =
     { pkgs, ... }:
     {
-      console.keyMap =
-        pkgs.writeText "trq-swapped-i.map" # hs
-          ''
-            include "${pkgs.kbd}/share/keymaps/i386/qwerty/trq.map"
-
-            keycode 23 = i
-            	altgr       keycode 23 = +icircumflex
-            	altgr shift keycode 23 = +Icircumflex
-
-            keycode 40 = +dotlessi +Idotabove
-          '';
-
       i18n.defaultLocale = "C.UTF-8";
     };
 

@@ -1,8 +1,8 @@
 { self, ... }:
 {
   flake.nixosModules.default.imports = [
-    self.nixosModules.boot
     self.nixosModules.hardware
+    self.nixosModules.kernel
     self.nixosModules.networking
     self.nixosModules.shell
     self.nixosModules.version-control
