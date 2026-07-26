@@ -543,32 +543,88 @@
                 local window = hs.window.focusedWindow()
                 if not window then return end
 
-                local window_frame = window:frame()
+                local frame = window:frame()
                 local screen_frame = window:screen():frame()
 
-                window_frame.w = window_frame.w + offsetWidth
-                window_frame.w = math.max(100, math.min(window_frame.w, screen_frame.x + screen_frame.w - window_frame.x))
+                frame.w = math.max(100, math.min(frame.w + offsetWidth, screen_frame.x2 - frame.x))
+                frame.h = math.max(100, math.min(frame.h + offsetHeight, screen_frame.y2 - frame.y))
 
-                window_frame.h = window_frame.h + offsetHeight
-                window_frame.h = math.max(100, math.min(window_frame.h, screen_frame.y + screen_frame.h - window_frame.y))
-
-                window:setFrame(window_frame)
+                window:setFrame(frame)
               end
 
-              hs.hotkey.bind(super_alt, "left", function() windowResize(-100, 0) end)
-              hs.hotkey.bind(super_alt, "down", function() windowResize(0, 100) end)
-              hs.hotkey.bind(super_alt, "up", function() windowResize(0, -100) end)
-              hs.hotkey.bind(super_alt, "right", function() windowResize(100, 0) end)
+              local columnRightBorderMove = function(offset)
+                local window = hs.window.focusedWindow()
+                if not window then return end
+
+                local index = PaperWM.state.windowIndex(window)
+                if not index then
+                  windowResize(offset, 0)
+                  return
+                end
+
+                local canvas = PaperWM.windows.getCanvas(window:screen())
+
+                local frame = window:frame()
+                frame.w = math.max(100, math.min(frame.w + offset, canvas.w))
+
+                PaperWM.windows.moveWindow(window, frame)
+                PaperWM:tileSpace(index.space, window)
+              end
+
+              local dividerMove = function(offset)
+                local window = hs.window.focusedWindow()
+                if not window then return end
+
+                local index = PaperWM.state.windowIndex(window)
+                if not index then
+                  windowResize(0, offset)
+                  return
+                end
+
+                local column = PaperWM.state.windowList(index.space, index.col)
+                if not column or #column == 1 then return end
+
+                local above = index.row < #column and window or column[index.row - 1]
+
+                local canvas = PaperWM.windows.getCanvas(window:screen())
+
+                local frame = above:frame()
+                frame.h = math.max(100, math.min(frame.h + offset, canvas.y2 - 100 - frame.y))
+
+                PaperWM.windows.moveWindow(above, frame)
+                PaperWM:tileSpace(index.space, above)
+              end
+
+              hs.hotkey.bind(super_alt, "left", function()  columnRightBorderMove(-100) end)
+              hs.hotkey.bind(super_alt, "down", function()            dividerMove( 100) end)
+              hs.hotkey.bind(super_alt, "up", function()              dividerMove(-100) end)
+              hs.hotkey.bind(super_alt, "right", function() columnRightBorderMove( 100) end)
             end
 
             hs.hotkey.bind(super_alt, "f", actions.full_width)
 
-            -- SWAP
-            PaperWM.lift_window = super_shift
-            hs.hotkey.bind(super_shift, "left", actions.swap_left)
-            hs.hotkey.bind(super_shift, "down", actions.swap_down)
-            hs.hotkey.bind(super_shift, "up", actions.swap_up)
-            hs.hotkey.bind(super_shift, "right", actions.swap_right)
+            -- SWAP / MOVE
+            do
+              PaperWM.lift_window = super_shift
+
+              local swapOrMove = function(swap, offsetX, offsetY) return function()
+                local window = hs.window.focusedWindow()
+                if not window then return end
+
+                if PaperWM.state.windowIndex(window) then
+                  swap()
+                  return
+                end
+
+                local frame = window:frame()
+                window:setTopLeft({ x = frame.x + offsetX, y = frame.y + offsetY })
+              end end
+
+              hs.hotkey.bind(super_shift, "left", swapOrMove(actions.swap_left, -100,    0))
+              hs.hotkey.bind(super_shift, "down", swapOrMove(actions.swap_down,    0,  100))
+              hs.hotkey.bind(super_shift, "up", swapOrMove(actions.swap_up,        0, -100))
+              hs.hotkey.bind(super_shift, "right", swapOrMove(actions.swap_right, 100,   0))
+            end
 
             -- SLURP & BARF
             hs.hotkey.bind(super_shift, "t", actions.slurp_in)
@@ -600,6 +656,44 @@
 
             PaperWM.swipe_fingers = 3
             PaperWM.swipe_gain = 1.7
+
+            -- FALL BACK TO SYSTEM WINDOW GRAB ON FLOATING
+            do
+              local mouseHandler = PaperWM.events.mouseHandler
+
+              PaperWM.events.mouseHandler = function(wm)
+                local handler = mouseHandler(wm)
+
+                return function(event)
+                  local drag_click = event:getType() == hs.eventtap.event.types.leftMouseDown
+                    and (event:getFlags():containExactly(super) or event:getFlags():containExactly(super_shift))
+                  if not drag_click then return handler(event) end
+
+                  local cursor = hs.geometry.new(event:location())
+                  for _, window in ipairs(hs.window.orderedWindows()) do
+                    if cursor:inside(window:frame()) then
+                      if not wm.state.windowIndex(window) then return false end
+                      break
+                    end
+                  end
+
+                  return handler(event)
+                end
+              end
+            end
+
+            -- FLOATING WINDOWS ON TOP
+            PaperWM.window_filter:subscribe({
+              hs.window.filter.windowFocused,
+              hs.window.filter.windowVisible,
+            }, function(window)
+              if not PaperWM.state.windowIndex(window) then return end
+
+              for id in pairs(PaperWM.state.is_floating) do
+                local floating = hs.window.get(id)
+                if floating then floating:raise() end
+              end
+            end)
 
             PaperWM:start()
           end
