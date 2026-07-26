@@ -1,23 +1,18 @@
 { self, ... }:
 {
   flake.nixosModules.boot = self.nixosModules.linux-boot;
-  flake.nixosModules.linux-boot =
-    { lib, ... }:
-    let
-      inherit (lib.modules) mkDefault;
-    in
-    {
-      boot.initrd.systemd = {
-        enable = true;
-        # This is not a file path, it's a literal string, so we can't reference `root.hashedPasswordFile`.
-        emergencyAccess = mkDefault true;
-      };
+  flake.nixosModules.linux-boot = {
+    boot.initrd.systemd.enable = true;
 
-      boot.loader.systemd-boot = {
-        enable = true;
-        # editor = false; # Security Theather. Hell, Security Cinema even.
-      };
+    boot.loader = {
+      systemd-boot.enable = true;
+      systemd-boot.editor = false;
 
-      boot.loader.efi.canTouchEfiVariables = true;
+      # Avoid unnecessary modesets and paints.
+      systemd-boot.consoleMode = "keep";
+      timeout = 0;
+
+      efi.canTouchEfiVariables = true;
     };
+  };
 }
