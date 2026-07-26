@@ -630,30 +630,30 @@
             local space_buttons = {}
 
             local updateSpaceButtons = function()
-              for _, button in pairs(space_buttons) do
-                button:delete()
-              end
-              space_buttons = {}
-
               local current_space = hs.spaces.activeSpaceOnScreen()
               local spaces = hs.spaces.allSpaces()[hs.screen.mainScreen():getUUID()]
 
-              for index = #spaces, 1, -1 do
-                local space = spaces[index]
+              if #space_buttons ~= #spaces then
+                for _, button in pairs(space_buttons) do
+                  button:delete()
+                end
+                space_buttons = {}
 
-                local title = tostring(index)
+                for index = #spaces, 1, -1 do
+                  space_buttons[index] = hs.menubar.new()
 
+                  space_buttons[index]:setClickCallback(function()
+                    gotoSpace(index)
+                  end)
+                end
+              end
+
+              for index, space in ipairs(spaces) do
                 local attributes = space == current_space and {
                   color = { red = 1 }
                 } or {}
 
-                local button = hs.menubar.new()
-                button:setTitle(hs.styledtext.new(title, attributes))
-                button:setClickCallback(function()
-                  gotoSpace(index)
-                end)
-
-                table.insert(space_buttons, button)
+                space_buttons[index]:setTitle(hs.styledtext.new(tostring(index), attributes))
               end
             end
 
