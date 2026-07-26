@@ -547,10 +547,10 @@
                 local screen_frame = window:screen():frame()
 
                 window_frame.w = window_frame.w + offsetWidth
-                window_frame.w = math.max(100, math.min(window_frame.w, screen_frame.w - window_frame.x))
+                window_frame.w = math.max(100, math.min(window_frame.w, screen_frame.x + screen_frame.w - window_frame.x))
 
                 window_frame.h = window_frame.h + offsetHeight
-                window_frame.h = math.max(100, math.min(window_frame.h, screen_frame.h - window_frame.y))
+                window_frame.h = math.max(100, math.min(window_frame.h, screen_frame.y + screen_frame.h - window_frame.y))
 
                 window:setFrame(window_frame)
               end
