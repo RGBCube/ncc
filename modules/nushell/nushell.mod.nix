@@ -295,12 +295,16 @@
               jj git init
             }
 
-            # Get the realpath of a program on PATH.
-            def realwhich [application: string]: nothing -> any {
-              which --all $application
-              | where type == external
-              | get 0?.path
-              | if $in != null { path expand }
+            # `which`, but with the paths of externals canonicalized.
+            def realwhich [
+              ...applications: string
+              --all (-a) # List all executables.
+            ]: nothing -> table {
+              which --all=$all ...$applications
+              | update path {|row| match $row.type {
+                  "external" => { $row.path | path expand }
+                  _ => $row.path
+                } }
             }
           ''
         }")
