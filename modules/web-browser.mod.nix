@@ -542,6 +542,12 @@ in
       inherit (lib.meta) getExe;
     in
     {
+      system.defaults.CustomUserPreferences."net.imput.helium" = {
+        SUEnableAutomaticChecks = false;
+        SUAutomaticallyUpdate = false;
+        SUSendProfileInfo = false;
+      };
+
       system.services.helium-policy = {
         imports = singleton self.serviceModules.managed-files;
 

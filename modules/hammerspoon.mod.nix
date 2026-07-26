@@ -7,8 +7,13 @@
       inherit (lib.lists) singleton;
     in
     {
-      system.defaults.CustomUserPreferences."org.hammerspoon.Hammerspoon".MJConfigFile =
-        "~/.config/hammerspoon/init.lua";
+      system.defaults.CustomUserPreferences."org.hammerspoon.Hammerspoon" = {
+        MJConfigFile = "~/.config/hammerspoon/init.lua";
+
+        SUEnableAutomaticChecks = false;
+        SUAutomaticallyUpdate = false;
+        SUSendProfileInfo = false;
+      };
 
       homebrew.casks = singleton "hammerspoon";
     };

@@ -1,5 +1,14 @@
 { self, ... }:
 {
+  flake.darwinModules.desktop = self.darwinModules.video-player;
+  flake.darwinModules.video-player = {
+    system.defaults.CustomUserPreferences."com.colliderli.iina" = {
+      SUEnableAutomaticChecks = false;
+      SUAutomaticallyUpdate = false;
+      SUSendProfileInfo = false;
+    };
+  };
+
   flake.homeModules.desktop = self.homeModules.video-player;
   flake.homeModules.video-player =
     {

@@ -94,6 +94,8 @@
           };
       }
       // optionalAttrs osConfig.nixpkgs.hostPlatform.isDarwin {
+        auto-update = "off";
+
         macos-titlebar-style = "tabs";
         macos-option-as-alt = "left";
       };

@@ -203,6 +203,7 @@ in
         generator = toJSON { };
         value = {
           global.show_in_menu_bar = false;
+          global.check_for_updates_on_startup = false;
 
           profiles = [
             {
