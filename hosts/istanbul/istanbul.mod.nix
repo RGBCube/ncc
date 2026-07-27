@@ -63,7 +63,7 @@ in
           };
         };
 
-        hardware.report = ./report.json;
+        hardware.reportPath = ./report.json;
         system.stateVersion = "25.11";
       }
     );

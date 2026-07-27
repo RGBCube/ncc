@@ -10,7 +10,8 @@
       imports = [
         inputs.nixos-facter.nixosModules.facter
 
-        (mkAliasOptionModule [ "hardware" "report" ] [ "facter" "reportPath" ])
+        (mkAliasOptionModule [ "hardware" "reportPath" ] [ "facter" "reportPath" ])
+        (mkAliasOptionModule [ "hardware" "report" ] [ "facter" "report" ])
       ];
     };
 
