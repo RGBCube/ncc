@@ -355,14 +355,16 @@ in
         }
 
         def get-jj-info [] {
-          let root_result = do { jj root } | complete
+          let root_result = do { jj --ignore-working-copy root } | complete
           if $root_result.exit_code != 0 { return "" }
 
-          let bookmark = (do { jj log -r @ --no-graph -T 'bookmarks.map(|b| b.name()).join(", ")' } | complete | get stdout | str trim)
-          let change = (do { jj log -r @ --no-graph -T 'change_id.shortest(8)' } | complete | get stdout | str trim)
-          let is_empty_str = (do { jj log -r @ --no-graph -T 'empty' } | complete | get stdout | str trim)
+          # --ignore-working-copy so a killed render can't leave the working
+          # copy stale; the watchman snapshot trigger keeps the data fresh.
+          let bookmark = (do { jj --ignore-working-copy log -r @ --no-graph -T 'bookmarks.map(|b| b.name()).join(", ")' } | complete | get stdout | str trim)
+          let change = (do { jj --ignore-working-copy log -r @ --no-graph -T 'change_id.shortest(8)' } | complete | get stdout | str trim)
+          let is_empty_str = (do { jj --ignore-working-copy log -r @ --no-graph -T 'empty' } | complete | get stdout | str trim)
           let dirty = if $is_empty_str == "false" { "*" } else { "" }
-          let has_conflict = (do { jj log -r @ --no-graph -T 'conflict' } | complete | get stdout | str trim)
+          let has_conflict = (do { jj --ignore-working-copy log -r @ --no-graph -T 'conflict' } | complete | get stdout | str trim)
           let conflict_marker = if $has_conflict == "true" { " \e[31m!conflict\e[0m" } else { "" }
 
           let ref_part = if ($bookmark | is-not-empty) {
