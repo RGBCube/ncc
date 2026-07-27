@@ -1,5 +1,6 @@
-{
-  flake.homeModules.terminfo-autogen =
+{ self, ... }: {
+  flake.homeModules.shell = self.homeModules.dump;
+  flake.homeModules.dump =
     { pkgs, lib, ... }:
     let
       dump = pkgs.writeTextDir "dump.nu" /* nu */ ''
