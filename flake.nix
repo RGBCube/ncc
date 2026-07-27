@@ -1,11 +1,5 @@
 {
   nixConfig = {
-    extra-substituters = [
-    ];
-
-    extra-trusted-public-keys = [
-    ];
-
     experimental-features = [
       "cgroups"
       "flakes"
