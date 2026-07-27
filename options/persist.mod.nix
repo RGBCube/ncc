@@ -145,7 +145,7 @@
         {
           persist.mountpoints =
             config.system.services
-            |> filterAttrs (_: service: service.limits.storage != null)
+            |> filterAttrs (_: service: service.limits.storage or null != null)
             |> mapAttrsToList (name: _: "/var/lib/${name}");
         }
       ]);
