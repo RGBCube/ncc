@@ -8,45 +8,7 @@
       pkgs,
       ...
     }:
-    let
-      inherit (lib.lists) singleton;
-
-      stats = pkgs.stats.overrideAttrs {
-        version = "3.0.9";
-
-        src = pkgs.fetchFromGitHub {
-          owner = "exelban";
-          repo = "Stats";
-          tag = "v3.0.9";
-          hash = "sha256-ioppiSutvke15vVcWdEBCSw/BAv7BYjkk8pR5D6goMg=";
-        };
-      };
-    in
     {
-      environment.systemPackages = singleton stats;
-
-      system.defaults.CustomUserPreferences."eu.exelban.Stats" = {
-        update-interval = "Never";
-        setupProcess = 1;
-
-        CPU_widget = "line_chart";
-        CPU_line_chart_box = 0;
-        CPU_line_chart_label = 1;
-
-        GPU_state = 1;
-        GPU_widget = "line_chart";
-        GPU_line_chart_box = 0;
-        GPU_line_chart_label = 1;
-
-        RAM_widget = "line_chart";
-        RAM_line_chart_box = 0;
-        RAM_line_chart_label = 1;
-
-        Disk_state = 0;
-
-        Battery_state = 0;
-      };
-
       # DOCK
       system.defaults.dock = {
         autohide = true;
