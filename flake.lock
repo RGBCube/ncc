@@ -220,15 +220,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1782267080,
-        "narHash": "sha256-so1hIImuLtTKTVUokJ/6C2D2b2D4znCx+/PAjMSAnpw=",
+        "lastModified": 1784298522,
+        "narHash": "sha256-H8jK/B3q+d2tKN5BCs3CfCsBPDSHdFIu91MWZdu2iOU=",
         "owner": "feel-co",
         "repo": "hjem",
-        "rev": "dd0ba9e22fb46581f843e6121de33ca7a4a80224",
+        "rev": "5d5d73c8b49f7b29549922484d3e024ecf91b64d",
         "type": "github"
       },
       "original": {
         "owner": "feel-co",
+        "ref": "pull/167/merge",
         "repo": "hjem",
         "type": "github"
       }

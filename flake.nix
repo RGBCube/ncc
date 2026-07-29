@@ -39,7 +39,7 @@
   };
 
   inputs.hjem = {
-    url = "github:feel-co/hjem";
+    url = "github:feel-co/hjem?ref=pull/167/merge";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
