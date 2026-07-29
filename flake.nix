@@ -104,13 +104,6 @@
     flake = false;
   };
 
-  inputs.sudo-run0-shim = {
-    url = "github:LordGrimmauld/run0-sudo-shim";
-    inputs.nixpkgs.follows = "nixpkgs";
-    inputs.nix-github-actions.follows = "";
-    inputs.treefmt-nix.follows = "";
-  };
-
   inputs.zmk-nix = {
     url = "github:lilyinstarlight/zmk-nix";
     inputs.nixpkgs.follows = "nixpkgs";

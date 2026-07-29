@@ -1,30 +1,13 @@
-{ inputs, self, ... }:
+{ self, ... }:
 {
   flake.nixosModules.default = self.nixosModules.sudo;
-  flake.nixosModules.sudo =
-    { lib, ... }:
-    let
-      inherit (lib.lists) singleton;
-    in
-    {
-      security.sudo.enable = false;
-      security.polkit.enable = true;
-
-      home.extraModules = singleton (
-        { osConfig, lib, ... }:
-        let
-          inherit (lib.lists) singleton;
-        in
-        {
-          packages =
-            singleton
-              inputs.sudo-run0-shim.packages.${osConfig.nixpkgs.hostPlatform.system}.run0-sudo-shim;
-        }
-      );
-    };
+  flake.nixosModules.sudo = {
+    security.sudo.enable = false;
+    security.polkit.enable = true;
+  };
 
   flake.nixosModules.desktop = self.nixosModules.sudo-auth-keep;
-  flake.nixosModules.sudo-auth-keep = {
+  flake.nixosModules.polkit-auth-keep = {
     security.polkit.extraConfig = # javascript
       ''
         polkit.addRule(function(action, subject) {

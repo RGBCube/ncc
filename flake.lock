@@ -377,7 +377,6 @@
         "nix-darwin": "nix-darwin",
         "nixos-facter": "nixos-facter",
         "nixpkgs": "nixpkgs",
-        "sudo-run0-shim": "sudo-run0-shim",
         "themes": "themes",
         "ublock": "ublock",
         "zmk-nix": "zmk-nix"
@@ -397,28 +396,6 @@
         "owner": "rust-lang",
         "ref": "nightly",
         "repo": "rust-analyzer",
-        "type": "github"
-      }
-    },
-    "sudo-run0-shim": {
-      "inputs": {
-        "nix-github-actions": [],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "treefmt-nix": []
-      },
-      "locked": {
-        "lastModified": 1782890834,
-        "narHash": "sha256-J/I7VPXpOwNtEk9H+lbZVT+xJYBsSKgnMlwzlVIJSWk=",
-        "owner": "LordGrimmauld",
-        "repo": "run0-sudo-shim",
-        "rev": "9fa985ddb9dc7f4d66aa7bfc3bc3188e4aa1d727",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LordGrimmauld",
-        "repo": "run0-sudo-shim",
         "type": "github"
       }
     },
