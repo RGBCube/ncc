@@ -26,7 +26,7 @@
     url = "github:NixOS/nixpkgs/nixos-unstable";
   };
   inputs.nix-darwin = {
-    url = "github:RGBCube/nix-darwin/master-with-modular-services";
+    url = "github:nix-darwin/nix-darwin?ref=pull/1765/merge";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 

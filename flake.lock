@@ -290,16 +290,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1784896526,
+        "lastModified": 1784910057,
         "narHash": "sha256-VmIZoKoFBeQRv7rD4B/51WLptTvYcxac6zl++jydU8U=",
-        "owner": "RGBCube",
+        "owner": "nix-darwin",
         "repo": "nix-darwin",
-        "rev": "75b5eaad90f492da351f5cf6a73b62b4eded0763",
+        "rev": "af2e28e7ad7f5c1ef2abbb50fc137649676c229e",
         "type": "github"
       },
       "original": {
-        "owner": "RGBCube",
-        "ref": "master-with-modular-services",
+        "owner": "nix-darwin",
+        "ref": "pull/1765/merge",
         "repo": "nix-darwin",
         "type": "github"
       }
