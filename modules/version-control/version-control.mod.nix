@@ -21,6 +21,8 @@
     {
       packages = singleton pkgs.gh;
 
+      xdg.data.files."gh/extensions/gh-stack".source = "${pkgs.gh-stack}/bin";
+
       xdg.config.files."gh/config.yml".generator = toYAML { };
       xdg.config.files."gh/config.yml".value = {
         version = 1;
