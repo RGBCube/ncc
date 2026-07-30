@@ -140,16 +140,6 @@
           "push"
         ];
 
-        aliases.cl = [
-          "git"
-          "clone"
-        ];
-
-        aliases.i = [
-          "git"
-          "init"
-        ];
-
         aliases.a = [ "abandon" ];
 
         aliases.c = [ "commit" ];
