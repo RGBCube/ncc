@@ -225,38 +225,51 @@
                 }
                 | insert line ($url.fragment | parse --regex 'L(?<line>\d+)' | get --optional line.0)
 
+                let repository_url = {
+                  scheme: $url.scheme
+                  host: $url.host
+                  path: $"/($target.owner)/($target.repository)"
+                }
+                | url join
+
                 # CLONE
                 do --env {
                   let destination = $at | path join $target.repository
 
                   if not ($destination | path exists) {
-                    {
-                      scheme: $url.scheme
-                      host: $url.host
-                      path: $"/($target.owner)/($target.repository)"
-                    }
-                    | url join
-                    | jj git clone $in $destination
+                    jj git clone $repository_url $destination
                   }
 
                   cd $destination
                 }
 
-                # RESOLVE
-                let symbol = do {
-                  let remote = jj git remote list
+                # RESOLVE REMOTE
+                let remote = do {
+                  let existing = jj git remote list
                   | lines
                   | parse "{name} {url}"
                   | where {|remote| $remote.url | str replace --regex '\.git$' "" | str ends-with $"($target.owner)/($target.repository)" }
                   | get --optional name.0
 
+                  if $existing != null {
+                    return $existing
+                  }
+
+                  # Repository is a fork/upstream of the one on disk,
+                  # so add it as a remote named after its owner.
+                  jj git remote add $target.owner $repository_url
+                  $target.owner
+                }
+
+                # RESOLVE SYMBOL
+                let symbol = do {
                   let symbol = resolve-revision-in --remote $remote $target.revision
 
                   if $symbol != null {
                     return $symbol
                   }
 
-                  jj git fetch
+                  jj git fetch --remote $remote
                   let symbol = resolve-revision-in --remote $remote $target.revision
 
                   if $symbol == null {
