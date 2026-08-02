@@ -110,9 +110,15 @@ let
 
       settings.toolbar_pin = "force_pinned";
 
-      policy.userSettings = singleton [
-        "userFiltersTrusted"
-        "true"
+      policy.userSettings = [
+        [
+          "suspendUntilListsAreLoaded"
+          "true"
+        ]
+        [
+          "userFiltersTrusted"
+          "true"
+        ]
       ];
 
       policy.toOverwrite.filterLists =
