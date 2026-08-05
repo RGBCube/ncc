@@ -389,7 +389,7 @@
         git.sign-on-push = true;
 
         signing.backend = "ssh";
-        signing.key = self.people.self.key;
+        signing.key = self.people.self.ssh-key;
       };
     };
 

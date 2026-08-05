@@ -56,7 +56,7 @@ let
       lib.attrsets = { inherit attrValues filterAttrs mapAttrs; };
     }).flake;
 
-  inherit (entitiesModule) keys keys-admin;
+  inherit (entitiesModule) ssh-keys ssh-keys-admin;
 
   hostSecrets =
     attrNames (readDir ./hosts)
@@ -66,7 +66,7 @@ let
       |> filter isAge
       |> map (path: {
         name = path;
-        value.publicKeys = uniq <| optional (keys ? ${host}) keys.${host} ++ keys-admin;
+        value.publicKeys = uniq <| optional (ssh-keys ? ${host}) ssh-keys.${host} ++ ssh-keys-admin;
       })
     );
 
@@ -75,10 +75,10 @@ let
     |> filter isAge
     |> map (path: {
       name = path;
-      value.publicKeys = uniq <| attrValues keys;
+      value.publicKeys = uniq <| attrValues ssh-keys;
     });
 in
 listToAttrs (hostSecrets ++ moduleSecrets)
 // {
-  "bootstrap.age".publicKeys = uniq <| attrValues keys;
+  "bootstrap.age".publicKeys = uniq <| attrValues ssh-keys;
 }

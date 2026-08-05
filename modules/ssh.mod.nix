@@ -33,7 +33,7 @@
             {
               User = "root";
               Port = head config.services.openssh.ports;
-              KnownHostsCommand = ''${echo} "%H ${self.machines.${name}.key}"'';
+              KnownHostsCommand = ''${echo} "%H ${self.machines.${name}.ssh-key}"'';
             }
           )
         )
@@ -42,7 +42,7 @@
             User = "root";
             HostName = "rgbcu.be";
             Port = 2222;
-            KnownHostsCommand = ''${echo} "%H ${self.machines.best.key}"'';
+            KnownHostsCommand = ''${echo} "%H ${self.machines.best.ssh-key}"'';
           };
 
           "*" = {
@@ -114,7 +114,7 @@
         };
       };
 
-      users.users.root.openssh.authorizedKeys.keys = self.keys-admin;
+      users.users.root.openssh.authorizedKeys.keys = self.ssh-keys-admin;
     };
 
   flake.nixosModules.server = self.nixosModules.endlessh-go;
