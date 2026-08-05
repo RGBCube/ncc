@@ -103,75 +103,15 @@ let
         "wildcard_enum_match_arm"
       ];
     };
-
-    configuration = {
-      avoid-breaking-exported-api = false;
-
-      allowed-idents-below-min-chars = [
-        "x"
-        "y"
-        "z"
-        "r"
-        "g"
-        "b"
-        "c"
-        "s"
-        "n"
-      ];
-
-      allowed-wildcard-imports = singleton "super";
-    };
-  };
-
-  rustfmtConfiguration = {
-    # float_literal_trailing_zero = "Always"; # TODO: Warning for some reason?
-    condense_wildcard_suffixes = true;
-    doc_comment_code_block_width = 100;
-    enum_discrim_align_threshold = 60;
-    force_multiline_blocks = true;
-    format_code_in_doc_comments = true;
-    format_macro_matchers = true;
-    format_strings = true;
-    group_imports = "StdExternalCrate";
-    hex_literal_case = "Upper";
-    imports_granularity = "Crate";
-    imports_layout = "Vertical";
-    inline_attribute_width = 60;
-    match_block_trailing_comma = true;
-    max_width = 100;
-    newline_style = "Unix";
-    normalize_comments = true;
-    normalize_doc_attributes = true;
-    overflow_delimited_expr = true;
-    struct_field_align_threshold = 60;
-    tab_spaces = 3;
-    unstable_features = true;
-    use_field_init_shorthand = true;
-    use_try_shorthand = true;
-    wrap_comments = true;
-  };
-
-  taploConfiguration = {
-    formatting = {
-      align_entries = true;
-      column_width = 100;
-      compact_arrays = false;
-      reorder_inline_tables = true;
-      reorder_keys = true;
-    };
-
-    rule = singleton {
-      include = singleton "**/Cargo.toml";
-      keys = singleton "package";
-
-      formatting.reorder_keys = false;
-    };
   };
 in
 {
   rust.package =
-    source:
-    { inputs, ... }:
+    {
+      source,
+      overrideAttrs ? (_: { }),
+    }:
+    { inputs, lib, ... }:
     {
       perSystem =
         {
@@ -181,54 +121,123 @@ in
           ...
         }:
         let
+          inherit (lib.fixedPoints) fix;
+
           toml = pkgs.formats.toml { };
 
           inherit (importTOML <| source + "/Cargo.toml") package;
 
           toolchain = inputs.fenix.packages.${system}.complete.toolchain;
 
-          buildRustCrateForPkgs =
-            pkgs:
-            pkgs.buildRustCrate.override {
-              cargo = toolchain;
-              clippy = toolchain;
-              rustc = toolchain;
-            };
+          clippyConfDir = pkgs.linkFarm "clippy-configuration" {
+            "clippy.toml" = toml.generate "clippy.toml" {
+              avoid-breaking-exported-api = false;
 
-          generated = (import "${inputs.crate2nix}/tools.nix" { inherit pkgs; }).generatedCargoNix {
-            inherit (package) name;
-            src = source;
+              allowed-idents-below-min-chars = [
+                "x"
+                "y"
+                "z"
+                "r"
+                "g"
+                "b"
+                "c"
+                "s"
+                "n"
+              ];
+
+              allowed-wildcard-imports = singleton "super";
+            };
           };
 
-          overrideRootCrate =
-            mkOverrides:
-            pkgs.callPackage "${generated}/default.nix" {
-              buildRustCrateForPkgs =
-                pkgs: crate:
-                buildRustCrateForPkgs pkgs
-                <| crate // optionalAttrs (crate.crateName == package.name) (mkOverrides pkgs);
+          rustfmtToml = toml.generate "rustfmt.toml" {
+            inherit (package) edition;
+
+            # float_literal_trailing_zero = "Always"; # TODO: Warning for some reason?
+            condense_wildcard_suffixes = true;
+            doc_comment_code_block_width = 100;
+            enum_discrim_align_threshold = 60;
+            force_multiline_blocks = true;
+            format_code_in_doc_comments = true;
+            format_macro_matchers = true;
+            format_strings = true;
+            group_imports = "StdExternalCrate";
+            hex_literal_case = "Upper";
+            imports_granularity = "Crate";
+            imports_layout = "Vertical";
+            inline_attribute_width = 60;
+            match_block_trailing_comma = true;
+            max_width = 100;
+            newline_style = "Unix";
+            normalize_comments = true;
+            normalize_doc_attributes = true;
+            overflow_delimited_expr = true;
+            struct_field_align_threshold = 60;
+            tab_spaces = 3;
+            unstable_features = true;
+            use_field_init_shorthand = true;
+            use_try_shorthand = true;
+            wrap_comments = true;
+          };
+
+          taploToml = toml.generate "taplo.toml" {
+            formatting = {
+              align_entries = true;
+              column_width = 100;
+              compact_arrays = false;
+              reorder_inline_tables = true;
+              reorder_keys = true;
             };
 
-          cargoNix = pkgs.callPackage "${generated}/default.nix" { inherit buildRustCrateForPkgs; };
+            rule = singleton {
+              include = singleton "**/Cargo.toml";
+              keys = singleton "package";
 
-          cargoNixDebug = overrideRootCrate (_: {
-            release = false;
-          });
-
-          cargoNixClippy = overrideRootCrate (pkgs: {
-            useClippy = true;
-            inherit (clippy) lints;
-            CLIPPY_CONF_DIR = pkgs.linkFarm "clippy-configuration" {
-              "clippy.toml" = toml.generate "clippy.toml" clippy.configuration;
+              formatting.reorder_keys = false;
             };
-          });
+          };
 
-          rustfmtToml =
-            rustfmtConfiguration // { inherit (package) edition; } |> toml.generate "rustfmt.toml";
+          inherit
+            (fix (self: {
+              overrideRootCrate =
+                mkOverrides:
+                pkgs.callPackage
+                  "${
+                    (import "${inputs.crate2nix}/tools.nix" { inherit pkgs; }).generatedCargoNix {
+                      inherit (package) name;
+                      src = source;
+                    }
+                  }/default.nix"
+                  {
+                    buildRustCrateForPkgs =
+                      pkgs: crate:
+                      pkgs.buildRustCrate.override {
+                        cargo = toolchain;
+                        clippy = toolchain;
+                        rustc = toolchain;
+                      }
+                      <| crate // optionalAttrs (crate.crateName == package.name) (mkOverrides pkgs);
+                  };
+
+              cargoNix = self.overrideRootCrate (_: { });
+
+              cargoNixDebug = self.overrideRootCrate (_: {
+                release = false;
+              });
+
+              cargoNixClippy = self.overrideRootCrate (_: {
+                useClippy = true;
+                inherit (clippy) lints;
+                CLIPPY_CONF_DIR = clippyConfDir;
+              });
+            }))
+            cargoNix
+            cargoNixDebug
+            cargoNixClippy
+            ;
         in
         {
-          packages.${package.name} = cargoNix.rootCrate.build;
-          packages."${package.name}-debug" = cargoNixDebug.rootCrate.build;
+          packages.${package.name} = cargoNix.rootCrate.build.overrideAttrs overrideAttrs;
+          packages."${package.name}-debug" = cargoNixDebug.rootCrate.build.overrideAttrs overrideAttrs;
 
           packages."${package.name}-rustfmt" = pkgs.writeShellScriptBin "rustfmt" ''
             exec ${getExe' toolchain "rustfmt"} --config-path ${rustfmtToml} "$@"
@@ -237,7 +246,9 @@ in
           devShells.${package.name} = pkgs.mkShell {
             packages = singleton toolchain;
 
+            env.CLIPPY_CONF_DIR = clippyConfDir;
             env.RUSTFMT = getExe self'.packages."${package.name}-rustfmt";
+            env.TAPLO_CONFIG = taploToml;
           };
 
           checks."${package.name}-package" = self'.packages.${package.name};
@@ -259,7 +270,7 @@ in
 
           checks."${package.name}-toml-fmt" = pkgs.runCommand "${package.name}-toml-fmt" { } ''
             cd ${source}
-            ${getExe pkgs.taplo} format --check --config ${toml.generate "taplo.toml" taploConfiguration}
+            ${getExe pkgs.taplo} format --check --config ${taploToml}
             touch $out
           '';
 

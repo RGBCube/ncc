@@ -3,5 +3,5 @@ let
   inherit (lib.lists) singleton;
 in
 {
-  imports = singleton <| lib.rust.package ./.;
+  imports = singleton <| lib.rust.package { source = ./.; };
 }
