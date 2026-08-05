@@ -164,7 +164,6 @@
         pkgs.rclone
         pkgs.tokei
         pkgs.typos
-        pkgs.yazi
       ]
       ++ optionals osConfig.nixpkgs.hostPlatform.isLinux [
         pkgs.strace
