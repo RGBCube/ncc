@@ -402,7 +402,6 @@
     }:
     let
       inherit (lib.meta) getExe;
-      inherit (lib.generators) toTOML;
       inherit (lib.lists) singleton;
       inherit (lib.modules) mkDefault;
 
@@ -415,7 +414,7 @@
     {
       packages = singleton difft;
 
-      xdg.config.files."jj/config.toml".generator = mkDefault toTOML;
+      xdg.config.files."jj/config.toml".generator = mkDefault <| pkgs.writers.writeTOML "jj-config.toml";
       xdg.config.files."jj/config.toml".value.ui.diff-formatter = [
         (getExe difft)
         "--color"
@@ -428,7 +427,6 @@
   flake.homeModules.mergiraf =
     { lib, pkgs, ... }:
     let
-      inherit (lib.generators) toTOML;
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe;
       inherit (lib.modules) mkDefault;
@@ -436,7 +434,7 @@
     {
       packages = singleton pkgs.mergiraf;
 
-      xdg.config.files."jj/config.toml".generator = mkDefault toTOML;
+      xdg.config.files."jj/config.toml".generator = mkDefault <| pkgs.writers.writeTOML "jj-config.toml";
       xdg.config.files."jj/config.toml".value = {
         aliases.resolve-ast = [
           "resolve"
@@ -452,7 +450,7 @@
   flake.homeModules.watchman =
     { lib, pkgs, ... }:
     let
-      inherit (lib.generators) toJSON toTOML;
+      inherit (lib.generators) toJSON;
       inherit (lib.lists) singleton;
       inherit (lib.modules) mkDefault;
     in
@@ -468,7 +466,7 @@
         ];
       };
 
-      xdg.config.files."jj/config.toml".generator = mkDefault toTOML;
+      xdg.config.files."jj/config.toml".generator = mkDefault <| pkgs.writers.writeTOML "jj-config.toml";
       xdg.config.files."jj/config.toml".value = {
         fsmonitor.backend = "watchman";
         fsmonitor.watchman.register-snapshot-trigger = true;
