@@ -16,6 +16,9 @@ Never use `git`. Instead of `git add`, use `jj file track`.
   on. Always prefer new (nix3) commands.
 - Never use python to parse json if jq can do it fine, jq avoids permission
   prompts.
+- Do not ever run `builtins.getFlake`, use flakerefs in the nix3 cli properly.
+  `getFlake` copies the entire path to the nix store, which includes `target`
+  dirs and is overall a waste of storage and time.
 
 # Nix Style Rules
 
