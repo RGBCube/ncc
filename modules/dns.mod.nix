@@ -250,7 +250,7 @@ in
               zone_type = "External";
 
               stores.type = "forward";
-              stores.options.validate = true;
+              # stores.options.validate = true; # TODO: Fix the hickory impl of DNSSEC validation.
               stores.name_servers =
                 [
                   # { # FIXME: Slow.
