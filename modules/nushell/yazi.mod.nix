@@ -33,14 +33,5 @@
           desc = "Open shell here";
         };
       };
-
-      xdg.config.files."nushell/config.nu".text = "source ${
-        pkgs.writeText "yazi.nu" /* nu */ ''
-          def --env yazi [...arguments: string]: nothing -> nothing {
-            let cwd = ${getExe pkgs.yazi} --cwd-file /dev/stdout ...$arguments | str trim
-            if $cwd != "" and $cwd != $env.PWD { cd $cwd }
-          }
-        ''
-      }";
     };
 }
