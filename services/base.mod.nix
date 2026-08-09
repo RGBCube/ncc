@@ -1,4 +1,13 @@
+{ self, ... }:
 {
+  flake.darwinModules.default = self.darwinModules.rotate-logs;
+  flake.darwinModules.rotate-logs = {
+    # logfilename              mode count size when flags
+    environment.etc."newsyslog.d/org.nixos.conf".text = ''
+      /var/log/org.nixos.*.log 640  5     1024 *    GJN
+    '';
+  };
+
   flake.serviceModules.base =
     {
       config,
@@ -304,6 +313,10 @@
         # A null attribute name omits the attribute, for runners without the backend.
         ${if options ? launchd then "launchd" else null} = {
           RunAtLoad = true;
+
+          StandardOutPath = "/var/log/org.nixos.${name}.log";
+          StandardErrorPath = "/var/log/org.nixos.${name}.log";
+
           KeepAlive = getAttr config.exec.again {
             no = false;
             always = true;
