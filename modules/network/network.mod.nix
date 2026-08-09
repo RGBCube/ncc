@@ -99,6 +99,7 @@
 
         pkgs.dig
         pkgs.inetutils
+        pkgs.miniserve
       ]
       ++ optionals osConfig.nixpkgs.hostPlatform.isDarwin [
         pkgs.iproute2mac

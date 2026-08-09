@@ -3,6 +3,7 @@
     { lib, pkgs, ... }:
     let
       inherit (lib.lists) singleton;
+      inherit (lib.meta) getExe;
       inherit (lib.strings) makeLibraryPath optionalString;
     in
     {
@@ -36,7 +37,19 @@
       packages.python = pkgs.buildEnv {
         name = "python";
         paths = [
-          pkgs.python3
+          (pkgs.writers.writeNuBin "python" /* nu */ ''
+            const banned = "http.server"
+
+            def --wrapped main [...arguments: string] {
+              if (($arguments | split list "-m").1?.0? == $banned) or ($"-m($banned)" in $arguments) {
+                error make --unspanned {
+                  msg: $"python -m ($banned) is banned, use miniserve instead"
+                }
+              }
+
+              exec ${getExe pkgs.python3} ...$arguments
+            }
+          '')
           pkgs.uv
         ];
 
