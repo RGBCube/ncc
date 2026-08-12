@@ -1,21 +1,139 @@
 { self }:
 let
-  inherit (self) attrNames isAttrs;
+  inherit (self)
+    attrNames
+    isAttrs
+    removeAttrs
+    toJSON
+    ;
   inherit (self.attrsets) mapAttrsToList;
   inherit (self.strings)
     concatLines
     concatStringsSep
+    match
     replaceStrings
     stringLength
     ;
   inherit (self.lists)
+    concatLists
+    concatMap
+    elem
     flatten
+    optional
     singleton
     sortOn
     toList
     ;
 in
 {
+  # KDL documents.
+  generators.toKDL =
+    {
+      version,
+      normalizeValueToNodeList ? singleton,
+    }:
+    let
+      mkNode =
+        {
+          name,
+          entries ? [ ],
+          children ? [ ],
+        }:
+        {
+          inherit name entries children;
+        };
+
+      attrsToNodeList =
+        attrs:
+        attrs
+        |> mapAttrsToList (
+          name: value:
+          value
+          |> toList
+          |> concatMap normalizeValueToNodeList
+          |> map (
+            value:
+            if isAttrs value then
+              mkNode {
+                inherit name;
+                entries = value._ or [ ];
+                children = attrsToNodeList <| removeAttrs value <| singleton "_";
+              }
+            else
+              mkNode {
+                inherit name;
+                entries = singleton value;
+              }
+          )
+        )
+        |> concatLists;
+
+      serialize.keywordPrefix =
+        if version == 1 then
+          ""
+        else if version == 2 then
+          "#"
+        else
+          throw "generators.toKDL: unsupported KDL version '${toString version}'";
+
+      serialize.value =
+        value:
+        if value == true then
+          "${serialize.keywordPrefix}true"
+        else if value == false then
+          "${serialize.keywordPrefix}false"
+        else if value == null then
+          "${serialize.keywordPrefix}null"
+        else
+          toJSON value;
+
+      serialize.entry =
+        entry:
+        if isAttrs entry then
+          mapAttrsToList (key: value: "${serialize.identifier key}=${serialize.value value}") entry
+        else
+          singleton <| serialize.value entry;
+
+      serialize.identifier =
+        identifier:
+        if
+          match "[A-Za-z_][A-Za-z0-9!$%&'*+.:?@^_|~-]*" identifier != null
+          && !elem identifier [
+            "true"
+            "false"
+            "null"
+            "inf"
+            "nan"
+          ]
+        then
+          identifier
+        else
+          toJSON identifier;
+
+      serialize.nodeToLines =
+        {
+          indent ? "",
+        }:
+        {
+          name,
+          entries,
+          children,
+        }:
+        singleton "${indent}${
+          singleton (serialize.identifier name)
+          ++ concatMap serialize.entry entries
+          ++ optional (children != [ ]) "{"
+          |> concatStringsSep " "
+        }"
+        ++ concatMap (serialize.nodeToLines { indent = "${indent}    "; }) children
+        ++ optional (children != [ ]) "${indent}}";
+    in
+    attrs:
+    attrs
+    |> attrsToNodeList
+    |> concatMap (serialize.nodeToLines { })
+    |> concatLines;
+
   # OpenSSH client config.
   generators.toSSHConfig =
     attrs:
@@ -37,7 +155,6 @@ in
         attrs
         |> mapAttrsToList (name: value: toList value |> map (value: "${indent}${name} ${render value}"))
         |> flatten;
-
     in
     attrs
     |> attrNames
