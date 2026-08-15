@@ -1,0 +1,13 @@
+[package]
+name    = "sessiond"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "sessiond"
+path = "main.rs"
+
+[dependencies]
+anyhow = "1.0.102"
+clap   = { features = [ "derive" ], version = "4.6.1" }
+zbus   = "5"
