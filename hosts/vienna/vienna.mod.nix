@@ -50,6 +50,11 @@ in
         secrets.password.file = ./password.age;
         users.users.root.hashedPasswordFile = config.secrets.password.path;
 
+        services.sessiond = {
+          enable = true;
+          user = "root";
+        };
+
         persist.enable = true;
 
         disko.imageBuilder = {

@@ -31,6 +31,11 @@ in
         secrets.password.file = ./password.age;
         users.users.root.hashedPasswordFile = config.secrets.password.path;
 
+        services.sessiond = {
+          enable = true;
+          user = "root";
+        };
+
         persist.enable = true;
         persist.passwordFile = "/media/key/.bcachefs.key";
 
