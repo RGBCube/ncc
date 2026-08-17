@@ -622,108 +622,193 @@ in
             #!${getExe pkgs.python3}
             from __future__ import annotations
 
-            # Extract the cli.js bundle from a bun --compile --bytecode executable.
+            # Unpack the module graph from a bun --compile --bytecode executable.
             #
             # Starting with @anthropic-ai/claude-code 2.1.113 the npm package stopped
             # shipping cli.js and instead publishes platform-specific tarballs that contain
-            # a bun-compiled ELF (~226 MB). The JavaScript is still fully embedded in the
-            # binary as plaintext — the @bytecode marker just means a V8 parse-cache lives
-            # alongside it, not instead of it.
+            # a bun-compiled executable. The JavaScript is still fully embedded as
+            # plaintext — the @bytecode marker just means a V8 parse-cache lives alongside
+            # it, not instead of it.
             #
-            # Layout of each CJS module inside the bun SEA payload:
-            #   // @bun[ @bytecode] @bun-cjs\n
-            #   (function(exports, require, module, __filename, __dirname) {<BODY>})\n
-            #   \x00/$bunfs/root/<next-module-name>\x00...
+            # Up to 2.1.235 the payload held one big `@bun-cjs` module (the whole bundle),
+            # which we lifted to a single cli.cjs. 2.1.245 switched to a code-split ESM
+            # build: ~1400 modules — an extensionless entry point, `chunk-<hash>.js`
+            # chunks, a worker under `src/`, four assets (mermaid, chart.js, highlight.js,
+            # an HTML template) and the optional native `.node` addons. So we unpack the
+            # whole graph into a directory instead.
             #
-            # Claude Code ships three real modules in the tail region (past 0x6000000):
-            # the main cli (~12 MB), then two tiny native-loader stubs for the optional
-            # image-processor.node and audio-capture.node. Only the first is interesting.
+            # Bun stores that graph in a dedicated section (Mach-O `__BUN,__bun`, ELF
+            # `.bun`) laid out as:
+            #   u64 payload_byte_count
+            #   <payload: every module name, source, bytecode and sourcemap concatenated>
+            #   Offsets struct
+            #   "\n---- Bun! ----\n"
+            # Every pointer into the payload is a StringPointer {u32 offset, u32 length}
+            # relative to the start of the payload, i.e. 8 bytes into the section. The
+            # module table is an array of 52-byte entries; we need three of its fields:
+            # the module name, the source text, and the kind (JS / asset / native addon).
 
+            import posixpath
+            import re
+            import struct
             import sys
             from pathlib import Path
 
-            # Skip over .rodata / .text — those contain `// @bun` string literals (error
-            # messages, help text) that would confuse the scanner. The first real module
-            # sat at ~0xd333ec8 in 2.1.113; staying well below that survives future growth.
-            SCAN_FROM: int = 0x6000000
+            TRAILER: bytes = b"\n---- Bun! ----\n"
 
-            HEADERS: list[bytes] = [
-              b"// @bun @bytecode @bun-cjs\n(function(exports, require, module, __filename, __dirname) {",
-              b"// @bun @bun-cjs\n(function(exports, require, module, __filename, __dirname) {",
-            ]
+            # Every module is named /$bunfs/root/<path>; bun resolves imports against that
+            # virtual root, so the tree we unpack mirrors it.
+            ROOT: str = "/$bunfs/root/"
 
-            CJS_OPEN: bytes = b"(function(exports, require, module, __filename, __dirname) {"
-            CJS_END: bytes = b"})\n\x00"
+            KIND_JS: int = 0x10101
 
+            STRIDE: int = 52
 
-            def find_main_module(data: bytes) -> tuple[int, int]:
-              # In 2.1.117 bun emits cli.js twice: once as a @bytecode blob with the V8
-              # parse cache interleaved between the source and its `})\n\x00` terminator,
-              # and again as a clean source-only copy that terminates normally. Collect
-              # every header past SCAN_FROM and pick the first one whose terminator lies
-              # before the next header — that's the source-only copy.
-              headers: list[tuple[int, int]] = []
-              for header in HEADERS:
-                p: int = SCAN_FROM
-                while True:
-                  p = data.find(header, p)
-                  if p < 0:
-                    break
-                  headers.append((p, len(header)))
-                  p += 1
+            # The entry point is extensionless (`/$bunfs/root/cli`), which Deno won't
+            # resolve as a module. Give it a name of our own.
+            ENTRY: str = "cli.js"
 
-              if not headers:
-                sys.exit("lift: no bun CJS module header found past 0x6000000")
-
-              headers.sort()
-              boundaries: list[int] = [p for p, _ in headers] + [len(data)]
-
-              for idx, (start, _) in enumerate(headers):
-                next_header: int = boundaries[idx + 1]
-                end: int = data.find(CJS_END, start, next_header)
-                if end >= 0:
-                  return start, end + 3  # include })\n, exclude trailing NUL
-
-              sys.exit("lift: could not find module terminator (})\\n\\x00)")
+            # Matching the launcher that runs us: `ansi blue_bold` and `ansi red_bold`.
+            INFO: str = "\x1b[1;34minfo:\x1b[0m"
+            ERROR: str = "\x1b[1;31merror:\x1b[0m"
 
 
-            def unwrap(mod: bytes) -> bytes:
-              nl = mod.find(b"\n")
-              if nl < 0:
-                sys.exit("lift: module has no header newline")
-              body = mod[nl + 1 :]
-              if not body.startswith(CJS_OPEN):
-                sys.exit("lift: module does not open with expected CJS wrapper")
-              body = body[len(CJS_OPEN) :]
-              # tail is either `})\n` or `})`
-              if body.endswith(b"})\n"):
-                body = body[:-3]
-              elif body.endswith(b"})"):
-                body = body[:-2]
-              else:
-                sys.exit("lift: module does not end with `})` wrapper close")
-              return body
+            def info(message: str) -> None:
+              sys.stderr.write(f"{INFO} {message}\n")
+
+
+            def die(message: str) -> None:
+              sys.exit(f"{ERROR} {message}")
+
+
+            def find_bun_section(data: bytes) -> tuple[int, int]:
+              """Return the (offset, size) of the section holding bun's module graph."""
+              if data[:4] in (b"\xcf\xfa\xed\xfe", b"\xce\xfa\xed\xfe"):
+                ncmds: int = struct.unpack_from("<I", data, 16)[0]
+                pos: int = 32
+                for _ in range(ncmds):
+                  cmd, cmdsize = struct.unpack_from("<II", data, pos)
+                  if cmd == 0x19 and data[pos + 8 : pos + 24].rstrip(b"\0") == b"__BUN":
+                    nsects: int = struct.unpack_from("<I", data, pos + 64)[0]
+                    spos: int = pos + 72
+                    for _ in range(nsects):
+                      if data[spos : spos + 16].rstrip(b"\0") == b"__bun":
+                        size: int = struct.unpack_from("<Q", data, spos + 40)[0]
+                        return struct.unpack_from("<I", data, spos + 48)[0], size
+                      spos += 80
+                  pos += cmdsize
+                die("Mach-O has no __BUN,__bun section")
+
+              if data[:4] == b"\x7fELF":
+                shoff: int = struct.unpack_from("<Q", data, 0x28)[0]
+                shentsize, shnum, shstrndx = struct.unpack_from("<HHH", data, 0x3A)
+                strtab: int = struct.unpack_from(
+                  "<Q", data, shoff + shstrndx * shentsize + 0x18
+                )[0]
+                for i in range(shnum):
+                  base: int = shoff + i * shentsize
+                  name_off: int = struct.unpack_from("<I", data, base)[0]
+                  name: bytes = data[strtab + name_off : data.index(b"\0", strtab + name_off)]
+                  if name == b".bun":
+                    return struct.unpack_from("<QQ", data, base + 0x18)
+                die("ELF has no .bun section")
+
+              die("unrecognised executable container")
+
+
+            def parse_graph(data: bytes) -> tuple[list[tuple[str, bytes, int]], int]:
+              """Return every (name, source, kind) in the graph, and the entry's index."""
+              offset, size = find_bun_section(data)
+              section: bytes = data[offset : offset + size]
+              if not section.endswith(TRAILER):
+                die("section does not end with the bun trailer")
+
+              payload: bytes = section[8:]
+
+              # Counting back from the trailer, the Offsets struct ends with the module
+              # table's StringPointer at -24 and the entry point's index at -16.
+              table_offset, table_length, entry_id = struct.unpack(
+                "<III", section[-len(TRAILER) - 24 : -len(TRAILER) - 12]
+              )
+
+              count, remainder = divmod(table_length, STRIDE)
+              if remainder:
+                die(f"module table is not a multiple of {STRIDE} bytes")
+              if not 0 <= entry_id < count:
+                die(f"entry point index {entry_id} is outside the module table")
+
+              table: bytes = payload[table_offset : table_offset + table_length]
+              modules: list[tuple[str, bytes, int]] = []
+              for i in range(count):
+                fields = struct.unpack_from(f"<{STRIDE // 4}I", table, i * STRIDE)
+                name: str = payload[fields[0] : fields[0] + fields[1]].decode()
+                source: bytes = payload[fields[2] : fields[2] + fields[3]]
+                modules.append((name, source, fields[12]))
+
+              return modules, entry_id
+
+
+            def rewrite(source: bytes, origin: str, paths: dict[str, str]) -> bytes:
+              """Repoint bunfs references at the unpacked tree.
+
+              Import specifiers become paths relative to the importing module, so Deno
+              walks the graph the way bun did. That includes `import(...)`, which the
+              bundle uses for around a thousand lazily-loaded chunks: the specifier has to
+              stay a literal, because a computed one is invisible to `deno compile` and
+              the chunk would be missing from the binary. Every other bunfs string is a
+              path read at runtime — an asset, a native addon, a worker — and becomes an
+              `import.meta.dirname` expression, which resolves inside a compiled binary
+              just as it does on disk.
+              """
+              here: str = posixpath.dirname(origin)
+
+              def relative(target: str) -> str:
+                path: str = posixpath.relpath(paths[ROOT + target], here)
+                return path if path.startswith(".") else "./" + path
+
+              def as_specifier(match: re.Match[bytes]) -> bytes:
+                return match[1] + b'"' + relative(match[2].decode()).encode() + b'"'
+
+              def as_runtime_path(match: re.Match[bytes]) -> bytes:
+                return b'(import.meta.dirname+"/' + relative(match[1].decode()).encode() + b'")'
+
+              root: bytes = re.escape(ROOT.encode())
+              specifier: bytes = rb'((?<![\w$.])(?:from|import)\s*\(?\s*)"' + root + rb'([^"]+)"'
+              source = re.sub(specifier, as_specifier, source)
+              return re.sub(rb'"' + root + rb'([^"]+)"', as_runtime_path, source)
 
 
             def main() -> None:
               if len(sys.argv) != 3:
-                sys.exit("usage: lift-claude-bun <claude-binary> <output.cjs>")
+                die("usage: lift-claude-bun <claude-binary> <output-directory>")
 
               binary = Path(sys.argv[1])
-              output = Path(sys.argv[2])
+              outdir = Path(sys.argv[2])
 
-              data = binary.read_bytes()
-              start, end = find_main_module(data)
-              body = unwrap(data[start:end])
+              modules, entry_id = parse_graph(binary.read_bytes())
 
-              # Sanity: the real claude-code cli.js always contains this legal banner.
-              if b"Anthropic" not in body[:4096]:
-                sys.exit("lift: extracted body is missing Anthropic banner — layout changed?")
+              paths: dict[str, str] = {}
+              for i, (name, _, _) in enumerate(modules):
+                if not name.startswith(ROOT):
+                  die(f"module lives outside {ROOT}: {name}")
+                paths[name] = ENTRY if i == entry_id else name[len(ROOT) :]
 
-              output.write_bytes(body)
-              sys.stderr.write(
-                f"lifted {len(body):,} bytes from {binary.name} "
-                f"(module @ {start:#x}..{end:#x}) -> {output}\n"
+              # Sanity: the real claude-code entry point always carries this legal banner.
+              if b"Anthropic" not in modules[entry_id][1][:4096]:
+                die("entry point is missing the Anthropic banner — layout changed?")
+
+              for name, source, kind in modules:
+                path: str = paths[name]
+                if kind == KIND_JS:
+                  source = rewrite(source, path, paths)
+                target = outdir / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(source)
+
+              js: int = sum(1 for _, _, kind in modules if kind == KIND_JS)
+              info(
+                f"lifted {len(modules)} modules ({js} JS, {len(modules) - js} assets) "
+                f"from {binary.name} -> {outdir}"
               )
 
 
@@ -747,49 +832,95 @@ in
             # Qualified name: matches `FN` and also `NS.FN` (e.g. `Lf.join`, `Oc7.spawn`).
             # Since 2.1.113 bun's bundler emits more member-style calls for path/spawn helpers.
             Q: bytes = rb"[\w$]+(?:\.[\w$]+)*"
-            data: bytes = Path(sys.argv[1]).read_bytes()
 
             SEARCH_WINDOW: int = 500
 
+            # The entry point `lift` writes, and the Bun polyfill module we add beside it.
+            ENTRY: str = "cli.js"
+            SHIM: str = "bun-polyfill.js"
 
-            def log(msg: str) -> None:
-              sys.stderr.write(msg + "\n")
+            # Since 2.1.245 the bundle is code-split across ~1400 ESM modules rather than
+            # one CJS blob, so every pass runs over the whole tree. Each module carries
+            # bun's banner; assets (mermaid, chart.js, highlight.js, the HTML template)
+            # and native addons sit in the same tree and must not be touched.
+            BANNER: bytes = b"// @bun"
+
+            # Matching the launcher that runs us: `ansi blue_bold` and friends.
+            INFO: str = "\x1b[1;34minfo:\x1b[0m"
+            WARN: str = "\x1b[1;33mwarn:\x1b[0m"
+            ERROR: str = "\x1b[1;31merror:\x1b[0m"
+
+
+            def die(message: str) -> None:
+              sys.exit(f"{ERROR} {message}")
+
+
+            tree: Path = Path(sys.argv[1])
+            modules: dict[Path, bytes] = {}
+            for path in sorted(tree.rglob("*.js")):
+              source: bytes = path.read_bytes()
+              if source.startswith(BANNER):
+                modules[path] = source
+
+            if not modules:
+              die(f"no bun modules under {tree}")
+
+
+            def info(message: str) -> None:
+              sys.stderr.write(f"{INFO} {message}\n")
+
+
+            def warn(message: str) -> None:
+              sys.stderr.write(f"{WARN} {message}\n")
 
 
             def patch(label: str, pattern: bytes, replacement: Replacement) -> None:
-              global data
-              data, n = re.subn(pattern, replacement, data)
-              log(f"{label} ({n})")
+              total: int = 0
+              for path, source in modules.items():
+                modules[path], n = re.subn(pattern, replacement, source)
+                total += n
+              info(f"{label} ({total})")
 
 
             def replace(label: str, old: bytes, new: bytes) -> None:
-              global data
-              n: int = data.count(old)
-              if n == 0:
-                log(f"{label}: NOT FOUND")
+              total: int = 0
+              for path, source in modules.items():
+                n: int = source.count(old)
+                if n:
+                  modules[path] = source.replace(old, new)
+                  total += n
+              if total == 0:
+                warn(f"{label}: NOT FOUND")
                 return
-              data = data.replace(old, new)
-              log(f"{label} ({n})")
+              info(f"{label} ({total})")
 
 
             def flip_gates(gates: list[tuple[bytes, str]]) -> None:
               """Flip all gate defaults from false to true in a single regex pass."""
-              global data
               gate_keys: list[bytes] = [g for g, _ in gates]
               labels: dict[bytes, str] = dict(gates)
               alternation: bytes = b"|".join(re.escape(g) for g in gate_keys)
               pat: bytes = W + rb'\("(' + alternation + rb')",!1\)'
               flipped: set[bytes] = set()
+              total: int = 0
 
               def replacer(m: re.Match[bytes]) -> bytes:
                 flipped.add(m.group(1))
                 return m[0].replace(b",!1)", b",!0)")
 
-              data, n = re.subn(pat, replacer, data)
-              log(f"feature gates: {n} flipped across {len(flipped)} gates")
+              for path, source in modules.items():
+                modules[path], n = re.subn(pat, replacer, source)
+                total += n
+
+              info(f"feature gates: {total} flipped across {len(flipped)} gates")
               for key in gate_keys:
-                status = "ok" if key in flipped else "MISSED"
-                log(f"  {labels[key]} [{status}]")
+                if key in flipped:
+                  info(f"feature gate {labels[key]} [ok]")
+                else:
+                  # Upstream renames and retires gates constantly. A gate that matched
+                  # nothing is already a no-op in the build, so this is a prune, not a
+                  # breakage — see the maintenance note in the module.
+                  warn(f"feature gate {labels[key]} [MISSED]")
 
 
             # --- AGENTS.md support ---
@@ -828,40 +959,39 @@ in
             ]
 
             for anchor, label in slash_commands:
-              pos: int = data.find(anchor)
-              if pos < 0:
-                log(f"slash command {label}: NOT FOUND")
-                continue
-              window: bytes = data[pos : pos + SEARCH_WINDOW]
-              patched: bytes = window.replace(b"isEnabled:()=>!1", b"isEnabled:()=>!0", 1)
-              if patched == window:
-                log(f"slash command {label}: isEnabled not found in window")
-                continue
-              data = data[:pos] + patched + data[pos + SEARCH_WINDOW :]
-              log(f"slash command {label}: enabled")
+              for path, source in modules.items():
+                pos: int = source.find(anchor)
+                if pos < 0:
+                  continue
+                window: bytes = source[pos : pos + SEARCH_WINDOW]
+                patched: bytes = window.replace(b"isEnabled:()=>!1", b"isEnabled:()=>!0", 1)
+                if patched == window:
+                  warn(f"slash command {label}: isEnabled not found in window")
+                  break
+                modules[path] = source[:pos] + patched + source[pos + SEARCH_WINDOW :]
+                info(f"slash command {label}: enabled")
+                break
+              else:
+                warn(f"slash command {label}: NOT FOUND")
 
             # --- Force the async feature-gate resolver to resolve true when offline ---
-            # The ASYNC gate resolver (Av → YB across versions) falls back to its default
-            # when telemetry is off (`if(!p4())return!1`), so every gate it resolves reads
-            # false. In 2.1.181 it shares its `tHt()`/`nHt()` override-map preamble with a
-            # SIBLING resolver (X1r) that resolves `tengu_disable_bypass_permissions_mode`
-            # — forcing THAT one true would DISABLE bypass-permissions mode. So we can't
-            # match on the shared preamble or replace the whole body; instead we flip only
-            # the offline fallback inside the resolver whose tail reads
-            # `cachedGrowthBookFeatures?.[e]===!0` (YB), leaving X1r and the explicit
-            # override maps untouched.
+            # The ASYNC gate resolver falls back to its default when telemetry is off, so
+            # every gate it resolves reads false. In 2.1.245 it is a method,
+            # `checkGateCachedOrBlocking`, and the bail is `if(!this.deps.isEnabled())`.
+            # A SIBLING method (`isFeatureFromExperiment`) opens with the very same bail,
+            # so we anchor on the line that follows it in the resolver we want; the
+            # explicit environment/config override maps it checks first stay untouched,
+            # so an intentionally-disabled gate stays disabled.
             #
-            # YB's only call-sites all target gates we want enabled:
-            #  - tengu_ccr_bridge              → bridge auto-connect
-            #  - tengu_ccr_bundle_seed_enabled → CCR bundle seed
-            #  - tengu_harbor                  → plugin marketplace
-            # Flipping the fallback to !0 enables these; explicit `tHt`/`nHt` overrides
-            # still win, so an intentionally-disabled gate stays disabled.
+            # Every gate reaching this resolver is one we want enabled — bridge
+            # auto-connect (tengu_ccr_bridge), the CCR bundle seed, the plugin marketplace
+            # (tengu_harbor, tengu_bubbly_harbor) — and none of them is a `tengu_disable_*`
+            # or a killswitch, where forcing true would turn a good behaviour OFF.
 
             replace(
               "async gate offline fallback true",
-              b"if(!p4())return!1;if(vt().cachedGrowthBookFeatures?.[e]===!0)",
-              b"if(!p4())return!0;if(vt().cachedGrowthBookFeatures?.[e]===!0)",
+              b"if(!this.deps.isEnabled())return!1;if(this.remoteEvalFeatureValues.get(e)===!0)",
+              b"if(!this.deps.isEnabled())return!0;if(this.remoteEvalFeatureValues.get(e)===!0)",
             )
 
             # --- Restore 1h prompt cache TTL when telemetry is off ---
@@ -910,14 +1040,12 @@ in
               (b"tengu_bridge_system_init", "bridge SDK init on connect"),
               (b"tengu_bridge_requires_action_details", "bridge rich tool-use payloads"),
               (b"tengu_remote_backend", "remote backend"),
-              (b"tengu_immediate_model_command", "instant /model switching"),
               (b"tengu_fgts", "fine-grained tool streaming"),
               (b"tengu_surreal_dali", "scheduled agents/cron"),
             ]
 
             memory_gates: list[Gate] = [
               # (b"tengu_session_memory", "session memory"),  # auto-memory; pollutes unrelated convos
-              (b"tengu_herring_clock", "team memory directory"),
               (b"tengu_passport_quail", "typed combined memory prompts"),
               (b"tengu_paper_halyard", "memory dedup in nested dirs"),
             ]
@@ -944,7 +1072,6 @@ in
               # (b"tengu_moth_copse", "relevant memory recall"),  # auto-recall; pollutes unrelated convos
               (b"tengu_harbor", "plugin marketplace"),
               (b"tengu_harbor_permissions", "plugin permissions"),
-              (b"tengu_relay_chain_v1", "parallel command chaining guidance"),
               (b"tengu_edit_minimalanchor_jrn", "Edit tool minimal-anchor instructions"),
               (b"tengu_amber_sentinel", "Monitor tool for streaming bg scripts"),
               (b"tengu_skills_dashboard_enabled", "/skills dashboard"),
@@ -1029,64 +1156,110 @@ in
                     else:
                       pos += 1
                 pos += 1
-              sys.exit("grep/find/rg shim: unbalanced braces")
+              die("grep/find/rg shim: unbalanced braces")
 
 
             fzr_sig: bytes = (
               rb"function (" + W + rb")\((" + W + rb"),(" + W + rb"),("
               + W + rb")=\[\],(" + W + rb")=\[\]\)\{"
             )
-            fzr_match: re.Match[bytes] | None = None
-            for cand in re.finditer(fzr_sig, data):
-              if b"\x60function ''${" + cand.group(2) + b"} {" in data[cand.end():cand.end() + 800]:
-                fzr_match = cand
-                break
+            # The same four-parameter signature occurs in bundled third-party code (and in
+            # the mermaid asset), so the emitted bash header is what identifies the factory.
+            for path, source in modules.items():
+              fzr_match: re.Match[bytes] | None = None
+              for cand in re.finditer(fzr_sig, source):
+                if b"\x60function ''${" + cand.group(2) + b"} {" in source[cand.end():cand.end() + 800]:
+                  fzr_match = cand
+                  break
 
-            if fzr_match is None:
-              log("grep/find/rg shim: NOT FOUND")
-            else:
+              if fzr_match is None:
+                continue
+
               fn_name: bytes = fzr_match.group(1)
-              body_end: int = scan_js_block(data, fzr_match.end())
+              body_end: int = scan_js_block(source, fzr_match.end())
               fzr_new: bytes = (
                 b"function " + fn_name + b"(e,t,n=[],r=[]){"
                 b'let o=n.length>0?n.join(" ")+\' "$@"\':\'"$@"\';'
                 b'return "function "+e+" { command "+t+" "+o+"; }"}'
               )
-              data = data[:fzr_match.start()] + fzr_new + data[body_end:]
-              log(f"grep/find/rg shim: replaced {fn_name.decode()}")
+              modules[path] = source[:fzr_match.start()] + fzr_new + source[body_end:]
+              info(f"grep/find/rg shim: replaced {fn_name.decode()} in {path.name}")
+              break
+            else:
+              warn("grep/find/rg shim: NOT FOUND")
+
+            # --- Bundle require (native addons + text assets) ---
+            # The bundle's runtime `require` is `import.meta.require`, a bun-only API
+            # that is undefined under Deno. It loads two kinds of modules: native
+            # `.node` addons, and (since 2.1.246) `.md`/`.txt` assets that bun's text
+            # loader resolves to their file contents — the /loop autonomous preambles
+            # (required at startup) and the bundled skill bodies. `createRequire`
+            # covers the addons, but parses a required `.md` as JavaScript and throws
+            # a SyntaxError before the REPL starts. Swap in a wrapper (defined by the
+            # polyfill module below, which evaluates first) that reads text assets off
+            # disk and defers to `createRequire` for everything else.
+
+            patch(
+              "bundle require (addons + text assets)",
+              rb"import\.meta\.require",
+              b"globalThis.__bunRequire(import.meta.url)",
+            )
 
             # --- Bun runtime polyfill ---
             # Since 2.1.128 the bundle calls Bun.* APIs unguarded (Bun.stringWidth,
-            # Bun.semver, Bun.hash, Bun.spawn, Bun.YAML, Bun.Transpiler, Bun.listen,
-            # Bun.which, Bun.wrapAnsi, Bun.stripANSI, Bun.embeddedFiles, Bun.gc,
-            # Bun.generateHeapSnapshot, Bun.JSONL, Bun.Terminal, Bun.version). Under
-            # Deno these throw `ReferenceError: Bun is not defined` at first use
-            # (Bun.stringWidth fires in a column-width helper during banner render).
-            # Define globalThis.Bun upfront with Node-backed equivalents so bare
-            # `Bun.X` lookups resolve.
+            # Bun.semver, Bun.hash, Bun.spawn, Bun.YAML, Bun.TOML, Bun.deepEquals,
+            # Bun.connect, Bun.Transpiler, Bun.listen, Bun.which, Bun.wrapAnsi,
+            # Bun.stripANSI, Bun.embeddedFiles, Bun.gc, Bun.generateHeapSnapshot,
+            # Bun.JSONL, Bun.Terminal, Bun.ant, Bun.version). Under Deno these throw
+            # `ReferenceError: Bun is not defined` at first use (Bun.stringWidth fires in
+            # a column-width helper during banner render). Define globalThis.Bun upfront
+            # with Node-backed equivalents so bare `Bun.X` lookups resolve.
             #
-            # Bun.Terminal and Bun.JSONL are intentionally left absent: the bundle
-            # already has fallback paths gated on `typeof Bun.Terminal<"u"` and
-            # `Bun.JSONL?.parseChunk`, so leaving them undefined preserves the
-            # built-in "running under Node?" degradation rather than half-emulating.
+            # Bun.Terminal, Bun.JSONL and Bun.ant are intentionally left absent: the
+            # bundle already has fallback paths gated on `typeof Bun.Terminal<"u"` and
+            # `Bun.JSONL?.parseChunk`, and every Bun.ant call (memory pressure, peer
+            # credentials) sits inside a try/catch that degrades cleanly. Leaving them
+            # undefined preserves the built-in "not running under bun" degradation rather
+            # than half-emulating it.
+            #
+            # The bundle is ESM now, so this is a module of its own rather than a prelude
+            # prepended to a CJS blob. ESM evaluates a module's imports before its body,
+            # depth first and in source order, so importing it on the entry point's first
+            # line means globalThis.Bun and globalThis.__bunRequire exist before any
+            # chunk's top-level code runs.
 
-            bun_shim: bytes = rb"""(()=>{if(typeof globalThis.Bun!=="undefined")return;
-            const sw=require("string-width"),sa=require("strip-ansi"),wa=require("wrap-ansi");
-            const sv=require("semver"),ya=require("yaml");
-            const cp=require("child_process"),fs=require("fs"),path=require("path");
-            const crypto=require("crypto"),net=require("net");
+            bun_shim: bytes = rb"""import sw from "string-width";
+            import sa from "strip-ansi";
+            import wa from "wrap-ansi";
+            import sv from "semver";
+            import * as ya from "yaml";
+            import * as tm from "smol-toml";
+            import cp from "node:child_process";
+            import fs from "node:fs";
+            import path from "node:path";
+            import crypto from "node:crypto";
+            import net from "node:net";
+            import util from "node:util";
+            import{createRequire}from "node:module";
+            globalThis.__bunRequire=(url)=>{const req=createRequire(url);const f=(spec)=>/\.(md|txt)$/.test(String(spec))?fs.readFileSync(spec,"utf8"):req(spec);return Object.assign(f,req);};
             function bunHash(input){const buf=Buffer.isBuffer(input)?input:Buffer.from(typeof input==="string"?input:String(input));return crypto.createHash("sha1").update(buf).digest().readBigUInt64LE(0);}
             function bunSpawn(cmd,opts){opts=opts||{};const[bin,...args]=cmd;const stdio=["pipe","pipe",opts.stderr==="ignore"?"ignore":"pipe"];const child=cp.spawn(bin,args,{cwd:opts.cwd,env:opts.env||process.env,stdio,argv0:opts.argv0});const exited=new Promise(r=>child.on("exit",c=>r(c==null?1:c)));return{pid:child.pid,stdin:child.stdin,stdout:child.stdout,stderr:child.stderr,exitCode:null,killed:false,kill(s){try{child.kill(s)}catch{}this.killed=true},async wait(){return await exited},exited};}
-            function bunListen(opts){const h=opts.socket||{};const server=net.createServer(s=>{s.data=undefined;if(h.open)try{h.open(s)}catch{}s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));});server.listen(opts.port||0,opts.hostname||"127.0.0.1");return server;}
+            function bunListen(opts){const h=opts.socket||{};const server=net.createServer(s=>{if(h.open)try{h.open(s)}catch{}s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));});server.listen(opts.port||0,opts.hostname||"127.0.0.1");return server;}
+            function bunConnect(opts){const h=opts.socket||{};const s=net.connect({host:opts.hostname,port:opts.port});if(h.open)s.on("connect",()=>h.open(s));s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));return Promise.resolve(s);}
             class BunTranspiler{constructor(o){this.opts=o}transformSync(s){return s}}
-            globalThis.Bun={version:"1.3.13",embeddedFiles:[],stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},Transpiler:BunTranspiler,generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{}};
-            })();
+            globalThis.Bun={version:"1.3.13",embeddedFiles:[],stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,deepEquals:(a,b)=>util.isDeepStrictEqual(a,b),which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,connect:bunConnect,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},TOML:{parse:s=>tm.parse(s)},Transpiler:BunTranspiler,generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{}};
             """
 
-            data = bun_shim + data
-            log("Bun runtime polyfill: prepended")
+            (tree / SHIM).write_bytes(bun_shim)
 
-            Path(sys.argv[1]).write_bytes(data)
+            entry: Path = tree / ENTRY
+            if entry not in modules:
+              die(f"no entry point at {entry}")
+            modules[entry] = b'import"./' + SHIM.encode() + b'";' + modules[entry]
+            info("Bun runtime polyfill: imported by the entry point")
+
+            for path, source in modules.items():
+              path.write_bytes(source)
           '';
         in
         [
@@ -1152,13 +1325,65 @@ in
                 try {
                   let latest = ls --long ($cache | path join "claude-code-*" | into glob)
                   | where { $in.type == "file" and ($in.mode | str substring 2..<3) == "x" }
+                  | where { not ($"($in.name).failed" | path exists) }
                   | sort-by modified
                   | last
                   | get name
+
+                  print --stderr $"(ansi blue_bold)info:(ansi reset) running ($latest | path basename)"
                   exec $latest ...$arguments
                 } catch {
                   print --stderr $"(ansi red_bold)error:(ansi reset) no binary found"
                   exit 67
+                }
+              }
+
+              def build [--workdir: directory, --into: path] {
+                let tree = $workdir | path join "tree"
+                let entrypoint = $tree | path join "cli.js"
+
+                ^${getExe lift} ($workdir | path join "package" "claude") $tree
+                ^${getExe patch} $tree
+
+                r###'${
+                  strings.toJSON {
+                    name = "claude-code-lifted";
+                    type = "module";
+                    dependencies = {
+                      ws = "^8";
+                      undici = "^6";
+                      node-fetch = "^3";
+                      ajv = "^8";
+                      ajv-formats = "^3";
+                      yaml = "^2";
+                      # Bun shim deps (see "Bun runtime polyfill" in patch script).
+                      smol-toml = "^1";
+                      string-width = "^7";
+                      strip-ansi = "^7";
+                      wrap-ansi = "^9";
+                      semver = "^7";
+                    };
+                  }
+                }'###
+                | save --force ($tree | path join "package.json")
+
+                do {
+                  cd $tree
+
+                  print --stderr $"(ansi blue_bold)info:(ansi reset) installing dependencies"
+                  (^${getExe pkgs.deno} install
+                    --quiet
+                    --node-modules-dir=auto
+                    --entrypoint $entrypoint)
+
+                  print --stderr $"(ansi blue_bold)info:(ansi reset) compiling, hold on"
+                  (^${getExe pkgs.deno} compile
+                    --quiet
+                    --allow-all
+                    --node-modules-dir=auto
+                    --include $tree
+                    --output $into
+                    $entrypoint)
                 }
               }
 
@@ -1172,75 +1397,70 @@ in
                 if ($version | is-empty) { run-latest --cache $cache ...$arguments }
 
                 let binary_path = $cache | path join $"claude-code-($version)"
+                let binary_path_failed = $"($binary_path).failed"
+
+                let workdir = $cache | path join $"claude-code-($version)-workdir"
+
+                let archive_path = $"($binary_path).tar.gz"
+
+                if ($binary_path_failed | path exists) and not $rebuild {
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to build ($version) previously, pass --rebuild to retry"
+                  run-latest --cache $cache ...$arguments
+                }
 
                 if not ($binary_path | path exists) or $rebuild {
-                  let archive = $"($binary_path).tar.gz"
-
-                  if not ($archive | path exists) or $rebuild {
+                  # ARCHIVE
+                  if not ($archive_path | path exists) {
                     let platform = detect-platform
 
                     try {
+                      print --stderr $"(ansi blue_bold)info:(ansi reset) downloading tarball"
                       http get --raw $"https://registry.npmjs.org/@anthropic-ai/claude-code-($platform)/-/claude-code-($platform)-($version).tgz"
-                      | save --force --raw $archive
+                      | save --force --raw $archive_path
+                      print --stderr $"(ansi blue_bold)info:(ansi reset) downloaded (ls $archive_path | get 0.size)"
                     } catch {
                       print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to download tarball"
+                      rm --force $archive_path
                       run-latest --cache $cache ...$arguments
                     }
                   }
 
-                  let workdir = $cache | path join $"claude-code-($version)-workdir"
-                  rm --recursive --force $workdir
-                  mkdir $workdir
+                  # WORKDIR WITH EXTRACTED ARCHIVE
+                  do {
+                    rm --recursive --force $workdir
 
-                  ^${getExe pkgs.gnutar} --extract --use-compress-program ${getExe pkgs.gzip} --file $archive --directory $workdir
-                  rm $archive
+                    mkdir $workdir
 
-                  let cli = $workdir | path join "cli.cjs"
-                  ^${getExe lift} ($workdir | path join "package" "claude") $cli
-                  ^${getExe patch} $cli
+                    try {
+                      print --stderr $"(ansi blue_bold)info:(ansi reset) extracting tarball"
+                      ^${getExe pkgs.gnutar} --extract --use-compress-program ${getExe pkgs.gzip} --file $archive_path --directory $workdir
+                    } catch {
+                      rm --force $archive_path
 
-                  r###'${
-                    strings.toJSON {
-                      name = "claude-code-lifted";
-                      type = "commonjs";
-                      dependencies = {
-                        ws = "^8";
-                        undici = "^6";
-                        node-fetch = "^3";
-                        ajv = "^8";
-                        ajv-formats = "^3";
-                        yaml = "^2";
-                        # Bun shim deps (see "Bun runtime polyfill" in patch script).
-                        # Pinned to CJS-compatible majors: ESM-only releases
-                        # (string-width@5+, strip-ansi@7+, wrap-ansi@8+) break
-                        # require() inside cli.cjs.
-                        string-width = "^4";
-                        strip-ansi = "^6";
-                        wrap-ansi = "^7";
-                        semver = "^7";
-                      };
+                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to extract tarball"
+                      run-latest --cache $cache ...$arguments
                     }
-                  }'### | save --force ($workdir | path join "package.json")
+                  }
 
-                  $env.DENO_DIR = ($workdir | path join ".deno")
-                  (^"${getExe pkgs.deno}" install
-                    --quiet
-                    --node-modules-dir=auto
-                    --entrypoint $cli)
-                  (^"${getExe pkgs.deno}" compile
-                    --quiet
-                    --allow-all
-                    --node-modules-dir=auto
-                    --include ($workdir | path join "node_modules")
-                    --output $binary_path
-                    $cli)
+                  # BUILD
+                  do {
+                    rm --force $binary_path
 
-                  rm --recursive --force $workdir
+                    try {
+                      print --stderr $"(ansi blue_bold)info:(ansi reset) building ($version)"
+                      build --workdir $workdir --into $binary_path
+                    } catch { |error|
+                      touch $binary_path_failed
+
+                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to build ($version): ($error.msg)"
+                      run-latest --cache $cache ...$arguments
+                    }
+                  }
                 }
 
-                r###'${
-                  strings.toJSON config.xdg.config.files."claude-code/settings.json".value.env
-                }'### | from json | load-env
+                rm --force $binary_path_failed
+                rm --recursive --force $workdir
+                rm --force $archive_path
 
                 exec $binary_path ...$arguments
               }
