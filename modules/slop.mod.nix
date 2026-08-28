@@ -1037,11 +1037,10 @@ in
 
             core_gates: list[Gate] = [
               (b"tengu_ccr_bridge", "remote control"),
-              (b"tengu_bridge_system_init", "bridge SDK init on connect"),
+              (b"tengu_bridge_initialize_commands", "bridge slash commands on connect"),
               (b"tengu_bridge_requires_action_details", "bridge rich tool-use payloads"),
               (b"tengu_remote_backend", "remote backend"),
               (b"tengu_fgts", "fine-grained tool streaming"),
-              (b"tengu_surreal_dali", "scheduled agents/cron"),
             ]
 
             memory_gates: list[Gate] = [
@@ -1052,9 +1051,7 @@ in
 
             ux_gates: list[Gate] = [
               (b"tengu_kairos_brief", "brief output mode"),
-              (b"tengu_kairos_loop_dynamic", "/loop dynamic self-pacing"),
               (b"tengu_kairos_loop_persistent", "/loop persistent mode"),
-              (b"tengu_kairos_loop_prompt", "/loop prompt sentinel"),
               (b"tengu_terminal_sidebar", "status in terminal tab"),
               (b"tengu_destructive_command_warning", "destructive command warnings"),
               (b"tengu_amber_prism", "permission denial context"),
@@ -1210,7 +1207,8 @@ in
             # Bun.semver, Bun.hash, Bun.spawn, Bun.YAML, Bun.TOML, Bun.deepEquals,
             # Bun.connect, Bun.Transpiler, Bun.listen, Bun.which, Bun.wrapAnsi,
             # Bun.stripANSI, Bun.embeddedFiles, Bun.gc, Bun.generateHeapSnapshot,
-            # Bun.JSONL, Bun.Terminal, Bun.ant, Bun.version). Under Deno these throw
+            # Bun.zstdDecompress, Bun.zstdDecompressSync, Bun.JSONL, Bun.Terminal,
+            # Bun.ant, Bun.version). Under Deno these throw
             # `ReferenceError: Bun is not defined` at first use (Bun.stringWidth fires in
             # a column-width helper during banner render). Define globalThis.Bun upfront
             # with Node-backed equivalents so bare `Bun.X` lookups resolve.
@@ -1221,6 +1219,13 @@ in
             # credentials) sits inside a try/catch that degrades cleanly. Leaving them
             # undefined preserves the built-in "not running under bun" degradation rather
             # than half-emulating it.
+            #
+            # Since 2.1.251 the bigger text assets (skill bodies, bundled plugin READMEs,
+            # mermaid/chart.js/highlight.js) ship zstd-compressed: the asset loader reads
+            # the file, sniffs the frame magic and hands it to Bun.zstdDecompress{,Sync}.
+            # Without those two the first skill or help render dies with "embedded text
+            # asset is missing or corrupt". node:zlib grew the same pair in Node 22.15,
+            # and Deno implements it.
             #
             # The bundle is ESM now, so this is a module of its own rather than a prelude
             # prepended to a CJS blob. ESM evaluates a module's imports before its body,
@@ -1240,6 +1245,7 @@ in
             import crypto from "node:crypto";
             import net from "node:net";
             import util from "node:util";
+            import zlib from "node:zlib";
             import{createRequire}from "node:module";
             globalThis.__bunRequire=(url)=>{const req=createRequire(url);const f=(spec)=>/\.(md|txt)$/.test(String(spec))?fs.readFileSync(spec,"utf8"):req(spec);return Object.assign(f,req);};
             function bunHash(input){const buf=Buffer.isBuffer(input)?input:Buffer.from(typeof input==="string"?input:String(input));return crypto.createHash("sha1").update(buf).digest().readBigUInt64LE(0);}
@@ -1247,7 +1253,7 @@ in
             function bunListen(opts){const h=opts.socket||{};const server=net.createServer(s=>{if(h.open)try{h.open(s)}catch{}s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));});server.listen(opts.port||0,opts.hostname||"127.0.0.1");return server;}
             function bunConnect(opts){const h=opts.socket||{};const s=net.connect({host:opts.hostname,port:opts.port});if(h.open)s.on("connect",()=>h.open(s));s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));return Promise.resolve(s);}
             class BunTranspiler{constructor(o){this.opts=o}transformSync(s){return s}}
-            globalThis.Bun={version:"1.3.13",embeddedFiles:[],stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,deepEquals:(a,b)=>util.isDeepStrictEqual(a,b),which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,connect:bunConnect,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},TOML:{parse:s=>tm.parse(s)},Transpiler:BunTranspiler,generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{}};
+            globalThis.Bun={version:"1.3.13",embeddedFiles:[],stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,deepEquals:(a,b)=>util.isDeepStrictEqual(a,b),which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,connect:bunConnect,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},TOML:{parse:s=>tm.parse(s)},Transpiler:BunTranspiler,generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{},zstdDecompressSync:b=>zlib.zstdDecompressSync(b),zstdDecompress:util.promisify(zlib.zstdDecompress)};
             """
 
             (tree / SHIM).write_bytes(bun_shim)
