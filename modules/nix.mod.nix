@@ -68,7 +68,7 @@
             }
 
             def --wrapped > [...arguments: string] {
-              nix shell ...($arguments | each { $in | >? })
+              nix shell ...($arguments | each { >? })
             }
           ''
         }";
