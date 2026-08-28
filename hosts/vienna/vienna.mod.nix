@@ -74,8 +74,6 @@ in
         disko.imageBuilder = {
           imageFormat = "qcow2";
 
-          enableBinfmt = true;
-          pkgs = import self.inputs.nixpkgs { system = "x86_64-linux"; };
           kernelPackages.kernel =
             config.disko.imageBuilder.pkgs.linuxPackages_latest
             |> (
