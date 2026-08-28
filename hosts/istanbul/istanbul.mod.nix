@@ -7,6 +7,16 @@ let
   inherit (lib.lists) singleton;
 in
 {
+  flake.machines.istanbul = {
+    ip.addresses4 = singleton "159.146.61.20";
+    ip.addresses6 = singleton "2a02:ff0:3d0e:c06c::53";
+
+    ssh = {
+      enable = true;
+      key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCykEkiotbnje7b7Gg7f+fg58zOxRjNKuJO0z1eVrmF istanbul";
+    };
+  };
+
   imports =
     singleton
     <| lib.systems.nixosSystem "istanbul" (

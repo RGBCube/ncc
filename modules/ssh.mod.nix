@@ -12,12 +12,10 @@
     let
       inherit (lib.attrsets) filterAttrs mapAttrs;
       inherit (lib.generators) toSSHConfig;
-      inherit (lib.lists) head singleton;
+      inherit (lib.lists) singleton;
       inherit (lib.meta) getExe';
       inherit (lib.modules) mkAfter;
       inherit (lib.strings) optionalString;
-
-      echo = getExe' pkgs.uutils-coreutils-noprefix "echo";
     in
     {
       packages = singleton pkgs.openssh;
@@ -25,26 +23,20 @@
       xdg.config.files."ssh/config".generator = toSSHConfig;
       xdg.config.files."ssh/config".value.Host =
         (
-          self.nixosConfigurations
-          |> filterAttrs (_: { config, ... }: config.services.openssh.enable)
+          self.machines
+          |> filterAttrs (_: { ssh, ... }: ssh.enable)
           |> mapAttrs (
-            name:
-            { config, ... }:
+            _:
+            { ssh, ... }:
             {
-              User = "root";
-              Port = head config.services.openssh.ports;
-              KnownHostsCommand = ''${echo} "%H ${self.machines.${name}.ssh-key}"'';
+              User = ssh.user;
+              HostName = ssh.hostName;
+              Port = ssh.port;
+              KnownHostsCommand = ''${getExe' pkgs.uutils-coreutils-noprefix "echo"} "%H ${ssh.key}"'';
             }
           )
         )
         // {
-          best = {
-            User = "root";
-            HostName = "rgbcu.be";
-            Port = 2222;
-            KnownHostsCommand = ''${echo} "%H ${self.machines.best.ssh-key}"'';
-          };
-
           "*" = {
             SetEnv = "COLORTERM=truecolor TERM=xterm-256color";
 

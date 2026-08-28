@@ -7,6 +7,20 @@ let
   inherit (lib.lists) singleton;
 in
 {
+  flake.machines.vienna = {
+    ip.addresses4 =
+      self.nixosConfigurations.vienna.config.networking.interfaces.enp4s0.ipv4.addresses
+      |> map ({ address, ... }: address);
+    ip.addresses6 =
+      self.nixosConfigurations.vienna.config.networking.interfaces.enp4s0.ipv6.addresses
+      |> map ({ address, ... }: address);
+
+    ssh = {
+      enable = true;
+      key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIO89LpzcmPit5ZanIpRhevqoUWpeB9Ja/sLxyKivfjJ vienna";
+    };
+  };
+
   imports =
     singleton
     <| lib.systems.nixosSystem "vienna" (
