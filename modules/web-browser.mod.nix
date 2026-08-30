@@ -160,6 +160,10 @@ let
 
         "old.reddit.com##:is(#eu-cookie-policy, #redesign-beta-optin-btn)"
       ]
+      # IPTORRENTS
+      ++ [
+        "iptorrents.com###btv-affiliate-banner"
+      ]
       # MAKE X ANONYMOUS: https://gist.github.com/sin-ack/5a6f7e34e78b6acf971d95808c9331d3
       ++ mkStylesheet "x.com" /* css */ ''
         /* user avatars */
