@@ -4,12 +4,25 @@
   ...
 }:
 let
-  inherit (lib.lists) singleton;
+  inherit (lib.lists) head singleton;
 in
 {
+  flake.dns.software.hate = {
+    NS = [
+      self.dns.software.hate.ns."0".FQDN
+      self.dns.software.hate.ns."1".FQDN
+    ];
+
+    # TODO: v6 when I get one.
+    ns."0".A = head self.machines.istanbul.ip.addresses4;
+
+    # Here cause we need at least two. Will setup a different node later.
+    ns."1".A = head self.machines.istanbul.ip.addresses4;
+  };
+
   flake.machines.istanbul = {
-    ip.addresses4 = singleton "159.146.61.20";
-    ip.addresses6 = singleton "2a02:ff0:3d0e:c06c::53";
+    ip.addresses4 = singleton "149.0.17.169";
+    ip.addresses6 = [ ];
 
     ssh = {
       enable = true;

@@ -1,6 +1,5 @@
 { self, lib, ... }:
 let
-  inherit (lib.dns) withClass;
   inherit (lib.magic) ula;
   inherit (lib.lists) singleton;
 
@@ -97,28 +96,8 @@ in
       minimum = "1h"; # Negative-cache TTL.
     };
 
-    NS = [
-      apex.ns."0".FQDN
-      apex.ns."1".FQDN
-    ];
-
-    ns = {
-      # Friendly alias for the primary.
-      CNAME = apex.ns."0".FQDN;
-
-      "0".A = "159.146.61.20";
-      # "0".AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
-
-      "1".A = "159.146.61.20";
-      # "1".AAAA = "2a02:ff0:3d0e:ca89::53"; # TODO: Uncomment once public v6 is set up.
-    };
-
-    # CONTENT
-    # TODO: Hickory does not support mixing classes in a zone.
-    # xn--67-lubb0090b.HINFO = withClass "CH" {
-    #   cpu = "Tendril";
-    #   os = "hey, hater";
-    # };
+    # Friendly alias for the primary.
+    ns.CNAME = apex.ns."0".FQDN;
   };
 
   commonModules.authoritative =
