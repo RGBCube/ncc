@@ -1208,7 +1208,7 @@ in
             # Bun.connect, Bun.Transpiler, Bun.listen, Bun.which, Bun.wrapAnsi,
             # Bun.stripANSI, Bun.embeddedFiles, Bun.gc, Bun.generateHeapSnapshot,
             # Bun.zstdDecompress, Bun.zstdDecompressSync, Bun.JSONL, Bun.Terminal,
-            # Bun.ant, Bun.version). Under Deno these throw
+            # Bun.ant, Bun.unsafe, Bun.version). Under Deno these throw
             # `ReferenceError: Bun is not defined` at first use (Bun.stringWidth fires in
             # a column-width helper during banner render). Define globalThis.Bun upfront
             # with Node-backed equivalents so bare `Bun.X` lookups resolve.
@@ -1219,6 +1219,13 @@ in
             # credentials) sits inside a try/catch that degrades cleanly. Leaving them
             # undefined preserves the built-in "not running under bun" degradation rather
             # than half-emulating it.
+            #
+            # Since 2.1.270 the bundle calls `Bun.unsafe.setJITPolicy?.(1)` from a startup
+            # timer and from a few UI mount points, guarded by nothing but `typeof Bun<"u"`.
+            # Only the method is optional: `Bun.unsafe` itself is dereferenced, so without
+            # it startup dies with `Cannot read properties of undefined (reading
+            # 'setJITPolicy')`. An empty object keeps the lookup alive and leaves the call a
+            # no-op, which is the honest answer — the knob it turns down is JSC's JIT.
             #
             # Since 2.1.251 the bigger text assets (skill bodies, bundled plugin READMEs,
             # mermaid/chart.js/highlight.js) ship zstd-compressed: the asset loader reads
@@ -1253,7 +1260,7 @@ in
             function bunListen(opts){const h=opts.socket||{};const server=net.createServer(s=>{if(h.open)try{h.open(s)}catch{}s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));});server.listen(opts.port||0,opts.hostname||"127.0.0.1");return server;}
             function bunConnect(opts){const h=opts.socket||{};const s=net.connect({host:opts.hostname,port:opts.port});if(h.open)s.on("connect",()=>h.open(s));s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));return Promise.resolve(s);}
             class BunTranspiler{constructor(o){this.opts=o}transformSync(s){return s}}
-            globalThis.Bun={version:"1.3.13",embeddedFiles:[],stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,deepEquals:(a,b)=>util.isDeepStrictEqual(a,b),which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,connect:bunConnect,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},TOML:{parse:s=>tm.parse(s)},Transpiler:BunTranspiler,generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{},zstdDecompressSync:b=>zlib.zstdDecompressSync(b),zstdDecompress:util.promisify(zlib.zstdDecompress)};
+            globalThis.Bun={version:"1.3.13",embeddedFiles:[],stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,deepEquals:(a,b)=>util.isDeepStrictEqual(a,b),which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,connect:bunConnect,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},TOML:{parse:s=>tm.parse(s)},Transpiler:BunTranspiler,unsafe:{},generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{},zstdDecompressSync:b=>zlib.zstdDecompressSync(b),zstdDecompress:util.promisify(zlib.zstdDecompress)};
             """
 
             (tree / SHIM).write_bytes(bun_shim)
