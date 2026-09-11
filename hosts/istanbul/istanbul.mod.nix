@@ -7,18 +7,20 @@ let
   inherit (lib.lists) head singleton;
 in
 {
-  flake.dns.software.hate = {
-    NS = [
-      self.dns.software.hate.ns."0".FQDN
-      self.dns.software.hate.ns."1".FQDN
-    ];
+  flake.dns.software.hate =
+    { config, ... }:
+    {
+      NS = [
+        config.ns."0".FQDN
+        config.ns."1".FQDN
+      ];
 
-    # TODO: v6 when I get one.
-    ns."0".A = head self.machines.istanbul.ip.addresses4;
+      # TODO: v6 when I get one.
+      ns."0".A = head self.machines.istanbul.ip.addresses4;
 
-    # Here cause we need at least two. Will setup a different node later.
-    ns."1".A = head self.machines.istanbul.ip.addresses4;
-  };
+      # Here cause we need at least two. Will setup a different node later.
+      ns."1".A = head self.machines.istanbul.ip.addresses4;
+    };
 
   flake.machines.istanbul = {
     ip.addresses4 = singleton "149.0.17.169";
@@ -42,6 +44,8 @@ in
           self.nixosModules.server
           self.nixosModules.authoritative
         ];
+
+        system.services.authoritative.zones = singleton self.dns.software.hate;
 
         networking = {
           macPolicy = "hostname";

@@ -5,8 +5,6 @@ let
 
   address = "${ula "resolver"}::1";
 
-  apex = self.dns.software.hate;
-
   mkPackage =
     { pkgs, lib }:
     let
@@ -85,20 +83,22 @@ let
     );
 in
 {
-  flake.dns.software.hate = {
-    SOA = {
-      mname = apex.ns."0".FQDN;
-      rname = apex.FQDN ++ singleton "hostmaster";
-      serial = 2026061000; # Bump on EVERY edit (YYYYMMDDnn).
-      refresh = "2h"; # Consulted only by secondaries.
-      retry = "15m"; # Consulted only by secondaries.
-      expire = "2w"; # Secondary stops serving after this long unreachable.
-      minimum = "1h"; # Negative-cache TTL.
-    };
+  flake.dns.software.hate =
+    { config, ... }:
+    {
+      SOA = {
+        mname = config.ns."0".FQDN;
+        rname = config.FQDN ++ singleton "hostmaster";
+        serial = 2026061000; # Bump on EVERY edit (YYYYMMDDnn).
+        refresh = "2h"; # Consulted only by secondaries.
+        retry = "15m"; # Consulted only by secondaries.
+        expire = "2w"; # Secondary stops serving after this long unreachable.
+        minimum = "1h"; # Negative-cache TTL.
+      };
 
-    # Friendly alias for the primary.
-    ns.CNAME = apex.ns."0".FQDN;
-  };
+      # Friendly alias for the primary.
+      ns.CNAME = config.ns."0".FQDN;
+    };
 
   commonModules.authoritative =
     {
@@ -107,31 +107,44 @@ in
       ...
     }:
     let
-      inherit (lib.lists) reverseList singleton;
-      inherit (lib.strings) concatStringsSep;
+      inherit (lib.lists) map singleton;
+      inherit (lib.options) mkOption;
+      inherit (lib.types) listOf raw;
+      inherit (lib.types.dns) name;
     in
     {
-      system.services.authoritative = {
-        imports = singleton self.serviceModules.hickory-dns;
+      system.services.authoritative =
+        { config, ... }:
+        {
+          imports = singleton self.serviceModules.hickory-dns;
 
-        hickory-dns = {
-          package = mkPackage { inherit pkgs lib; };
-          tomlFormat = pkgs.formats.toml { };
+          options.zones = mkOption {
+            type = listOf raw;
+            default = [ ];
+            description = "DNS zones this node is the primary of.";
+          };
 
-          settings = {
-            listen_addrs_ipv4 = singleton "0.0.0.0";
-            listen_addrs_ipv6 = singleton "::";
-            listen_port = 53;
+          config.hickory-dns = {
+            package = mkPackage { inherit pkgs lib; };
+            tomlFormat = pkgs.formats.toml { };
 
-            zones = singleton {
-              zone = "${apex.FQDN |> reverseList |> concatStringsSep "."}.";
-              zone_type = "Primary";
-              axfr_policy = "AllowAll";
-              file = pkgs.writeText "zone" apex.RENDERED;
+            settings = {
+              listen_addrs_ipv4 = singleton "0.0.0.0";
+              listen_addrs_ipv6 = singleton "::";
+              listen_port = 53;
+
+              zones =
+                config.zones
+                |> map (zone: {
+                  zone = zone.FQDN |> name.render;
+                  file = zone.RENDERED |> pkgs.writeText "zone";
+
+                  zone_type = "Primary";
+                  axfr_policy = "AllowAll";
+                });
             };
           };
         };
-      };
     };
 
   flake.nixosModules.authoritative =
