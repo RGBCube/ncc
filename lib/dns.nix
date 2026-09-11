@@ -16,7 +16,6 @@ let
       };
 in
 {
-
   dns.withTtl = ttl: value: rrset value // { inherit ttl; };
   dns.withClass = class: value: rrset value // { inherit class; };
 
