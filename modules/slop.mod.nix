@@ -925,24 +925,38 @@ in
 
             # --- AGENTS.md support ---
             # The CLAUDE.md loader only reads CLAUDE.md. Patch it to also load AGENTS.md
-            # from the same directories. Pattern: let VAR=ME(DIR,"CLAUDE.md");ARR.push(...await XE(VAR,"Project",ARG,BOOL))
+            # from the same directories, with the same "Project" treatment.
+            #
+            # Since 2.1.286 the walk from the cwd up to the root builds a per-directory
+            # file list, `projectFiles:FLAG?[JOIN(DIR,"CLAUDE.md"),JOIN(DIR,".claude","CLAUDE.md")]`,
+            # and loads every entry as "Project". Add AGENTS.md to the list.
+            #
+            # Directories added with --add-dir still go through the older shape,
+            # `let VAR=JOIN(DIR,"CLAUDE.md");ARR.push(...await LOAD(VAR,"Project",...))`,
+            # which we turn into a loop over both names.
+
+            patch(
+              "agents.md loader (project dirs)",
+              rb"(projectFiles:" + W + rb"\?\[)(" + Q + rb")\((" + W + rb'),"CLAUDE\.md"\),\2\(\3,"\.claude","CLAUDE\.md"\)\]',
+              lambda m: m[1] + m[2] + b"(" + m[3] + b',"CLAUDE.md"),' + m[2] + b"(" + m[3] + b',"AGENTS.md"),' + m[2] + b"(" + m[3] + b',".claude","CLAUDE.md")]',
+            )
 
             agents_pat: bytes = (
               rb"let (" + W + rb")=(" + Q + rb")\((" + W + rb'),"CLAUDE\.md"\);'
-              rb"(" + W + rb")\.push\(\.\.\.await (" + W + rb")\(\1,\"Project\",(" + W + rb"),(" + W + rb")\)\)"
+              rb"(" + W + rb")\.push\(\.\.\.await (" + W + rb")\(\1,\"Project\",([^()]*)\)\)"
             )
 
 
             def agents_repl(m: re.Match[bytes]) -> bytes:
-              var, join_fn, dir_, arr, load_fn, arg, flag = [m.group(i) for i in range(1, 8)]
+              var, join_fn, dir_, arr, load_fn, rest = [m.group(i) for i in range(1, 7)]
               return (
                 b'for(let _f of["CLAUDE.md","AGENTS.md"]){let '
                 + var + b"=" + join_fn + b"(" + dir_ + b",_f);"
-                + arr + b".push(...await " + load_fn + b"(" + var + b',"Project",' + arg + b"," + flag + b"))}"
+                + arr + b".push(...await " + load_fn + b"(" + var + b',"Project",' + rest + b"))}"
               )
 
 
-            patch("agents.md loader", agents_pat, agents_repl)
+            patch("agents.md loader (added dirs)", agents_pat, agents_repl)
 
             # --- macOS config path ---
 
@@ -1234,6 +1248,51 @@ in
             # asset is missing or corrupt". node:zlib grew the same pair in Node 22.15,
             # and Deno implements it.
             #
+            # Bun.isStandaloneExecutable is true. The bundle reads it to decide whether it
+            # runs as a compiled binary or from a checkout: self-spawns add process.argv[1]
+            # (here the binary itself, so a bogus positional) unless it is set, fig
+            # completion specs try a bare npm import unless it is set, and since 2.1.286
+            # the builtin plugins resolve their hooks module from a source folder unless
+            # it is set — a folder the compiled bundle no longer carries, so startup died
+            # with `The "path" argument must be of type string. Received undefined` before
+            # the first frame. A deno-compiled binary is a standalone executable in every
+            # sense the bundle cares about. The one branch it opens that we do not want is
+            # "embedded ripgrep", a re-exec of the binary with argv0=rg; USE_BUILTIN_RIPGREP=0
+            # in the settings env below rules it out before the check is reached.
+            #
+            # Bun.ant.CellSegmenter is the one native piece the terminal renderer needs.
+            # Since 2.1.273 ink rasterises every written line into screen cells through a
+            # grapheme/SGR segmenter from @anthropic-ai/bun-internal and throws, uncaught,
+            # when it is missing — there is no JavaScript fallback, so the UI never mounts.
+            # The class below implements the contract the JavaScript side expects:
+            #
+            #   segment(text, cells, runs, reorder) parses ANSI-styled text into cells
+            #   [grapheme index, run << 10 | tab (256) | width] and runs [SGR key index,
+            #   URI index], returning the cell count, or minus the count when either array
+            #   is too small (the caller reallocates and retries). Grapheme strings are
+            #   interned into `graphemes`; a style is `sgrKeys[i]`, its SGR codes joined by
+            #   NUL — one parameter per code, exactly the shape the renderer's regex
+            #   /^\x1b\[\d{1,3}(;5;…|;2;…)?m$/ accepts — with `sgrCloseKeys[i]` the closing
+            #   codes in the same order; OSC 8 hyperlinks land in `uris`. Index 0 is "none"
+            #   for all three. The bidi code points in `substitute` become U+FFFD.
+            #
+            #   paint(screen, width, x, y, cells, count, _, charIndices, words) writes a
+            #   segmented line onto row y: screen cells are [char index, style << 17 |
+            #   link << 2 | width bits], a wide character is a head (bits 1) followed by a
+            #   spacer tail (bits 2), and one cut off by the right edge is a spacer head
+            #   (bits 3). Char index 0 is a space, 1 the invisible spacer. Overwriting half
+            #   of a wide character blanks the other half, as the blit code does. Tabs
+            #   advance to the next stop. The return value packs the damaged span as
+            #   x1 * 2^20 + x2 * 2^36 plus the end column in the low 20 bits.
+            #
+            #   setCell(screen, width, x, y, charIndex, word) writes one cell with the
+            #   same neighbour fixups and the same damage packing.
+            #
+            # Bun.sliceAnsi slices by column (slice-ansi); the renderer corrects the
+            # overshoot on wide characters itself. Bun.sleepSync blocks the thread
+            # (Atomics.wait) inside a synchronous PTY read loop. Bun.stdin.stream() feeds
+            # `claude hooks edit` and the Claude Design sign-in from standard input.
+            #
             # The bundle is ESM now, so this is a module of its own rather than a prelude
             # prepended to a CJS blob. ESM evaluates a module's imports before its body,
             # depth first and in source order, so importing it on the entry point's first
@@ -1242,6 +1301,7 @@ in
 
             bun_shim: bytes = rb"""import sw from "string-width";
             import sa from "strip-ansi";
+            import sl from "slice-ansi";
             import wa from "wrap-ansi";
             import sv from "semver";
             import * as ya from "yaml";
@@ -1253,14 +1313,27 @@ in
             import net from "node:net";
             import util from "node:util";
             import zlib from "node:zlib";
+            import{Readable}from "node:stream";
             import{createRequire}from "node:module";
             globalThis.__bunRequire=(url)=>{const req=createRequire(url);const f=(spec)=>/\.(md|txt)$/.test(String(spec))?fs.readFileSync(spec,"utf8"):req(spec);return Object.assign(f,req);};
+            function sgrClose(p){if(p===1||p===2)return 22;if(p===3)return 23;if(p===4||p===21)return 24;if(p===5||p===6)return 25;if(p===7)return 27;if(p===8)return 28;if(p===9)return 29;if(p===53)return 55;if(p>=30&&p<=38||p>=90&&p<=97)return 39;if(p>=40&&p<=48||p>=100&&p<=107)return 49;return 0}
+            const SGR_CLOSERS=new Set([22,23,24,25,27,28,29,39,49,55]);
+            class CellSegmenter{
+            constructor(o){this.sub=o.substitute??[];this.screen=o.screen;this.narrow=o.ambiguousIsNarrow!==!1;this.graphemes=[];this.widths=[];this.gmap=new Map;this.sgrKeys=[""];this.sgrCloseKeys=[""];this.smap=new Map([["",0]]);this.uris=[""];this.umap=new Map([["",0]]);this.seg=new Intl.Segmenter(void 0,{granularity:"grapheme"})}
+            intern(g){let i=this.gmap.get(g);if(i!==void 0)return i;let cp=g.codePointAt(0)??0,w;if(cp>=55296&&cp<=57343&&g.length===1)g="\uFFFD",w=1;else{for(let[a,b]of this.sub)if(cp>=a&&cp<=b){g="\uFFFD";break}w=cp<127?1:sw(g,{ambiguousIsNarrow:this.narrow})}i=this.graphemes.length;this.graphemes.push(g);this.widths.push(w>2?2:w);this.gmap.set(g,i);return i}
+            sgrIndex(list){let k="",c="";for(let i=0;i<list.length;i++){if(i){k+="\0";c+="\0"}k+=list[i][0];c+=list[i][1]}let i=this.smap.get(k);if(i===void 0){i=this.sgrKeys.length;this.sgrKeys.push(k);this.sgrCloseKeys.push(c);this.smap.set(k,i)}return i}
+            uriIndex(u){let i=this.umap.get(u);if(i===void 0){i=this.uris.length;this.uris.push(u);this.umap.set(u,i)}return i}
+            applySgr(params,list){if(params==="")return[];let t=params.split(";"),out=list.slice();for(let i=0;i<t.length;i++){let s=t[i];if(s===""||s.includes(":"))continue;let p=+s;if(!Number.isInteger(p))continue;if(p===0){out=[];continue}if(SGR_CLOSERS.has(p)){out=out.filter((e)=>e[2]!==p);continue}let unit=s,close=sgrClose(p);if(p===38||p===48){if(t[i+1]==="5"&&i+2<t.length)unit=t.slice(i,i+3).join(";"),i+=2;else if(t[i+1]==="2"&&i+4<t.length)unit=t.slice(i,i+5).join(";"),i+=4;else continue}if(close===0)continue;let code=`\x1b[''${unit}m`,end=`\x1b[''${close}m`;if(close===39||close===49)out=out.filter((e)=>e[2]!==close);else out=out.filter((e)=>e[0]!==code);out.push([code,end,close])}return out}
+            segment(text,cells,runs,reorder){let count=0,nruns=0,run=-1,runSgr=-1,runUri=-1,sgr=[],sgrIdx=0,uri=0,over=!1,maxC=cells.length>>1,maxR=runs.length>>1,n=text.length,i=0;const emit=(g,packed)=>{if(run<0||runSgr!==sgrIdx||runUri!==uri){if(nruns<maxR)runs[2*nruns]=sgrIdx,runs[2*nruns+1]=uri;else over=!0;run=nruns++,runSgr=sgrIdx,runUri=uri}if(count<maxC)cells[2*count]=g,cells[2*count+1]=run<<10|packed;else over=!0;count++};while(i<n){let ch=text.charCodeAt(i);if(ch===27){let c1=text.charCodeAt(i+1);if(c1===91){let j=i+2;while(j<n){let c=text.charCodeAt(j);if(c>=64&&c<=126)break;j++}if(j<n&&text.charCodeAt(j)===109){sgr=this.applySgr(text.slice(i+2,j),sgr);sgrIdx=this.sgrIndex(sgr)}i=j+1;continue}if(c1===93){let j=i+2,end=-1,skip=0;while(j<n){let c=text.charCodeAt(j);if(c===7){end=j;skip=1;break}if(c===27&&text.charCodeAt(j+1)===92){end=j;skip=2;break}j++}let body=text.slice(i+2,end<0?n:end);if(body.startsWith("8;")){let k=body.indexOf(";",2);uri=this.uriIndex(k<0?"":body.slice(k+1))}i=end<0?n:end+skip;continue}i+=Number.isNaN(c1)?1:2;continue}if(ch<32||ch===127){if(ch===9)emit(this.intern("\t"),256);i++;continue}if(ch<127&&(i+1>=n||text.charCodeAt(i+1)<768)){emit(this.intern(text[i]),1);i++;continue}let j=i;while(j<n){let c=text.charCodeAt(j);if(c===27||c<32&&c!==9||c===127)break;j++}for(let{segment:g}of this.seg.segment(text.slice(i,j))){if(g==="\t"){emit(this.intern("\t"),256);continue}let gi=this.intern(g);emit(gi,this.widths[gi])}i=j}return over?-count:count}
+            paint(cells,width,x,y,seg,count,_clip,chars,words){let s=this.screen,base=y*width*2,cx=x,x1=1/0,x2=-1;const put=(c,ch,wd)=>{let o=base+2*c,ex=cells[o+1]&3;if(ex===2&&c>0&&(cells[o-1]&3)===1)cells[o-2]=s.emptyCharIndex,cells[o-1]=s.emptyWord,x1=Math.min(x1,c-1);else if(ex===1&&c+1<width&&(cells[o+3]&3)===2)cells[o+2]=s.emptyCharIndex,cells[o+3]=s.emptyWord,x2=Math.max(x2,c+2);cells[o]=ch,cells[o+1]=wd;if(c<x1)x1=c;if(c+1>x2)x2=c+1};for(let i=0;i<count;i++){let p=seg[2*i+1],w=p&255,word=words[p>>>10]&~3;if(p&256){let stop=cx+(s.tabWidth-(cx%s.tabWidth+s.tabWidth)%s.tabWidth);for(let c=Math.max(cx,0);c<stop&&c<width;c++)put(c,s.emptyCharIndex,word);cx=stop;continue}if(w===0)continue;if(w>=2){if(cx>=0&&cx<width){if(cx+1<width)put(cx,chars[seg[2*i]],word|1),put(cx+1,s.spacerCharIndex,word|2);else put(cx,s.spacerCharIndex,word|3)}else if(cx+1>=0&&cx+1<width)put(cx+1,s.emptyCharIndex,word);cx+=2;continue}if(cx>=0&&cx<width)put(cx,chars[seg[2*i]],word);cx++}if(x2<0)x1=x2=0;return x1*1048576+x2*68719476736+(cx<0?0:cx&1048575)}
+            setCell(cells,width,x,y,ch,word){if(x<0||x>=width)return 0;let s=this.screen,o=y*width*2+2*x,wd=word&3,x1=x,x2=x+1,ex=cells[o+1]&3;if(ex===2&&x>0&&(cells[o-1]&3)===1)cells[o-2]=s.emptyCharIndex,cells[o-1]=s.emptyWord,x1=x-1;if(wd===1){if(x+1<width){let ex1=cells[o+3]&3;if(ex1===1&&x+2<width&&(cells[o+5]&3)===2)cells[o+4]=s.emptyCharIndex,cells[o+5]=s.emptyWord,x2=x+3;cells[o]=ch,cells[o+1]=word,cells[o+2]=s.spacerCharIndex,cells[o+3]=word&~3|2;if(x2<x+2)x2=x+2}else cells[o]=s.spacerCharIndex,cells[o+1]=word&~3|3}else{if(ex===1&&x+1<width&&(cells[o+3]&3)===2)cells[o+2]=s.emptyCharIndex,cells[o+3]=s.emptyWord,x2=x+2;cells[o]=ch,cells[o+1]=word}return x1*1048576+x2*68719476736}
+            }
             function bunHash(input){const buf=Buffer.isBuffer(input)?input:Buffer.from(typeof input==="string"?input:String(input));return crypto.createHash("sha1").update(buf).digest().readBigUInt64LE(0);}
             function bunSpawn(cmd,opts){opts=opts||{};const[bin,...args]=cmd;const stdio=["pipe","pipe",opts.stderr==="ignore"?"ignore":"pipe"];const child=cp.spawn(bin,args,{cwd:opts.cwd,env:opts.env||process.env,stdio,argv0:opts.argv0});const exited=new Promise(r=>child.on("exit",c=>r(c==null?1:c)));return{pid:child.pid,stdin:child.stdin,stdout:child.stdout,stderr:child.stderr,exitCode:null,killed:false,kill(s){try{child.kill(s)}catch{}this.killed=true},async wait(){return await exited},exited};}
             function bunListen(opts){const h=opts.socket||{};const server=net.createServer(s=>{if(h.open)try{h.open(s)}catch{}s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));});server.listen(opts.port||0,opts.hostname||"127.0.0.1");return server;}
             function bunConnect(opts){const h=opts.socket||{};const s=net.connect({host:opts.hostname,port:opts.port});if(h.open)s.on("connect",()=>h.open(s));s.on("data",d=>h.data&&h.data(s,d));s.on("close",()=>h.close&&h.close(s));s.on("error",e=>h.error&&h.error(s,e));return Promise.resolve(s);}
             class BunTranspiler{constructor(o){this.opts=o}transformSync(s){return s}}
-            globalThis.Bun={version:"1.3.13",embeddedFiles:[],stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,deepEquals:(a,b)=>util.isDeepStrictEqual(a,b),which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,connect:bunConnect,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},TOML:{parse:s=>tm.parse(s)},Transpiler:BunTranspiler,unsafe:{},generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{},zstdDecompressSync:b=>zlib.zstdDecompressSync(b),zstdDecompress:util.promisify(zlib.zstdDecompress)};
+            globalThis.Bun={version:"1.3.13",isStandaloneExecutable:!0,embeddedFiles:[],ant:{CellSegmenter},stringWidth:(s,o)=>sw(String(s||""),o),stripANSI:s=>sa(String(s||"")),sliceAnsi:(s,a,b)=>sl(String(s||""),a,b),wrapAnsi:(s,w,o)=>wa(String(s||""),w,o),sleepSync:(ms)=>{Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,ms)},stdin:{stream:()=>Readable.toWeb(process.stdin)},semver:{satisfies:(a,b)=>sv.satisfies(a,b),order:(a,b)=>sv.compare(a,b)},hash:bunHash,deepEquals:(a,b)=>util.isDeepStrictEqual(a,b),which(cmd){const dirs=(process.env.PATH||"").split(path.delimiter);for(const d of dirs){const f=path.join(d,cmd);try{fs.accessSync(f,fs.constants.X_OK);return f;}catch{}}return null;},spawn:bunSpawn,listen:bunListen,connect:bunConnect,YAML:{parse:s=>ya.parse(s),stringify:(o,r,i)=>ya.stringify(o,r,i)},TOML:{parse:s=>tm.parse(s)},Transpiler:BunTranspiler,unsafe:{},generateHeapSnapshot:()=>new ArrayBuffer(0),gc:()=>{},zstdDecompressSync:b=>zlib.zstdDecompressSync(b),zstdDecompress:util.promisify(zlib.zstdDecompress)};
             """
 
             (tree / SHIM).write_bytes(bun_shim)
@@ -1373,6 +1446,7 @@ in
                       smol-toml = "^1";
                       string-width = "^7";
                       strip-ansi = "^7";
+                      slice-ansi = "^7";
                       wrap-ansi = "^9";
                       semver = "^7";
                     };
