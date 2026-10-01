@@ -20,7 +20,12 @@
         ;
       inherit (lib.meta) getExe getExe';
       inherit (lib.modules) mkForce mkIf;
-      inherit (lib.strings) hasInfix toJSON toUpper;
+      inherit (lib.strings)
+        hasInfix
+        optionalString
+        toJSON
+        toUpper
+        ;
 
       paths =
         config.disko.devices.disk
@@ -80,33 +85,37 @@
                   ^${sync} --file-system $entry.destination
                   ^${umount} $entry.destination
 
-                  let existing_slot = (^${getExe pkgs.efibootmgr}
-                    | lines
-                    | parse --regex r###'^Boot(?P<slot>[0-9A-Fa-f]{4})\*?\s(?P<label>[^\t]*)\t.*$'###
-                    | where label == $entry.label
-                    | get 0?.slot)
-                  if ($existing_slot | is-not-empty) {
-                    ^${getExe pkgs.efibootmgr} --bootnum $existing_slot --delete-bootnum
+                  ${optionalString config.boot.loader.efi.canTouchEfiVariables /* nu */ ''
+                    let existing_slot = (^${getExe pkgs.efibootmgr}
+                      | lines
+                      | parse --regex r###'^Boot(?P<slot>[0-9A-Fa-f]{4})\*?\s(?P<label>[^\t]*)\t.*$'###
+                      | where label == $entry.label
+                      | get 0?.slot)
+                    if ($existing_slot | is-not-empty) {
+                      ^${getExe pkgs.efibootmgr} --bootnum $existing_slot --delete-bootnum
+                    }
+
+                    (^${getExe pkgs.efibootmgr}
+                      --create
+                      --disk $"/dev/(^${lsblk} --noheadings --output PKNAME $entry.source | str trim)"
+                      --part (^${lsblk} --noheadings --output PARTN $entry.source | str trim)
+                      --label $entry.label
+                      --loader '\EFI\BOOT\BOOT${toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI')
+                  ''}
+                }
+
+                ${optionalString config.boot.loader.efi.canTouchEfiVariables /* nu */ ''
+                  let entries = ^${getExe pkgs.efibootmgr} | lines | parse --regex r###'^Boot(?P<slot>[0-9A-Fa-f]{4})\*?\s(?P<label>[^\t]*)\t.*$'###
+                  def "into slot" []: string -> any {
+                    $entries | where label == $in | get 0?.slot
                   }
 
-                  (^${getExe pkgs.efibootmgr}
-                    --create
-                    --disk $"/dev/(^${lsblk} --noheadings --output PKNAME $entry.source | str trim)"
-                    --part (^${lsblk} --noheadings --output PARTN $entry.source | str trim)
-                    --label $entry.label
-                    --loader '\EFI\BOOT\BOOT${toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI')
-                }
-
-                let entries = ^${getExe pkgs.efibootmgr} | lines | parse --regex r###'^Boot(?P<slot>[0-9A-Fa-f]{4})\*?\s(?P<label>[^\t]*)\t.*$'###
-                def "into slot" []: string -> any {
-                  $entries | where label == $in | get 0?.slot
-                }
-
-                ^${getExe pkgs.efibootmgr} --bootorder (
-                  [($primary.label | into slot)]
-                  | append ($secondary | each {|entry| $entry.label | into slot })
-                  | str join ","
-                )
+                  ^${getExe pkgs.efibootmgr} --bootorder (
+                    [($primary.label | into slot)]
+                    | append ($secondary | each {|entry| $entry.label | into slot })
+                    | str join ","
+                  )
+                ''}
 
                 ^${sync} --file-system $primary.destination
                 ^${umount} $primary.destination
