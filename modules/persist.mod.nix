@@ -21,7 +21,7 @@
       inherit (lib.generators) toINI;
       inherit (lib.lists) head;
       inherit (lib.modules) mkIf mkMerge;
-      inherit (lib.options) mkEnableOption mkOption;
+      inherit (lib.options) mkOption;
       inherit (lib.types)
         listOf
         nullOr
@@ -32,11 +32,10 @@
     in
     {
       options.persist = {
-        enable = mkEnableOption "bcachefs-backed persistence";
-
         filesystemName = mkOption {
           type = str;
-          default = "persist";
+          default = "${config.networking.hostName}.persist";
+          defaultText = "\${config.networking.hostName}.persist";
           description = "Name of the filesystem.";
         };
 
@@ -51,7 +50,6 @@
           default = [
             "--compression=zstd:9"
             "--background_compression=zstd:9"
-            "--block_size=4096"
           ];
           description = "Extra arguments passed to bcachefs format.";
         };
@@ -71,7 +69,7 @@
         };
       };
 
-      config = mkIf config.persist.enable (mkMerge [
+      config = mkMerge [
         {
           disko.devices.nodev."root" = {
             fsType = "tmpfs";
@@ -148,6 +146,6 @@
             |> filterAttrs (_: service: service.limits.storage or null != null)
             |> mapAttrsToList (name: _: "/var/lib/${name}");
         }
-      ]);
+      ];
     };
 }

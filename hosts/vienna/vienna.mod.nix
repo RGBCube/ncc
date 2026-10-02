@@ -69,8 +69,6 @@ in
           user = "root";
         };
 
-        persist.enable = true;
-
         disko.imageBuilder = {
           imageFormat = "qcow2";
 

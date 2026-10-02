@@ -63,7 +63,8 @@ in
           user = "root";
         };
 
-        persist.enable = true;
+        # This should ideally be istanbul.persist, but this host was set up before that change, so it's Over.
+        persist.filesystemName = "persist";
         persist.passwordFile = "/media/key/.bcachefs.key";
 
         disko.devices.disk."main" = {
