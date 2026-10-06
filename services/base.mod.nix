@@ -195,8 +195,21 @@
         };
 
         exec.argv = mkOption {
-          type = listOf str;
-          description = "The service's command line.";
+          type = options.process.argv.type;
+          default = [ ];
+          description = options.process.argv.description;
+        };
+
+        exec.flags = mkOption {
+          type = options.process.flags.type;
+          default = { };
+          description = options.process.flags.description;
+        };
+
+        exec.flagFormat = mkOption {
+          type = options.process.flagFormat.type;
+          default = options.process.flagFormat.default;
+          description = options.process.flagFormat.description;
         };
 
         exec.pre.argv = mkOption {
@@ -309,6 +322,8 @@
 
       config = {
         process.argv = config.exec.argv;
+        process.flags = options.exec.flags.valueMeta.attrListValue;
+        process.flagFormat = config.exec.flagFormat;
 
         # A null attribute name omits the attribute, for runners without the backend.
         ${if options ? launchd then "launchd" else null} = {

@@ -5,7 +5,6 @@
     {
       config,
       lib,
-      osConfig,
       pkgs,
       ...
     }:
@@ -14,11 +13,11 @@
       inherit (lib.generators) toSSHConfig;
       inherit (lib.lists) singleton;
       inherit (lib.meta) getExe';
-      inherit (lib.modules) mkAfter;
-      inherit (lib.strings) optionalString;
     in
     {
       packages = singleton pkgs.openssh;
+
+      xdg.cache.files."ssh".type = "directory";
 
       xdg.config.files."ssh/config".generator = toSSHConfig;
       xdg.config.files."ssh/config".value.Host =
@@ -45,18 +44,6 @@
             ControlPath = "${config.xdg.cache.directory}/ssh/%r@%n:%p";
           };
         };
-
-      xdg.cache.files."ssh".type = "directory";
-
-      xdg.config.files."nushell/config.nu".text =
-        mkAfter
-        <| optionalString osConfig.nixpkgs.hostPlatform.isDarwin "source ${
-          pkgs.writeText "ssh-auth-sock.nu" /* nu */ ''
-            try {
-              $env.SSH_AUTH_SOCK = ^/bin/launchctl getenv SSH_AUTH_SOCK | str trim
-            }
-          ''
-        }";
     };
 
   flake.homeModules.desktop = self.homeModules.ssh-client-desktop;
@@ -71,7 +58,11 @@
       xdg.config.files."nushell/aliases.nu".value.mosh = "mosh --no-init";
     };
 
-  flake.nixosModules.default = self.nixosModules.ssh-server;
+  flake.nixosModules.default.imports = [
+    self.nixosModules.ssh-server
+    self.nixosModules.ssh-agent
+  ];
+
   flake.nixosModules.ssh-server =
     {
       config,
@@ -159,4 +150,62 @@
         };
       };
     };
+
+  commonModules.ssh-agent =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      inherit (lib.attrsets)
+        attrNames
+        filterAttrs
+        getAttr
+        ;
+      inherit (lib.lists) singleton;
+      inherit (lib.trivial) const;
+
+      isDarwin = config.nixpkgs.hostPlatform.isDarwin;
+
+      interactiveUsers =
+        if isDarwin then
+          singleton config.system.primaryUser
+        else
+          config.users.users |> filterAttrs (const <| getAttr "isNormalUser") |> attrNames;
+    in
+    {
+      users.groups.ssh-agent.members = interactiveUsers;
+
+      system.services.ssh-agent = {
+        imports = singleton self.serviceModules.ssh-agent;
+
+        ssh-agent = {
+          inherit (pkgs.writers) writeNu;
+
+          package = pkgs.openssh.overrideAttrs (old: {
+            postPatch = (old.postPatch or "") + /* sh */ ''
+              sed -i '0,/prev_mask = umask(0177);/s//prev_mask = umask(0007);/' ssh-agent.c
+            '';
+          });
+        };
+      };
+
+      nix.envVars.SSH_AUTH_SOCK =
+        if config.nixpkgs.hostPlatform.isDarwin then
+          "/var/run/ssh-agent/socket"
+        else
+          "/run/ssh-agent/socket";
+    };
+
+  flake.nixosModules.ssh-agent = {
+    environment.sessionVariables.SSH_AUTH_SOCK = "/run/ssh-agent/socket";
+  };
+
+  flake.darwinModules.default = self.darwinModules.ssh-agent;
+  flake.darwinModules.ssh-agent = {
+    # TODO: Remove hacks we do for shell init and use this, which is essentially Darwin environment.sessionVariables.
+    launchd.user.envVariables.SSH_AUTH_SOCK = "/var/run/ssh-agent/socket";
+  };
 }

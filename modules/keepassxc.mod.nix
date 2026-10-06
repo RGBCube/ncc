@@ -35,7 +35,9 @@
         Security.LockDatabaseIdleSeconds = 3 * 60 * 60; # 3 hours.
 
         Browser.Enabled = true;
+
         SSHAgent.Enabled = true;
+        SSHAgent.UseOpenSSH = true;
       }
       // optionalAttrs osConfig.nixpkgs.hostPlatform.isLinux {
         FdoSecrets.Enabled = true;
