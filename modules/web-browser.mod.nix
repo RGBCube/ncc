@@ -139,21 +139,21 @@ let
       ]
       # OLD REDDIT
       ++ [
-        "@@||reddit.com/media$document"
-        "@@||reddit.com/mod$document"
-        "@@||reddit.com/poll$document"
-        "@@||reddit.com/settings$document"
-        "@@||reddit.com/topics$document"
-        "@@||reddit.com/community-points$document"
-        "@@||reddit.com/appeal$document"
-        "@@||reddit.com/appeals$document"
-        "@@||reddit.com/notifications$document"
-        "@@||reddit.com/message/compose/$document"
-        "@@||reddit.com/mail^$document"
-        "@@||reddit.com/answers^$document"
-        "@@||reddit.com/r/subreddit^$document"
-        ''@@/^https:\/\/\w*\.?reddit\.com\/r\/[A-Za-z0-9_]+\/s\//$document''
-        ''@@/^https:\/\/\w*\.?reddit\.com\/.*[?&]new_reddit=true(?:$|[&#])/$document''
+        "@@||reddit.com/media$document,uritransform"
+        "@@||reddit.com/video/$document,uritransform"
+        "@@||reddit.com/mod$document,uritransform"
+        "@@||reddit.com/poll$document,uritransform"
+        "@@||reddit.com/settings$document,uritransform"
+        "@@||reddit.com/topics$document,uritransform"
+        "@@||reddit.com/community-points$document,uritransform"
+        "@@||reddit.com/appeal$document,uritransform"
+        "@@||reddit.com/appeals$document,uritransform"
+        "@@||reddit.com/notifications$document,uritransform"
+        "@@||reddit.com/message/compose/$document,uritransform"
+        "@@||reddit.com/mail^$document,uritransform"
+        "@@||reddit.com/answers^$document,uritransform"
+        ''@@/^https:\/\/\w*\.?reddit\.com\/r\/[A-Za-z0-9_]+\/s\//$document,uritransform''
+        ''@@/^https:\/\/\w*\.?reddit\.com\/.*[?&]new_reddit=true(?:$|[&#])/$document,uritransform''
 
         ''||reddit.com/gallery/$document,uritransform=/^https:\/\/(?:www\.|np\.|amp\.|i\.)?reddit\.com\/gallery\/(.*)/https:\/\/old.reddit.com\/comments\/\$1/''
         ''||reddit.com^$document,uritransform=/^https:\/\/(?:www\.|np\.|amp\.|i\.)?reddit\.com\/(?!gallery\/)/https:\/\/old.reddit.com\//''
