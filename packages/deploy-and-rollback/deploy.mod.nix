@@ -53,6 +53,8 @@
           let class = class-of --host $host
 
           let toplevel = (${getExe pkgs.nix-output-monitor} build
+            --keep-going
+
             --eval-store $eval_store
             --store $store
             --no-link
