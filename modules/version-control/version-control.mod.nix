@@ -59,8 +59,11 @@
     { config, lib, ... }:
     let
       inherit (lib.attrsets) optionalAttrs;
+      inherit (lib.lists) singleton;
     in
     {
+      nixpkgs.config.permittedInsecurePackages = singleton "radicle-node-1.10.3";
+
       secrets.radicle = {
         file = ./radicle.age;
       }
