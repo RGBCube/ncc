@@ -23,7 +23,19 @@
           "x-scheme-handler/magnet"
         ];
 
-      packages = singleton pkgs.qbittorrent;
+      packages = singleton (
+        if osConfig.nixpkgs.hostPlatform.isDarwin then
+          pkgs.qbittorrent.overrideAttrs {
+            src = pkgs.fetchFromGitHub {
+              owner = "qbittorrent";
+              repo = "qBittorrent";
+              rev = "6164ed1";
+              hash = "sha256-U8L2q62XVRlaNj3ZozPHXfrIDuvn25fsnfqLY05FO60=";
+            };
+          }
+        else
+          pkgs.qbittorrent
+      );
 
       xdg.config.files."qBittorrent/qBittorrent.${
         if osConfig.nixpkgs.hostPlatform.isDarwin then "ini" else "conf"
