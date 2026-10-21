@@ -34,7 +34,7 @@
         optionals
         singleton
         ;
-      inherit (lib.modules) mkIf mkMerge;
+      inherit (lib.modules) mkAliasOptionModule mkIf mkMerge;
       inherit (lib.network) isAddressV4 isAddressV6;
       inherit (lib.options) mkOption;
       inherit (lib.strings)
@@ -153,6 +153,12 @@
         |> filter (port: port != null);
     in
     {
+      imports = [
+        (mkAliasOptionModule [ "exec" "argv" ] [ "process" "argv" ])
+        (mkAliasOptionModule [ "exec" "flags" ] [ "process" "flags" ])
+        (mkAliasOptionModule [ "exec" "flagFormat" ] [ "process" "flagFormat" ])
+      ];
+
       options = {
         exec.allow = mkOption {
           type =
@@ -192,24 +198,6 @@
           type = timespan;
           default = "10s";
           description = "How long to wait before restarting.";
-        };
-
-        exec.argv = mkOption {
-          type = options.process.argv.type;
-          default = [ ];
-          description = options.process.argv.description;
-        };
-
-        exec.flags = mkOption {
-          type = options.process.flags.type;
-          default = { };
-          description = options.process.flags.description;
-        };
-
-        exec.flagFormat = mkOption {
-          type = options.process.flagFormat.type;
-          default = options.process.flagFormat.default;
-          description = options.process.flagFormat.description;
         };
 
         exec.pre.argv = mkOption {
@@ -321,10 +309,6 @@
       };
 
       config = {
-        process.argv = config.exec.argv;
-        process.flags = options.exec.flags.valueMeta.attrListValue;
-        process.flagFormat = config.exec.flagFormat;
-
         # A null attribute name omits the attribute, for runners without the backend.
         ${if options ? launchd then "launchd" else null} = {
           RunAtLoad = true;
