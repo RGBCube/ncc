@@ -168,29 +168,45 @@
       inherit (lib.trivial) const;
 
       isDarwin = config.nixpkgs.hostPlatform.isDarwin;
-
-      interactiveUsers =
+    in
+    {
+      users.groups.ssh-agent.members =
         if isDarwin then
           singleton config.system.primaryUser
         else
           config.users.users |> filterAttrs (const <| getAttr "isNormalUser") |> attrNames;
-    in
-    {
-      users.groups.ssh-agent.members = interactiveUsers;
 
       system.services.ssh-agent = {
         imports = singleton self.serviceModules.ssh-agent;
 
         ssh-agent = {
           inherit (pkgs.writers) writeNu;
+          inherit (pkgs) uutils-coreutils-noprefix;
 
           package = pkgs.openssh.overrideAttrs (old: {
             postPatch = (old.postPatch or "") + /* sh */ ''
               sed -i '0,/prev_mask = umask(0177);/s//prev_mask = umask(0007);/' ssh-agent.c
+              substituteInPlace ssh-agent.c \
+                --replace-fail \
+                'if ((euid != 0) && (getuid() != euid)) {' \
+                'if (false && (euid != 0) && (getuid() != euid)) {'
             '';
           });
         };
       };
+
+      home.extraModules = singleton (
+        if isDarwin then
+          {
+            files."Library/Application Support/KeePassXC/keepassxc.ini".value.SSHAgent.AuthSockOverride =
+              "/var/run/ssh-agent/socket";
+          }
+        else
+          {
+            xdg.config.files."keepassxc/keepassxc.ini".value.SSHAgent.AuthSockOverride =
+              "/run/ssh-agent/socket";
+          }
+      );
 
       nix.envVars.SSH_AUTH_SOCK =
         if config.nixpkgs.hostPlatform.isDarwin then
@@ -204,8 +220,16 @@
   };
 
   flake.darwinModules.default = self.darwinModules.ssh-agent;
-  flake.darwinModules.ssh-agent = {
-    # TODO: Remove hacks we do for shell init and use this, which is essentially Darwin environment.sessionVariables.
-    launchd.user.envVariables.SSH_AUTH_SOCK = "/var/run/ssh-agent/socket";
-  };
+  flake.darwinModules.ssh-agent =
+    { lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      users.knownGroups = singleton "ssh-agent";
+      users.groups.ssh-agent.gid = 550;
+
+      # TODO: Remove hacks we do for shell init and use this, which is essentially Darwin environment.sessionVariables.
+      launchd.user.envVariables.SSH_AUTH_SOCK = "/var/run/ssh-agent/socket";
+    };
 }

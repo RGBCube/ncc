@@ -59,6 +59,11 @@
           description = "Nushell script writer used to wrap ssh-agent.";
         };
 
+        uutils-coreutils-noprefix = mkOption {
+          type = raw;
+          description = "Coreutils required for the Nushell script";
+        };
+
         foreground = mkFlagOption {
           flag = "-D";
           type = bool;
@@ -117,6 +122,8 @@
             def --wrapped main [...arguments] {
               let runtime_directory = r###'${name |> toJSON}'### | from json
               mkdir $runtime_directory
+              ^${getExe' cfg.uutils-coreutils-noprefix "chgrp"} ${name} $runtime_directory
+              ^${getExe' cfg.uutils-coreutils-noprefix "chmod"} 0770 $runtime_directory
               cd $runtime_directory
 
               exec ${getExe' cfg.package "ssh-agent"} ...$arguments
@@ -147,6 +154,8 @@
         };
       }
       // optionalAttrs (options ? launchd) {
+        launchd.GroupName = name;
+
         processConfig.workingDirectory = "/var/run";
       };
     };
