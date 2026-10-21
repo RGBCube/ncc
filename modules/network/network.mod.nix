@@ -88,7 +88,6 @@
           idnSupport = true;
           ldapSupport = true;
           pslSupport = true;
-          rtmpSupport = true;
           scpSupport = true;
           websocketSupport = true;
         })
