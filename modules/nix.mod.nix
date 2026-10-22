@@ -37,6 +37,12 @@
         (import <| self + /flake.nix).nixConfig
         |> flip removeAttrs (optional config.nixpkgs.hostPlatform.isDarwin "use-cgroups");
 
+      nix.distributedBuilds = config.nix.buildMachines != [ ];
+      nix.buildMachines =
+        self.machines
+        |> filterAttrs (_: { builder, ... }: builder.enable)
+        |> mapAttrsToList (_: { builder, ... }: removeAttrs builder <| singleton "enable");
+
       nix.channel.enable = false;
 
       nix.optimise.automatic = true;

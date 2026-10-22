@@ -1,6 +1,7 @@
 { self, lib, ... }:
 let
   inherit (lib.attrsets) attrValues filterAttrs mapAttrs;
+  inherit (lib.lists) singleton;
 in
 {
   # TODO: This entire file shouldn't exist, it's like the old packages.mod.nix.
@@ -42,6 +43,16 @@ in
       user = "nix-ssh";
       hostName = "typing.ink";
       key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgIcUZYHyzcg4YSL6DWsqhRDnjri35KPOpF6V42wlvq lyrae";
+    };
+
+    lyrae.builder = {
+      enable = true;
+      protocol = "ssh-ng";
+      hostName = "typing.ink:2222";
+      sshUser = "nix-ssh";
+      publicHostKey = "c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUJnSWNVWllIeXpjZzRZU0w2RFdzcWhSRG5qcmkzNUtQT3BGNlY0MndsdnEgbHlyYWUK";
+      systems = singleton "aarch64-linux";
+      supportedFeatures = singleton "big-parallel";
     };
   };
 
