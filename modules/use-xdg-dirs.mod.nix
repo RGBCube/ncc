@@ -2,16 +2,10 @@
 {
   flake.darwinModules.default = self.darwinModules.use-xdg-dirs;
   flake.darwinModules.use-xdg-dirs =
-    { config, lib, ... }:
-    let
-      inherit (lib.modules) mkAfter;
-    in
+    { config, ... }:
     {
-      # On darwin, the login shell has to be zsh, so set ZDOTDIR before the user
-      # configuration is read.
-      environment.etc."zshenv".text = mkAfter /* zsh */ ''
-        export ZDOTDIR="''${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
-      '';
+      launchd.user.envVariables =
+        config.home.users.${config.system.primaryUser}.environment.sessionVariables;
 
       # The watchman daemon is spawned by launchd with a minimal environment,
       # so WATCHMAN_CONFIG_FILE can't reach it. the compiled-in /etc path can.

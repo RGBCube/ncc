@@ -202,11 +202,7 @@
 
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
         text = mkAfter /* zsh */ ''
-          # Nested exec for the true shell to see the variables.
-          SHELL=${getExe package} exec ${getExe package} \
-            --login \
-            --config ${config.xdg.config.files."nushell/config.nu".source} \
-            --execute 'exec $env.SHELL'
+          SHELL=${getExe package} exec "$SHELL" --login
         '';
       };
 

@@ -218,7 +218,6 @@
       users.knownGroups = singleton "ssh-agent";
       users.groups.ssh-agent.gid = 550;
 
-      # TODO: Remove hacks we do for shell init and use this, which is essentially Darwin environment.sessionVariables.
       launchd.user.envVariables.SSH_AUTH_SOCK = config.nix.envVars.SSH_AUTH_SOCK;
     };
 }
