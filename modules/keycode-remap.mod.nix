@@ -190,6 +190,15 @@ in
     in
     {
       homebrew.casks = singleton "karabiner-elements";
+
+      launchd.user.agents.karabiner-elements.serviceConfig = {
+        RunAtLoad = true;
+        ProgramArguments = [
+          "/usr/bin/open"
+          "-a"
+          "/Applications/Karabiner-Elements.app"
+        ];
+      };
     };
 
   flake.homeModules.keycode-remap =

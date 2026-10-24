@@ -7,6 +7,8 @@
       inherit (lib.lists) singleton;
     in
     {
+      homebrew.casks = singleton "hammerspoon";
+
       system.defaults.CustomUserPreferences."org.hammerspoon.Hammerspoon" = {
         MJConfigFile = "~/.config/hammerspoon/init.lua";
 
@@ -15,7 +17,14 @@
         SUSendProfileInfo = false;
       };
 
-      homebrew.casks = singleton "hammerspoon";
+      launchd.user.agents.hammerspoon.serviceConfig = {
+        RunAtLoad = true;
+        ProgramArguments = [
+          "/usr/bin/open"
+          "-a"
+          "/Applications/Hammerspoon.app"
+        ];
+      };
     };
 
   flake.homeModules.hammerspoon =

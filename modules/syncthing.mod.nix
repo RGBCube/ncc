@@ -14,6 +14,15 @@
         SUAutomaticallyUpdate = false;
         SUSendProfileInfo = false;
       };
+
+      launchd.user.agents.syncthing.serviceConfig = {
+        RunAtLoad = true;
+        ProgramArguments = [
+          "/usr/bin/open"
+          "-a"
+          "/Applications/Syncthing.app"
+        ];
+      };
     };
 
   # flake.nixosModules.syncthing =

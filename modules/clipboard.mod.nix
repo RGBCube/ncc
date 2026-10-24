@@ -11,6 +11,15 @@
         pkgs.maccy
       ];
 
+      launchd.user.agents.maccy.serviceConfig = {
+        RunAtLoad = true;
+        ProgramArguments = [
+          "/usr/bin/open"
+          "-a"
+          "/Applications/Nix Apps/Maccy.app"
+        ];
+      };
+
       system.defaults.CustomUserPreferences."org.p0deje.Maccy" = {
         KeyboardShortcuts_delete = 0;
         KeyboardShortcuts_pin = 0;
