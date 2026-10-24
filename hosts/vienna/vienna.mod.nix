@@ -4,7 +4,7 @@
   ...
 }:
 let
-  inherit (lib.lists) singleton;
+  inherit (lib.lists) head singleton;
 in
 {
   flake.machines.vienna = {
@@ -17,6 +17,7 @@ in
 
     ssh = {
       enable = true;
+      hostName = head self.machines.vienna.ip.addresses4;
       key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIO89LpzcmPit5ZanIpRhevqoUWpeB9Ja/sLxyKivfjJ vienna";
     };
   };

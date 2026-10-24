@@ -28,6 +28,7 @@ in
 
     ssh = {
       enable = true;
+      hostName = head self.machines.istanbul.ip.addresses4;
       key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCykEkiotbnje7b7Gg7f+fg58zOxRjNKuJO0z1eVrmF istanbul";
     };
   };
