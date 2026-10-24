@@ -38,6 +38,7 @@
 
         SSHAgent.Enabled = true;
         SSHAgent.UseOpenSSH = true;
+        SSHAgent.AuthSockOverride = osConfig.nix.envVars.SSH_AUTH_SOCK;
       }
       // optionalAttrs osConfig.nixpkgs.hostPlatform.isLinux {
         FdoSecrets.Enabled = true;

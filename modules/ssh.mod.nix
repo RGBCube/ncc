@@ -195,19 +195,6 @@
         };
       };
 
-      home.extraModules = singleton (
-        if isDarwin then
-          {
-            files."Library/Application Support/KeePassXC/keepassxc.ini".value.SSHAgent.AuthSockOverride =
-              "/var/run/ssh-agent/socket";
-          }
-        else
-          {
-            xdg.config.files."keepassxc/keepassxc.ini".value.SSHAgent.AuthSockOverride =
-              "/run/ssh-agent/socket";
-          }
-      );
-
       nix.envVars.SSH_AUTH_SOCK =
         if config.nixpkgs.hostPlatform.isDarwin then
           "/var/run/ssh-agent/socket"
@@ -215,13 +202,15 @@
           "/run/ssh-agent/socket";
     };
 
-  flake.nixosModules.ssh-agent = {
-    environment.sessionVariables.SSH_AUTH_SOCK = "/run/ssh-agent/socket";
-  };
+  flake.nixosModules.ssh-agent =
+    { config, ... }:
+    {
+      environment.sessionVariables.SSH_AUTH_SOCK = config.nix.envVars.SSH_AUTH_SOCK;
+    };
 
   flake.darwinModules.default = self.darwinModules.ssh-agent;
   flake.darwinModules.ssh-agent =
-    { lib, ... }:
+    { config, lib, ... }:
     let
       inherit (lib.lists) singleton;
     in
@@ -230,6 +219,6 @@
       users.groups.ssh-agent.gid = 550;
 
       # TODO: Remove hacks we do for shell init and use this, which is essentially Darwin environment.sessionVariables.
-      launchd.user.envVariables.SSH_AUTH_SOCK = "/var/run/ssh-agent/socket";
+      launchd.user.envVariables.SSH_AUTH_SOCK = config.nix.envVars.SSH_AUTH_SOCK;
     };
 }
