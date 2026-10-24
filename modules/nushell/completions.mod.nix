@@ -5,6 +5,7 @@
     { pkgs, lib, ... }:
     let
       inherit (lib.meta) getExe;
+      inherit (lib.modules) mkAfter;
     in
     {
       packages = [
@@ -17,7 +18,7 @@
 
       environment.sessionVariables.CARAPACE_BRIDGES = "inshellisense,carapace,zsh,fish,bash";
 
-      xdg.config.files."nushell/config.nu".text = "source ${
+      xdg.config.files."nushell/config.nu".text = mkAfter "source ${
         pkgs.writeText "completions.nu" /* nu */ ''
           let menus = [
             {

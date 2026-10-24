@@ -202,7 +202,7 @@
 
       xdg.config.files."zsh/.zshrc" = mkIf osConfig.nixpkgs.hostPlatform.isDarwin {
         text = mkAfter /* zsh */ ''
-          SHELL=${getExe package} exec "$SHELL" --login
+          SHELL=${getExe package} exec ${getExe package} --login
         '';
       };
 
