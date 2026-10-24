@@ -37,6 +37,7 @@ in
       hostName = "rgbcu.be:2222";
       sshUser = "build";
       systems = singleton "x86_64-linux";
+      maxJobs = 20;
     };
 
     disk.ssh = {
@@ -60,6 +61,7 @@ in
       publicHostKey = "c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUJnSWNVWllIeXpjZzRZU0w2RFdzcWhSRG5qcmkzNUtQT3BGNlY0MndsdnEgbHlyYWUK";
       systems = singleton "aarch64-linux";
       supportedFeatures = singleton "big-parallel";
+      maxJobs = 20;
     };
   };
 
