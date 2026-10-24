@@ -93,6 +93,9 @@
           # removing framebuffers and their emulation kills two birds with one stone.
           FB_DEVICE = option no;
           DRM_FBDEV_EMULATION = mkForce no;
+
+          # TODO: Remove once upstream fixes this.
+          RC_CORE = lib.mkForce lib.kernel.module;
         };
       };
     };
