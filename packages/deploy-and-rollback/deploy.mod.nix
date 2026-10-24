@@ -20,8 +20,13 @@
           | get $host
         }
 
-        def switch [--target: string, --pull-from: string, --toplevel: string] {
+        def is-local [--host: string] {
+          sys host | get hostname | $in == $host
+        }
+
+        def switch [--target: string, --toplevel: string, --copy] {
           let class = class-of --host $target
+          let is_local = is-local --host $target
 
           let escalate = match $class {
             "nixos" => "run0"
@@ -33,12 +38,11 @@
             "darwin" => [$"($toplevel)/activate"]
           }
 
-          let prefix = if $pull_from == "auto" { [$escalate] } else { [ssh -t $target $escalate] }
+          let prefix = if $is_local { [] } else { [ssh -tt $target] }
 
-          run-external ...[...$prefix nix copy --no-check-sigs --from $pull_from $toplevel]
-          run-external ...[...$prefix dix /run/current-system $toplevel]
-          run-external ...[...$prefix nix build --no-link --profile /nix/var/nix/profiles/system $toplevel]
-          run-external ...[...$prefix ...$activate]
+          try { run-external ...[...$prefix           dix /run/current-system $toplevel] }
+                run-external ...[...$prefix $escalate nix build --no-link --profile /nix/var/nix/profiles/system $toplevel]
+                run-external ...[...$prefix $escalate ...$activate]
         }
 
         def main [] {
@@ -46,54 +50,61 @@
         }
 
         def "main deploy" [
-          --eval-store: string = "auto"
-          --store: string = "auto"
-          host: string
+          target: string
         ] {
-          let class = class-of --host $host
+          let class = class-of --host $target
+          let is_local = is-local --host $target
 
-          let toplevel = (${getExe pkgs.nix-output-monitor} build
+          let toplevel = (^${getExe pkgs.nix-output-monitor} build
             --keep-going
-
-            --eval-store $eval_store
-            --store $store
             --no-link
             --print-out-paths
-            $"${self}#($class)Configurations.($host).config.system.build.toplevel"
+            $"${self}#($class)Configurations.($target).config.system.build.toplevel"
             | str trim)
 
-          switch --target $host --pull-from $store --toplevel $toplevel
+          if not $is_local {
+            ^${getExe pkgs.nix-output-monitor} copy --substitute-on-destination --no-check-sigs --to $"ssh-ng://($target)" $toplevel
+          }
+
+          switch --target $target --toplevel $toplevel
         }
 
         def "main rollback" [
-          --store: string = "auto"
-          host: string
+          target: string
         ] {
-          let generations = if $store == "auto" {
+          let class = class-of --host $target
+          let is_local = is-local --host $target
+
+          let generations = if $is_local {
             ls /nix/var/nix/profiles
             | update name { path basename }
-            | where ($it.name | str starts-with "system-")
+            | where { str starts-with "system-" }
             | select name modified
           } else {
-            let names = (ssh $host ls /nix/var/nix/profiles
-              | lines
-              | where ($it | str starts-with "system-"))
+            let names = ssh $target ls /nix/var/nix/profiles
+            | lines
+            | where { str starts-with "system-" }
 
-            (ssh $host stat --format=%y ...($names | each { $"/nix/var/nix/profiles/($in)" })
-              | lines
-              | into datetime
-              | wrap modified
-              | merge ($names | wrap name))
+            let modified = match $class {
+              "nixos" => { ssh $target stat --format=%Y ...($names | each { $"/nix/var/nix/profiles/($in)" }) }
+              "darwin" => { ssh $target stat -f %m ...($names | each { $"/nix/var/nix/profiles/($in)" }) }
+            }
+
+            $modified
+            | lines
+            | into int
+            | wrap modified
+            | merge ($names | wrap name)
           }
 
-          let generation = ($generations
-            | sort-by modified --reverse
-            | each { $"($in.name)  ($in.modified)" }
-            | input list
-            | split row "  "
-            | first)
+          let generation = $generations
+          | sort-by modified --reverse
+          | skip 1
+          | each { $"($in.name)" }
+          | input list
+          | first
 
-          switch --target $host --pull-from $store --toplevel $"/nix/var/nix/profiles/($generation)"
+          switch --target $target --toplevel $"/nix/var/nix/profiles/($generation)"
         }
       '';
     };
