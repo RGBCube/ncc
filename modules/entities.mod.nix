@@ -31,6 +31,14 @@ in
       hostName = "rgbcu.be";
       key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBUsMV591/9VqzjBiMqdxJId0C7PlZTIXQByHEILWMwc the@best";
     };
+    best.builder = {
+      enable = true;
+      protocol = "ssh-ng";
+      hostName = "rgbcu.be:2222";
+      sshUser = "build";
+      systems = singleton "x86_64-linux";
+    };
+
     disk.ssh = {
       enable = true;
       hostName = "mail1.rgbcu.be";
@@ -44,7 +52,6 @@ in
       hostName = "typing.ink";
       key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBgIcUZYHyzcg4YSL6DWsqhRDnjri35KPOpF6V42wlvq lyrae";
     };
-
     lyrae.builder = {
       enable = true;
       protocol = "ssh-ng";
