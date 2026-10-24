@@ -44,5 +44,16 @@
     };
 
   flake.darwinModules.default = self.darwinModules.home;
-  flake.darwinModules.home = inputs.hjem.darwinModules.hjem;
+  flake.darwinModules.home =
+    { config, lib, ... }:
+    let
+      inherit (lib.lists) singleton;
+    in
+    {
+      imports = singleton inputs.hjem.darwinModules.hjem;
+
+      launchd.user.envVariables =
+        config.home.users.${config.system.primaryUser}.environment.sessionVariables;
+    };
+
 }

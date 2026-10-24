@@ -25,6 +25,7 @@ in
         "Thunderbolt Bridge"
       ];
 
+      system.primaryUser = "pala";
       users.users.pala = {
         name = "pala";
         home = "/Users/pala";

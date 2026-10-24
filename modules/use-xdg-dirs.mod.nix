@@ -4,9 +4,6 @@
   flake.darwinModules.use-xdg-dirs =
     { config, ... }:
     {
-      launchd.user.envVariables =
-        config.home.users.${config.system.primaryUser}.environment.sessionVariables;
-
       # The watchman daemon is spawned by launchd with a minimal environment,
       # so WATCHMAN_CONFIG_FILE can't reach it. the compiled-in /etc path can.
       environment.etc."watchman.json".source = "${
