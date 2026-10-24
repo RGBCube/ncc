@@ -18,6 +18,7 @@ in
         self.darwinModules.ai
         self.darwinModules.communication
         self.darwinModules.media
+        self.darwinModules.version-control
       ];
 
       networking.knownNetworkServices = [
