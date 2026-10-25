@@ -422,6 +422,7 @@
         (getExe difft)
         "--color"
         "always"
+        "--width=$width"
         "$left"
         "$right"
       ];
