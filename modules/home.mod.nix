@@ -45,15 +45,39 @@
 
   flake.darwinModules.default = self.darwinModules.home;
   flake.darwinModules.home =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
+      inherit (lib.attrsets) mapAttrsToList;
       inherit (lib.lists) singleton;
+      inherit (lib.strings) concatStringsSep escapeShellArg;
     in
     {
       imports = singleton inputs.hjem.darwinModules.hjem;
 
       launchd.user.envVariables =
         config.home.users.${config.system.primaryUser}.environment.sessionVariables;
+
+      launchd.user.agents.user-environment.serviceConfig = {
+        RunAtLoad = true;
+        ProgramArguments =
+          singleton
+          <| "${pkgs.writeShellScript "user-environment" /* bash */ ''
+            set -euo pipefail
+
+            ${
+              config.launchd.user.envVariables
+              |> mapAttrsToList (
+                name: value: "/bin/launchctl setenv ${escapeShellArg name} ${escapeShellArg value}"
+              )
+              |> concatStringsSep "\n"
+            }
+          ''}";
+      };
     };
 
 }
