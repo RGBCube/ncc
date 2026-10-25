@@ -195,6 +195,8 @@ in
         RunAtLoad = true;
         ProgramArguments = [
           "/usr/bin/open"
+          "--hide"
+          "--background"
           "-a"
           "/Applications/Karabiner-Elements.app"
         ];
