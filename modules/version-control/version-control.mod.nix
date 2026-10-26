@@ -154,8 +154,6 @@
 
         aliases.d = [ "diff" ];
 
-        aliases.e = [ "edit" ];
-
         aliases.l = [ "log" ];
         aliases.la = [
           "log"
