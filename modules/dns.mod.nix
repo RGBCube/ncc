@@ -137,7 +137,7 @@ in
                 config.zones
                 |> map (zone: {
                   zone = zone.FQDN |> name.render;
-                  file = zone.RENDERED |> pkgs.writeText "zone";
+                  file = zone.ZONE_RECORDS_RENDERED |> pkgs.writeText "zone";
 
                   zone_type = "Primary";
                   axfr_policy = "AllowAll";

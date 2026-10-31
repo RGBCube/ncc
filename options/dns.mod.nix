@@ -350,7 +350,13 @@ let
               ++ (
                 self.parameters
                 |> mapAttrsToList (
-                  key: value: "${key}=${quote <| concatStringsSep "," <| map toString <| toList value}"
+                  key: value:
+                  "${key}=${
+                    toList value
+                    |> map toString
+                    |> concatStringsSep ","
+                    |> quote
+                  }"
                 )
               )
               |> concatStringsSep " "
@@ -385,7 +391,6 @@ let
         } "Text record.";
 
         FQDN = mkOption {
-          internal = true;
           readOnly = true;
           type = name;
           description = "The absolute DNS name of this node as a root-first label path.";
@@ -394,7 +399,6 @@ let
         };
 
         RECORDS = mkOption {
-          internal = true;
           readOnly = true;
           type =
             listOf
@@ -439,8 +443,7 @@ let
             );
         };
 
-        ENTRIES = mkOption {
-          internal = true;
+        ZONE_RECORDS = mkOption {
           readOnly = true;
           type = self.RECORDS.type;
           description = "Every record in this zone.";
@@ -497,8 +500,7 @@ let
               walk config;
         };
 
-        RENDERED = mkOption {
-          internal = true;
+        ZONE_RECORDS_RENDERED = mkOption {
           readOnly = true;
           type = nullOr str;
           description = "The BIND zone file body for this zone, null when this node does not define a SOA.";
@@ -506,7 +508,7 @@ let
             if config.SOA.rdata == null then
               null
             else
-              config.ENTRIES
+              config.ZONE_RECORDS
               |> map (entry: "${name.render entry.owner} ${entry.ttl} ${entry.class} ${entry.type} ${entry.data}")
               |> concatLines;
         };
