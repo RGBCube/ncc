@@ -14,6 +14,7 @@
         hasAttr
         mapAttrsToList
         optionalAttrs
+        unionOfDisjoint
         ;
       inherit (lib.lists)
         concatLists
@@ -43,7 +44,7 @@
           default,
           description,
         }:
-        mkOption { inherit type default description; } // { inherit flag; };
+        mkOption { inherit type default description; } |> unionOfDisjoint { inherit flag; };
     in
     {
       imports = singleton self.serviceModules.base;

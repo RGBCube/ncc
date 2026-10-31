@@ -1,6 +1,6 @@
 { inputs, lib, ... }:
 let
-  inherit (lib.attrsets) removeAttrs;
+  inherit (lib.attrsets) unionOfDisjoint removeAttrs;
   inherit (lib.lists) singleton;
   inherit (lib.options) mkEnableOption mkOption;
   inherit (lib.trivial) flip;
@@ -102,15 +102,13 @@ in
             builder = mkOption {
               type = submodule {
                 options =
-                  (
-                    (import "${inputs.nixpkgs}/nixos/modules/config/nix-remote-build.nix" {
-                      config.nix.enable = false;
-                      inherit lib;
-                    }).options.nix.buildMachines.type.nestedTypes.elemType.getSubOptions
-                      [ ]
-                    |> flip removeAttrs (singleton "_module")
-                  )
-                  // {
+                  (import "${inputs.nixpkgs}/nixos/modules/config/nix-remote-build.nix" {
+                    config.nix.enable = false;
+                    inherit lib;
+                  }).options.nix.buildMachines.type.nestedTypes.elemType.getSubOptions
+                    [ ]
+                  |> flip removeAttrs (singleton "_module")
+                  |> unionOfDisjoint {
                     enable = mkEnableOption "this machine as a remote Nix builder";
                   };
               };

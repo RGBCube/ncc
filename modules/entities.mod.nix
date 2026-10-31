@@ -1,7 +1,8 @@
 { self, lib, ... }:
 let
-  inherit (lib.attrsets) attrValues filterAttrs mapAttrs;
-  inherit (lib.lists) singleton;
+  inherit (lib.trivial) flip;
+  inherit (lib.attrsets) attrValues;
+  inherit (lib.lists) singleton filter;
 in
 {
   # TODO: This entire file shouldn't exist, it's like the old packages.mod.nix.
@@ -68,18 +69,18 @@ in
   };
 
   flake.ssh-keys =
-    mapAttrs (_: { ssh, ... }: ssh.key) <| removeAttrs self.people [ "self" ] // self.machines;
+    (self.people |> flip removeAttrs [ "self" ] |> attrValues) ++ (self.machines |> attrValues)
+    |> map ({ ssh, ... }: ssh.key);
 
   flake.ssh-keys-admin =
     removeAttrs self.people [ "self" ]
-    |> filterAttrs (
-      _:
+    |> attrValues
+    |> filter (
       {
         admin ? false,
         ...
       }:
       admin
     )
-    |> attrValues
     |> map ({ ssh, ... }: ssh.key);
 }

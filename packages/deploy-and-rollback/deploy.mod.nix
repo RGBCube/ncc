@@ -3,7 +3,7 @@
   perSystem =
     { lib, pkgs, ... }:
     let
-      inherit (lib.attrsets) mapAttrs getAttr;
+      inherit (lib.attrsets) mapAttrs getAttr unionOfDisjoint;
       inherit (lib.trivial) const;
       inherit (lib.meta) getExe;
       inherit (lib.strings) toJSON;
@@ -12,7 +12,8 @@
       packages.default = pkgs.writers.writeNuBin "default" /* nu */ ''
         def class-of [--host: string] {
           r###'${
-            self.nixosConfigurations // self.darwinConfigurations
+            self.nixosConfigurations
+            |> unionOfDisjoint self.darwinConfigurations
             |> mapAttrs (const <| getAttr "class")
             |> toJSON
           }'###
