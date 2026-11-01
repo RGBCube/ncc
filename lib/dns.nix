@@ -2,22 +2,44 @@
 let
   inherit (self.lists) all reverseList;
   inherit (self.strings) concatStringsSep match;
-  inherit (self.types) addCheck listOf str;
+  inherit (self.options) mkOption;
+  inherit (self.types)
+    addCheck
+    coercedTo
+    enum
+    listOf
+    raw
+    str
+    submodule
+    ;
   inherit (self.types.dns) label;
-
-  rrset =
-    value:
-    if value._type or "" == "rrset" then
-      value
-    else
-      {
-        _type = "rrset";
-        rdata = value;
-      };
 in
 {
-  dns.withTtl = ttl: value: rrset value // { inherit ttl; };
-  dns.withClass = class: value: rrset value // { inherit class; };
+  types.dns.rrset =
+    rdataType:
+    coercedTo raw (
+      value: if value._type or "" == "rrset" then removeAttrs value [ "_type" ] else { rdata = value; }
+    )
+    <| submodule {
+      options.ttl = mkOption {
+        type = str;
+        default = "1h";
+        description = "The time to live.";
+      };
+      options.class = mkOption {
+        type = enum [
+          "IN"
+          "CH"
+          "HS"
+        ];
+        default = "IN";
+        description = "The DNS class.";
+      };
+      options.rdata = mkOption {
+        type = rdataType;
+        description = "The data.";
+      };
+    };
 
   types.dns.label =
     addCheck str (
