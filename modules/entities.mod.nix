@@ -36,7 +36,7 @@ in
       enable = true;
       protocol = "ssh-ng";
       hostName = "rgbcu.be:2222";
-      sshUser = "build";
+      sshUser = "root";
       publicHostKey = "c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUJVc01WNTkxLzlWcXpqQmlNcWR4SklkMEM3UGxaVElYUUJ5SEVJTFdNd2M=";
       systems = singleton "x86_64-linux";
       supportedFeatures = singleton "big-parallel";
