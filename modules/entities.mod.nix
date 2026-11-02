@@ -39,7 +39,10 @@ in
       sshUser = "root";
       publicHostKey = "c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUJVc01WNTkxLzlWcXpqQmlNcWR4SklkMEM3UGxaVElYUUJ5SEVJTFdNd2M=";
       systems = singleton "x86_64-linux";
-      supportedFeatures = singleton "big-parallel";
+      supportedFeatures = [
+        "big-parallel"
+        "kvm"
+      ];
       maxJobs = 20;
     };
 
@@ -63,7 +66,10 @@ in
       sshUser = "nix-ssh";
       publicHostKey = "c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUJnSWNVWllIeXpjZzRZU0w2RFdzcWhSRG5qcmkzNUtQT3BGNlY0MndsdnEgbHlyYWUK";
       systems = singleton "aarch64-linux";
-      supportedFeatures = singleton "big-parallel";
+      supportedFeatures = [
+        "big-parallel"
+        "kvm"
+      ];
       maxJobs = 20;
     };
   };
