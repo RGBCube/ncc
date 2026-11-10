@@ -108,23 +108,16 @@
 
   outputs =
     inputs:
-    let
-      inherit (inputs.nixpkgs.lib.attrsets) filterAttrs mapAttrs' nameValuePair;
-      inherit (inputs.nixpkgs.lib.filesystem) readDir;
-      inherit (inputs.nixpkgs.lib.strings) hasSuffix removeSuffix;
+    ((import "${inputs.flake-parts}/flake.nix").outputs (
+      inputs.flake-parts.inputs
+      // {
+        self = inputs.flake-parts;
 
-      readCoal =
-        directory:
-        readDir directory
-        |> filterAttrs (name: _: hasSuffix ".nix" name)
-        |> mapAttrs' (name: _: nameValuePair (removeSuffix ".nix" name) "${directory}/${name}");
-    in
-    (import "${inputs.flake-parts}/lib.nix" {
-      lib = import ./lib inputs.nixpkgs.lib;
-
-      builtinModules = readCoal "${inputs.flake-parts}/modules";
-      extraModules = readCoal "${inputs.flake-parts}/extras";
-    }).mkFlake
+        nixpkgs-lib = inputs.flake-parts.inputs.nixpkgs-lib // {
+          lib = import ./lib inputs.nixpkgs.lib;
+        };
+      }
+    )).lib.mkFlake
       { inherit inputs; }
       (
         { lib, ... }:
