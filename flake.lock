@@ -130,11 +130,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778267637,
-        "narHash": "sha256-fuLzGTNtgzoaeb1KQscuIZrnQmlX8ck9hMkKp35xSkg=",
+        "lastModified": 1793631717,
+        "narHash": "sha256-z9Cvju7VjIDHM7euEwsaPMiuOHIhSYBPO8P10GTvMdU=",
         "owner": "RGBCube",
         "repo": "disko",
-        "rev": "cc3fb95a8f8342c340a66bbd8a06dc36a0f05c24",
+        "rev": "fded543a760b90f66deb7826edad0f40e0be807a",
         "type": "github"
       },
       "original": {
