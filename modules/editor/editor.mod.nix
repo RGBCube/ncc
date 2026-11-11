@@ -112,6 +112,12 @@
           hidden = false;
         };
 
+        editor.end-of-line-diagnostics = "hint";
+        editor.inline-diagnostics = {
+          cursor-line = "disable";
+          other-lines = "disable";
+        };
+
         editor.cursorline = true;
         editor.cursor-shape = {
           insert = "bar";
