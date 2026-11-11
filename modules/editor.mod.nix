@@ -15,7 +15,7 @@
         mapAttrs
         optionalAttrs
         ;
-      inherit (lib.lists) elem;
+      inherit (lib.lists) elem singleton;
       inherit (lib.modules) mkIf;
       inherit (lib.meta) getExe;
       inherit (lib.trivial) const flip;
@@ -71,7 +71,8 @@
         pkgs.nil
 
         # PYTHON
-        pkgs.basedpyright
+        pkgs.ty
+        pkgs.ruff
 
         # RUST
         pkgs.rust-analyzer
@@ -158,6 +159,16 @@
           };
         };
 
+        language-server.ty = {
+          command = "ty";
+          args = singleton "server";
+        };
+
+        language-server.ruff = {
+          command = "ruff";
+          args = singleton "server";
+        };
+
         language-server.rust-analyzer = {
           config = {
             cargo.features = "all";
@@ -228,7 +239,10 @@
             {
               name = "python";
               auto-format = true;
-              language-servers = [ "basedpyright" ];
+              language-servers = [
+                "ty"
+                "ruff"
+              ];
             }
 
             {
