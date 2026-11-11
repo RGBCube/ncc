@@ -1,4 +1,4 @@
-{ self, ... }:
+{ self, inputs, ... }:
 {
   flake.homeModules.shell = self.homeModules.helix;
   flake.homeModules.helix =
@@ -20,7 +20,7 @@
       inherit (lib.attrsets) unionOfDisjoint;
       inherit (lib.trivial) const flip;
 
-      package = pkgs.helix;
+      package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       environment.sessionVariables.EDITOR = getExe package;
@@ -99,6 +99,8 @@
 
         editor.bufferline = "multiple";
         editor.color-modes = true;
+
+        editor.rainbow-brackets = true;
 
         editor.insert-final-newline = true;
         editor.trim-final-newlines = true;

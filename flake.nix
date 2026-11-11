@@ -101,6 +101,11 @@
     flake = false;
   };
 
+  inputs.helix = {
+    url = "github:helix-editor/helix/master";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   inputs.zmk-nix = {
     url = "github:lilyinstarlight/zmk-nix";
     inputs.nixpkgs.follows = "nixpkgs";
