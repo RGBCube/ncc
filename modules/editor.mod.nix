@@ -89,20 +89,28 @@
       xdg.config.files."helix/config.toml".value = {
         theme = "gruvbox_dark_hard";
 
-        editor = {
-          auto-completion = false;
-          bufferline = "multiple";
-          color-modes = true;
-          cursorline = true;
-          file-picker.hidden = false;
-          idle-timeout = 0;
-          shell = [
-            "nu"
-            "--commands"
-          ];
-          text-width = 100;
+        editor.shell = singleton "${pkgs.writers.writeNu "need-shelling-for-SHELL-nonrespecters" /* nu */ ''
+          def main [...arguments] {
+            exec $env.SHELL -c ($arguments | str join " ")
+          }
+        ''}";
+
+        editor.auto-completion = false;
+
+        editor.bufferline = "multiple";
+        editor.color-modes = true;
+
+        editor.insert-final-newline = true;
+        editor.trim-final-newlines = true;
+        editor.trim-trailing-whitespace = true;
+
+        editor.jump-label-alphabet = "fdsrevcxwaqz";
+
+        editor.file-picker = {
+          hidden = false;
         };
 
+        editor.cursorline = true;
         editor.cursor-shape = {
           insert = "bar";
           normal = "block";
@@ -188,6 +196,22 @@
             };
           };
 
+          language.nix = {
+            auto-format = true;
+            formatter.command = "nixfmt";
+          };
+
+          language.python = {
+            auto-format = true;
+            language-servers = [
+              "ty"
+              "ruff"
+            ];
+          };
+
+          language.rust.auto-format = true;
+          language.toml.auto-format = true;
+
           language.astro = denoFor "astro" { };
           language.css = denoFor "css" { };
           language.html = denoFor "html" { };
@@ -202,21 +226,6 @@
           language.typescript = denoFor "ts" { language-server = true; };
           language.vue = denoFor "vue" { };
           language.yaml = denoFor "yaml" { };
-
-          language.nix = {
-            auto-format = true;
-            formatter.command = "nixfmt";
-          };
-
-          language.python = {
-            auto-format = true;
-            language-servers = [
-              "ty"
-              "ruff"
-            ];
-          };
-
-          language.toml.auto-format = true;
         };
     };
 }
