@@ -2,7 +2,10 @@
 {
   flake.homeModules.shell = self.homeModules.prompt;
   flake.homeModules.prompt =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
+    let
+      inherit (lib.meta) getExe';
+    in
     {
       xdg.config.files."nushell/config.nu".text = "source ${
         pkgs.writeText "prompt.nu" /* nu */ ''
@@ -17,24 +20,37 @@
 
               let segments = [
                 # EXIT CODE
-                (if $code != 0 { $"(ansi light_red_bold)($code)" })
+                (if $code != 0 {
+                  let signal = if $code < 0 or ($code > 128 and $code < 256) { try {
+                    ^${getExe' pkgs.uutils-coreutils-noprefix "kill"} --list (if $code < 0 { 0 - $code } else { $code }) err> $null_device | str trim
+                  } }
+
+                  $"(ansi light_red_bold)(if ($signal | is-not-empty) { $"SIG($signal):" })($code)"
+                })
 
                 # COMMAND DURATION
-                (($env.CMD_DURATION_MS | into int) * 1ms
+                ($env.CMD_DURATION_MS
+                | into int
+                | $in * 1ms
                 | if $in > 2sec { $"(ansi light_magenta_bold)($in)" })
+
+                # BACKGROUND JOBS
+                (job list | length | if $in > 0 { $"(ansi light_cyan_bold)jobs:($in)" })
 
                 # NIX PACKAGES
                 ($env.PATH
-                | parse --regex "^/nix/store/[0-9a-z]{32}-(?<name>[^/]+?)(-[0-9][^/]*)?/bin/?$"
-                | get name
-                | each { str replace --regex "-(un)?wrapped$" "" }
+                | parse --regex "^/nix/store/[0-9a-z]{32}-(?<name>[^/]+?)(?:-(?<version>[0-9][^/-]*)(?:-[^/]+)?)?/bin/?$"
+                | each {|package|
+                  let name = $package.name | str replace --regex "-(un)?wrapped$" ""
+                  $"($name)(if ($package.version | is-not-empty) { $":($package.version)" })"
+                }
                 | uniq
                 | reverse
                 | str join " "
                 | if ($in | is-not-empty) { $"(ansi light_blue_bold)($in)" })
               ]
               | compact
-              | each {|segment| $"┫($segment)(ansi light_yellow_bold)┣" }
+              | each {|segment| $"┫(ansi reset)($segment)(ansi reset)(ansi light_yellow_bold)┣" }
               | str join "━"
               | $"(ansi light_yellow_bold)($left_char)($in)($right_char)(ansi reset)"
 
@@ -59,9 +75,14 @@
 
                   $"(ansi cyan)($jj_workspace_root)(ansi cyan_bold)(ansi attr_underline)/($subpath)"
                 })
+
+                # DIRECTORY ACCESS
+                (^${getExe' pkgs.uutils-coreutils-noprefix "test"} -w (pwd)
+                | complete
+                | if $in.exit_code != 0 { $"(ansi reset)(ansi light_red_bold)[readonly]" })
               ]
               | compact
-              | str join " "
+              | str join $"(ansi reset) "
               | $" ($in)(ansi reset)"
 
               $"($segments)($body)(char newline)"
@@ -75,10 +96,16 @@
               prompt-header --left-char "┏"
             }
             $env.PROMPT_COMMAND_RIGHT = {|| try {
-              jj --quiet --color always --ignore-working-copy log --no-graph --revisions @ --template '${/* jjtemplate */ ''
+              jj --ignore-working-copy --no-integrate-operation --quiet --color always log --no-graph --revisions @ --template '${/* jjtemplate */ ''
                 separate(
                   " ",
                   if(empty, label("empty", "(empty)")),
+                  if(!empty, separate(
+                    " ",
+                    label("diff modified", "Δ" ++ self.diff().files().len()),
+                    label("diff added", "+" ++ self.diff().stat().total_added()),
+                    label("diff removed", "−" ++ self.diff().stat().total_removed()),
+                  )),
                   coalesce(
                     surround(
                       "\"",
@@ -94,7 +121,7 @@
                   bookmarks.join(", "),
                   change_id.shortest(),
                   commit_id.shortest(),
-                  if(conflict, label("conflict", "(conflict)")),
+                  if(conflict, label("conflict", "(conflict:" ++ self.conflicted_files().len() ++ ")")),
                   if(divergent, label("divergent prefix", "(divergent)")),
                   if(hidden, label("hidden prefix", "(hidden)")),
                 )
