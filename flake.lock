@@ -36,6 +36,28 @@
         "type": "github"
       }
     },
+    "autolith": {
+      "inputs": {
+        "crane": "crane",
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1794375198,
+        "narHash": "sha256-UDeOgfyob8FdSwwipc+jUJhczFwCbqwwNsuxPdKGvV8=",
+        "owner": "lambda-symbolics",
+        "repo": "autolith",
+        "rev": "15ddde8293d5c846c1acba2bb71262ccd5c34050",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lambda-symbolics",
+        "repo": "autolith",
+        "type": "github"
+      }
+    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -50,6 +72,21 @@
         "owner": "Homebrew",
         "ref": "7.0.4",
         "repo": "brew",
+        "type": "github"
+      }
+    },
+    "crane": {
+      "locked": {
+        "lastModified": 1791754810,
+        "narHash": "sha256-cN0Mgk+sQtCJcGWs9H4M0CnLRAuC4I8aCwiBTcBJs6E=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "bd63bf1d0a0f6dcacd7549c714a671ee63b0db6a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
         "type": "github"
       }
     },
@@ -358,6 +395,22 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1786348146,
+        "narHash": "sha256-we5zDEFfn8TgzeWKjKDMIjeQZ59omEPl23NIF+13/ys=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "d482ef84049d9b7276b83a06e4e4d76983830097",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "d482ef84049d9b7276b83a06e4e4d76983830097",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1792502884,
         "narHash": "sha256-IoNisKcGbUjdd45qCqywGMCYmZ5EnkxezvLII0FWwNA=",
         "owner": "NixOS",
@@ -402,6 +455,7 @@
       "inputs": {
         "advisory-db": "advisory-db",
         "agenix": "agenix",
+        "autolith": "autolith",
         "crash": "crash",
         "crate2nix": "crate2nix",
         "disko": "disko",
@@ -415,7 +469,7 @@
         "homebrew-core": "homebrew-core",
         "nix-darwin": "nix-darwin",
         "nixos-facter": "nixos-facter",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "themes": "themes",
         "ublock": "ublock",
         "zmk-nix": "zmk-nix"

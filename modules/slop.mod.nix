@@ -1,9 +1,12 @@
-{ self, lib, ... }:
+{
+  inputs,
+  self,
+  lib,
+  ...
+}:
 let
   inherit (lib.lists) concatMap singleton;
-  inherit (lib.strings) concatLines makeBinPath;
-
-  mkNixs = pkgs: self.packages.${pkgs.stdenv.hostPlatform.system}.nixs;
+  inherit (lib.strings) concatLines makeBinPath optionalString;
 
   mkExtraPath =
     pkgs: package:
@@ -17,15 +20,23 @@ let
         for binary in $out/bin/*; do
           wrapProgram "$binary" --suffix PATH : ${
             makeBinPath [
+              pkgs.diffutils
+              pkgs.findutils
+              pkgs.file
               pkgs.gnused
+              pkgs.which
               pkgs.gawk
               pkgs.jq
               pkgs.gnutar
               pkgs.gzip
               pkgs.ugrep
               pkgs.bfs
+              pkgs.unzip
               pkgs.ripgrep
+              pkgs.llvmPackages.llvm
+              pkgs.llvmPackages.clang
             ]
+            + optionalString pkgs.stdenv.hostPlatform.isDarwin ":/usr/bin:/bin:/usr/sbin:/sbin:/usr/libexec"
           }
         done
       '';
@@ -103,8 +114,6 @@ let
 
     "cargo clippy*"
     "cargo nextest*"
-
-    "nixs *"
   ];
 
   forbidden.rules = [
@@ -133,11 +142,6 @@ let
 
   instructions =
     [
-      "Use `nixs eval`."
-      "Use `nixs flake archive`."
-      "Use `nixs flake metadata`."
-      "Use `nixs flake show`."
-      "Use `nixs path-info`."
       "Prefer nix3 commands over nix2 commands."
     ]
     ++ (forbidden.rules |> map ({ justification, ... }: justification))
@@ -153,8 +157,19 @@ let
 in
 {
   flake.homeModules.ai.imports = [
+    self.homeModules.autolith
     self.homeModules.claude-code
   ];
+  flake.homeModules.autolith =
+    {
+      pkgs,
+      ...
+    }:
+    {
+      packages =
+        singleton <| mkExtraPath pkgs inputs.autolith.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    };
+
   flake.homeModules.claude-code =
     {
       config,
@@ -1207,213 +1222,208 @@ in
               path.write_bytes(source)
           '';
         in
-        [
-          (
-            mkExtraPath pkgs
-            <| pkgs.writers.writeNuBin "claude" /* nu */ ''
-              def detect-platform []: nothing -> string {
-                let arch = match ($nu.os-info.arch | str lowercase) {
-                  "x86_64" | "x64" | "amd64" => "x64"
-                  "aarch64" | "arm64" => "arm64"
-                  $arch => {
-                    print --stderr $"(ansi red_bold)error:(ansi reset) unsupported arch: ($arch)"
-                    exit 67
-                  }
-                }
-
-                match ($nu.os-info.name | str lowercase) {
-                  "linux" => $"linux-($arch)"
-                  "macos" | "darwin" => $"darwin-($arch)"
-                  $os => {
-                    print --stderr $"(ansi red_bold)error:(ansi reset) unsupported os: ($os)"
-                    exit 67
-                  }
-                }
+        singleton
+        <| mkExtraPath pkgs
+        <| pkgs.writers.writeNuBin "claude" /* nu */ ''
+          def detect-platform []: nothing -> string {
+            let arch = match ($nu.os-info.arch | str lowercase) {
+              "x86_64" | "x64" | "amd64" => "x64"
+              "aarch64" | "arm64" => "arm64"
+              $arch => {
+                print --stderr $"(ansi red_bold)error:(ansi reset) unsupported arch: ($arch)"
+                exit 67
               }
+            }
 
-              def detect-version [--cache: directory, --rebuild]: nothing -> string {
-                let version_file = $cache | path join "latest-version"
-
-                match ($rebuild or (try { (date now) - (ls $version_file | get 0.modified) > 6hr } | default true)) {
-                  # Version older than 6h or doesn't exist.
-                  true | null => {
-                    let version = try {
-                      http get --max-time 5sec https://registry.npmjs.org/@anthropic-ai/claude-code/latest | get version
-                    } catch {
-                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) fetched version older than 6hr, but can't re-fetch"
-                      return ""
-                    }
-
-                    try {
-                      $version_file | path parse | get parent | mkdir $in
-                      $version | save --force $version_file
-                    } catch {
-                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to save latest fetched version"
-                    }
-
-                    $version
-                  },
-
-                  # Version fetched within 6h.
-                  false => { try {
-                    open $version_file
-                  } catch {
-                    print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to read latest fetched version"
-                    ""
-                  } },
-                }
+            match ($nu.os-info.name | str lowercase) {
+              "linux" => $"linux-($arch)"
+              "macos" | "darwin" => $"darwin-($arch)"
+              $os => {
+                print --stderr $"(ansi red_bold)error:(ansi reset) unsupported os: ($os)"
+                exit 67
               }
+            }
+          }
 
-              def run-latest [--cache: directory, ...arguments] {
-                print --stderr $"(ansi yellow_bold)warn:(ansi reset) falling back to latest binary"
+          def detect-version [--cache: directory, --rebuild]: nothing -> string {
+            let version_file = $cache | path join "latest-version"
+
+            match ($rebuild or (try { (date now) - (ls $version_file | get 0.modified) > 6hr } | default true)) {
+              # Version older than 6h or doesn't exist.
+              true | null => {
+                let version = try {
+                  http get --max-time 5sec https://registry.npmjs.org/@anthropic-ai/claude-code/latest | get version
+                } catch {
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) fetched version older than 6hr, but can't re-fetch"
+                  return ""
+                }
 
                 try {
-                  let latest = ls --long ($cache | path join "claude-code-*" | into glob)
-                  | where { $in.type == "file" and ($in.mode | str substring 2..<3) == "x" }
-                  | where { not ($"($in.name).failed" | path exists) }
-                  | sort-by modified
-                  | last
-                  | get name
-
-                  print --stderr $"(ansi blue_bold)info:(ansi reset) running ($latest | path basename)"
-                  exec $latest ...$arguments
+                  $version_file | path parse | get parent | mkdir $in
+                  $version | save --force $version_file
                 } catch {
-                  print --stderr $"(ansi red_bold)error:(ansi reset) no binary found"
-                  exit 67
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to save latest fetched version"
                 }
+
+                $version
+              },
+
+              # Version fetched within 6h.
+              false => { try {
+                open $version_file
+              } catch {
+                print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to read latest fetched version"
+                ""
+              } },
+            }
+          }
+
+          def run-latest [--cache: directory, ...arguments] {
+            print --stderr $"(ansi yellow_bold)warn:(ansi reset) falling back to latest binary"
+
+            try {
+              let latest = ls --long ($cache | path join "claude-code-*" | into glob)
+              | where { $in.type == "file" and ($in.mode | str substring 2..<3) == "x" }
+              | where { not ($"($in.name).failed" | path exists) }
+              | sort-by modified
+              | last
+              | get name
+
+              print --stderr $"(ansi blue_bold)info:(ansi reset) running ($latest | path basename)"
+              exec $latest ...$arguments
+            } catch {
+              print --stderr $"(ansi red_bold)error:(ansi reset) no binary found"
+              exit 67
+            }
+          }
+
+          def build [--workdir: directory, --into: path] {
+            let tree = $workdir | path join "tree"
+            let entrypoint = $tree | path join "cli.js"
+
+            ^${getExe lift} ($workdir | path join "package" "claude") $tree
+            ^${getExe patch} $tree
+
+            r###'${
+              strings.toJSON {
+                name = "claude-code-lifted";
+                type = "module";
+                dependencies = {
+                  ws = "^8";
+                  undici = "^6";
+                  node-fetch = "^3";
+                  ajv = "^8";
+                  ajv-formats = "^3";
+                  yaml = "^2";
+                  # Bun shim deps (see "Bun runtime polyfill" in patch script).
+                  smol-toml = "^1";
+                  string-width = "^7";
+                  strip-ansi = "^7";
+                  slice-ansi = "^7";
+                  wrap-ansi = "^9";
+                  semver = "^7";
+                };
               }
+            }'###
+            | save --force ($tree | path join "package.json")
 
-              def build [--workdir: directory, --into: path] {
-                let tree = $workdir | path join "tree"
-                let entrypoint = $tree | path join "cli.js"
+            do {
+              cd $tree
 
-                ^${getExe lift} ($workdir | path join "package" "claude") $tree
-                ^${getExe patch} $tree
+              print --stderr $"(ansi blue_bold)info:(ansi reset) installing dependencies"
+              (^${getExe pkgs.deno} install
+                --quiet
+                --node-modules-dir=auto
+                --entrypoint $entrypoint)
 
-                r###'${
-                  strings.toJSON {
-                    name = "claude-code-lifted";
-                    type = "module";
-                    dependencies = {
-                      ws = "^8";
-                      undici = "^6";
-                      node-fetch = "^3";
-                      ajv = "^8";
-                      ajv-formats = "^3";
-                      yaml = "^2";
-                      # Bun shim deps (see "Bun runtime polyfill" in patch script).
-                      smol-toml = "^1";
-                      string-width = "^7";
-                      strip-ansi = "^7";
-                      slice-ansi = "^7";
-                      wrap-ansi = "^9";
-                      semver = "^7";
-                    };
-                  }
-                }'###
-                | save --force ($tree | path join "package.json")
+              print --stderr $"(ansi blue_bold)info:(ansi reset) compiling, hold on"
+              (^${getExe pkgs.deno} compile
+                --quiet
+                --allow-all
+                --node-modules-dir=auto
+                --include $tree
+                --output $into
+                $entrypoint)
+            }
+          }
 
-                do {
-                  cd $tree
+          def --wrapped main [--rebuild, ...arguments] {
+            let cache = $env
+            | get --optional "XDG_CACHE_HOME"
+            | default ($env.HOME | path join ".cache")
+            | path join "claude-code"
 
-                  print --stderr $"(ansi blue_bold)info:(ansi reset) installing dependencies"
-                  (^${getExe pkgs.deno} install
-                    --quiet
-                    --node-modules-dir=auto
-                    --entrypoint $entrypoint)
+            let version = detect-version --cache $cache --rebuild=($rebuild)
+            if ($version | is-empty) { run-latest --cache $cache ...$arguments }
 
-                  print --stderr $"(ansi blue_bold)info:(ansi reset) compiling, hold on"
-                  (^${getExe pkgs.deno} compile
-                    --quiet
-                    --allow-all
-                    --node-modules-dir=auto
-                    --include $tree
-                    --output $into
-                    $entrypoint)
-                }
-              }
+            let binary_path = $cache | path join $"claude-code-($version)"
+            let binary_path_failed = $"($binary_path).failed"
 
-              def --wrapped main [--rebuild, ...arguments] {
-                let cache = $env
-                | get --optional "XDG_CACHE_HOME"
-                | default ($env.HOME | path join ".cache")
-                | path join "claude-code"
+            let workdir = $cache | path join $"claude-code-($version)-workdir"
 
-                let version = detect-version --cache $cache --rebuild=($rebuild)
-                if ($version | is-empty) { run-latest --cache $cache ...$arguments }
+            let archive_path = $"($binary_path).tar.gz"
 
-                let binary_path = $cache | path join $"claude-code-($version)"
-                let binary_path_failed = $"($binary_path).failed"
+            if ($binary_path_failed | path exists) and not $rebuild {
+              print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to build ($version) previously, pass --rebuild to retry"
+              run-latest --cache $cache ...$arguments
+            }
 
-                let workdir = $cache | path join $"claude-code-($version)-workdir"
+            if not ($binary_path | path exists) or $rebuild {
+              # ARCHIVE
+              if not ($archive_path | path exists) {
+                let platform = detect-platform
 
-                let archive_path = $"($binary_path).tar.gz"
-
-                if ($binary_path_failed | path exists) and not $rebuild {
-                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to build ($version) previously, pass --rebuild to retry"
+                try {
+                  print --stderr $"(ansi blue_bold)info:(ansi reset) downloading tarball"
+                  http get --raw $"https://registry.npmjs.org/@anthropic-ai/claude-code-($platform)/-/claude-code-($platform)-($version).tgz"
+                  | save --force --raw $archive_path
+                  print --stderr $"(ansi blue_bold)info:(ansi reset) downloaded (ls $archive_path | get 0.size)"
+                } catch {
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to download tarball"
+                  rm --force $archive_path
                   run-latest --cache $cache ...$arguments
                 }
-
-                if not ($binary_path | path exists) or $rebuild {
-                  # ARCHIVE
-                  if not ($archive_path | path exists) {
-                    let platform = detect-platform
-
-                    try {
-                      print --stderr $"(ansi blue_bold)info:(ansi reset) downloading tarball"
-                      http get --raw $"https://registry.npmjs.org/@anthropic-ai/claude-code-($platform)/-/claude-code-($platform)-($version).tgz"
-                      | save --force --raw $archive_path
-                      print --stderr $"(ansi blue_bold)info:(ansi reset) downloaded (ls $archive_path | get 0.size)"
-                    } catch {
-                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to download tarball"
-                      rm --force $archive_path
-                      run-latest --cache $cache ...$arguments
-                    }
-                  }
-
-                  # WORKDIR WITH EXTRACTED ARCHIVE
-                  do {
-                    rm --recursive --force $workdir
-
-                    mkdir $workdir
-
-                    try {
-                      print --stderr $"(ansi blue_bold)info:(ansi reset) extracting tarball"
-                      ^${getExe pkgs.gnutar} --extract --use-compress-program ${getExe pkgs.gzip} --file $archive_path --directory $workdir
-                    } catch {
-                      rm --force $archive_path
-
-                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to extract tarball"
-                      run-latest --cache $cache ...$arguments
-                    }
-                  }
-
-                  # BUILD
-                  do {
-                    rm --force $binary_path
-
-                    try {
-                      print --stderr $"(ansi blue_bold)info:(ansi reset) building ($version)"
-                      build --workdir $workdir --into $binary_path
-                    } catch { |error|
-                      touch $binary_path_failed
-
-                      print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to build ($version): ($error.msg)"
-                      run-latest --cache $cache ...$arguments
-                    }
-                  }
-                }
-
-                rm --force $binary_path_failed
-                rm --recursive --force $workdir
-                rm --force $archive_path
-
-                exec $binary_path ...$arguments
               }
-            ''
-          )
 
-          (mkNixs pkgs)
-        ];
+              # WORKDIR WITH EXTRACTED ARCHIVE
+              do {
+                rm --recursive --force $workdir
+
+                mkdir $workdir
+
+                try {
+                  print --stderr $"(ansi blue_bold)info:(ansi reset) extracting tarball"
+                  ^${getExe pkgs.gnutar} --extract --use-compress-program ${getExe pkgs.gzip} --file $archive_path --directory $workdir
+                } catch {
+                  rm --force $archive_path
+
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to extract tarball"
+                  run-latest --cache $cache ...$arguments
+                }
+              }
+
+              # BUILD
+              do {
+                rm --force $binary_path
+
+                try {
+                  print --stderr $"(ansi blue_bold)info:(ansi reset) building ($version)"
+                  build --workdir $workdir --into $binary_path
+                } catch { |error|
+                  touch $binary_path_failed
+
+                  print --stderr $"(ansi yellow_bold)warn:(ansi reset) failed to build ($version): ($error.msg)"
+                  run-latest --cache $cache ...$arguments
+                }
+              }
+            }
+
+            rm --force $binary_path_failed
+            rm --recursive --force $workdir
+            rm --force $archive_path
+
+            exec $binary_path ...$arguments
+          }
+        '';
     };
 }

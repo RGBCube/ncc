@@ -106,6 +106,11 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
+  inputs.autolith = {
+    url = "github:lambda-symbolics/autolith";
+    inputs.flake-parts.follows = "flake-parts";
+  };
+
   inputs.zmk-nix = {
     url = "github:lilyinstarlight/zmk-nix";
     inputs.nixpkgs.follows = "nixpkgs";
