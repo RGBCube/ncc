@@ -74,15 +74,11 @@
           | split row "\e\\"
           | each { parse --regex '1\+r(?P<entry>.+)' | get 0?.entry? }
           | where { is-not-empty }
-          | each {|entry|
-            try {
-              match ($entry | split row "=" --number 2) {
-                [$key, $value] => { name: ($key | decode hex | decode utf-8), value: ($value | decode hex | decode utf-8) }
-                [$key] => { name: ($key | decode hex | decode utf-8), value: true }
-              }
-            } catch { null }
-          }
-          | where { $in != null }
+          | each {|entry| try { match ($entry | split row "=" --number 2) {
+            [$key, $value] => { name: ($key | decode hex | decode utf-8), value: ($value | decode hex | decode utf-8) }
+            [$key] => { name: ($key | decode hex | decode utf-8), value: true }
+          } } }
+          | compact
           | transpose --header-row --as-record
         }
 
