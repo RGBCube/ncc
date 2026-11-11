@@ -16,11 +16,13 @@
               --left-char: string
               --right-char: string = "━"
             ]: nothing -> string {
-              let code = $env.LAST_EXIT_CODE
-
               let segments = [
                 # EXIT CODE
-                (if $code != 0 {
+                (do {
+                  let code = $ans | get --optional exit_code | default 0
+
+                  if $code == 0 { return }
+
                   let signal = if $code < 0 or ($code > 128 and $code < 256) { try {
                     ^${getExe' pkgs.uutils-coreutils-noprefix "kill"} --list (if $code < 0 { 0 - $code } else { $code }) err> $null_device | str trim
                   } }
@@ -29,9 +31,9 @@
                 })
 
                 # COMMAND DURATION
-                ($env.CMD_DURATION_MS
-                | into int
-                | $in * 1ms
+                ($ans
+                | get --optional duration
+                | default 0sec
                 | if $in > 2sec { $"(ansi light_magenta_bold)($in)" })
 
                 # BACKGROUND JOBS
