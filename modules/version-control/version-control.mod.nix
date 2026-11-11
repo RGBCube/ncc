@@ -177,7 +177,7 @@
             getExe
             <| pkgs.writers.writeNuBin "jj-open" /* nu */ ''
               def resolve-revision [revision: string] {
-                do { jj --ignore-working-copy log --no-graph --template commit_id --revisions $revision }
+                do { jj --ignore-working-copy --no-integrate-operation log --no-graph --template commit_id --revisions $revision }
                 | complete
                 | if $in.exit_code == 0 { $in.stdout }
               }
