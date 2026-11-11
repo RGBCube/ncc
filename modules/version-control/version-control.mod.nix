@@ -127,11 +127,11 @@
 
         aliases.".." = [
           "edit"
-          "@-"
+          /* jjrevset */ "@-"
         ];
         aliases.",," = [
           "edit"
-          "@+"
+          /* jjrevset */ "@+"
         ];
 
         aliases.f = [
@@ -158,7 +158,7 @@
         aliases.la = [
           "log"
           "--revisions"
-          "::"
+          /* jjrevset */ "::"
         ];
 
         aliases.s = [ "squash" ];
@@ -329,23 +329,20 @@
           )
         ];
 
-        revsets.bookmark-advance-from = # python
-          ''
-            coalesce(
-              heads(::to & bookmarks() & ~immutable()),
-              heads(::to & bookmarks()),
-            )
-          '';
+        revsets.bookmark-advance-from = /* jjrevset */ ''
+          coalesce(
+            heads(::to & bookmarks() & ~immutable()),
+            heads(::to & bookmarks()),
+          )
+        '';
 
-        revsets.bookmark-advance-to = # python
-          ''
-            heads(::@ & mutable() & ~description(exact:"") & (~empty() | merges()))
-          '';
+        revsets.bookmark-advance-to = /* jjrevset */ ''
+          heads(::@ & mutable() & ~description(exact:"") & (~empty() | merges()))
+        '';
 
-        revsets.log = # python
-          ''
-            present(@) | present(trunk()) | ancestors(remote_bookmarks().. | @.., 8)
-          '';
+        revsets.log = /* jjrevset */ ''
+          present(@) | present(trunk()) | ancestors(remote_bookmarks().. | @.., 8)
+        '';
 
         ui.default-command = "log";
 
@@ -354,23 +351,21 @@
         ui.conflict-marker-style = "snapshot";
         ui.graph.style = if osConfig.theme.cornerRadius > 0 then "curved" else "square";
 
-        templates.draft_commit_description = # python
-          ''
-            concat(
-              coalesce(description, "\n"),
-              surround(
-                "\nJJ: This commit contains the following changes:\n", "",
-                indent("JJ:     ", diff.stat(72)),
-              ),
-              "\nJJ: ignore-rest\n",
-              diff.git(),
-            )
-          '';
+        templates.draft_commit_description = /* jjtemplate */ ''
+          concat(
+            coalesce(description, "\n"),
+            surround(
+              "\nJJ: This commit contains the following changes:\n", "",
+              indent("JJ:     ", diff.stat(72)),
+            ),
+            "\nJJ: ignore-rest\n",
+            diff.git(),
+          )
+        '';
 
-        templates.git_push_bookmark = # python
-          ''
-            "${toLower self.people.self.name}/change-" ++ change_id.short()
-          '';
+        templates.git_push_bookmark = /* jjtemplate */ ''
+          "${toLower self.people.self.name}/change-" ++ change_id.short()
+        '';
 
         remotes."*" = {
           auto-track-bookmarks = "${toLower self.people.self.name}/*";

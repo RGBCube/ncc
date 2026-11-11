@@ -72,38 +72,32 @@
             $env.PROMPT_COMMAND = {||
               prompt-header --left-char "┏"
             }
-            $env.PROMPT_COMMAND_RIGHT = {||
-              let jj_status = try {
-                jj --quiet --color always --ignore-working-copy log --no-graph --revisions @ --template '
-                  separate(
-                    " ",
-                    if(empty, label("empty", "(empty)")),
-                    coalesce(
-                      surround(
-                        "\"",
-                        "\"",
-                        if(
-                          description.first_line().substr(0, 24).starts_with(description.first_line()),
-                          description.first_line().substr(0, 24),
-                          description.first_line().substr(0, 23) ++ "…"
-                        )
-                      ),
-                      label(if(empty, "empty"), description_placeholder)
+            $env.PROMPT_COMMAND_RIGHT = {|| try {
+              jj --quiet --color always --ignore-working-copy log --no-graph --revisions @ --template '${/* jjtemplate */ ''
+                separate(
+                  " ",
+                  if(empty, label("empty", "(empty)")),
+                  coalesce(
+                    surround(
+                      "\"",
+                      "\"",
+                      if(
+                        description.first_line().substr(0, 24).starts_with(description.first_line()),
+                        description.first_line().substr(0, 24),
+                        description.first_line().substr(0, 23) ++ "…"
+                      )
                     ),
-                    bookmarks.join(", "),
-                    change_id.shortest(),
-                    commit_id.shortest(),
-                    if(conflict, label("conflict", "(conflict)")),
-                    if(divergent, label("divergent prefix", "(divergent)")),
-                    if(hidden, label("hidden prefix", "(hidden)")),
-                  )
-                ' err> $null_device
-              } catch {
-                ""
-              }
-
-              $jj_status
-            }
+                    label(if(empty, "empty"), description_placeholder)
+                  ),
+                  bookmarks.join(", "),
+                  change_id.shortest(),
+                  commit_id.shortest(),
+                  if(conflict, label("conflict", "(conflict)")),
+                  if(divergent, label("divergent prefix", "(divergent)")),
+                  if(hidden, label("hidden prefix", "(hidden)")),
+                )
+              ''}' err> $null_device
+            } }
 
             $env.TRANSIENT_PROMPT_INDICATOR = "  "
             $env.TRANSIENT_PROMPT_INDICATOR_VI_INSERT = $env.TRANSIENT_PROMPT_INDICATOR
