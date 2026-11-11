@@ -11,58 +11,60 @@
 
             def prompt-header [
               --left-char: string
+              --right-char: string = "━"
             ]: nothing -> string {
               let code = $env.LAST_EXIT_CODE
 
-              let jj_workspace_root = try {
-                jj workspace root err> $null_device
-              } catch {
-                ""
-              }
+              let segments = [
+                # EXIT CODE
+                (if $code != 0 { $"(ansi light_red_bold)($code)" })
 
-              let hostname = if ($env.SSH_CONNECTION? | is-not-empty) {
-                $"(ansi light_green_bold)@(sys host | get hostname)(ansi reset) "
-              } else {
-                ""
-              }
+                # COMMAND DURATION
+                (($env.CMD_DURATION_MS | into int) * 1ms
+                | if $in > 2sec { $"(ansi light_magenta_bold)($in)" })
 
-              let body = if ($jj_workspace_root | is-not-empty) {
-                let subpath = pwd | path relative-to $jj_workspace_root
-                let subpath = if ($subpath | is-not-empty) {
-                  $"(ansi magenta_bold) → (ansi reset)(ansi blue)($subpath)"
-                }
+                # NIX PACKAGES
+                ($env.PATH
+                | parse --regex "^/nix/store/[0-9a-z]{32}-(?<name>[^/]+?)(-[0-9][^/]*)?/bin/?$"
+                | get name
+                | each { str replace --regex "-(un)?wrapped$" "" }
+                | uniq
+                | reverse
+                | str join " "
+                | if ($in | is-not-empty) { $"(ansi light_blue_bold)($in)" })
+              ]
+              | compact
+              | each {|segment| $"┫($segment)(ansi light_yellow_bold)┣" }
+              | str join "━"
+              | $"(ansi light_yellow_bold)($left_char)($in)($right_char)(ansi reset)"
 
-                $"($hostname)(ansi light_yellow_bold)($jj_workspace_root | path basename)($subpath)(ansi reset)"
-              } else {
-                $"($hostname)(ansi cyan)(
-                  if (pwd | str starts-with $env.HOME) {
-                    "~" | path join (pwd | path relative-to $env.HOME)
-                  } else {
-                    pwd
+              let body = [
+                # HOSTNAME
+                (if ($env.SSH_CONNECTION? | is-not-empty) { $"(ansi light_green_bold)@(sys host | get hostname)" })
+
+                # DIRECTORY
+                (do {
+                  def relatify [ path: path ] {
+                    if not ($path | str starts-with $env.HOME) { return $path }
+
+                    "~" | path join ($path | path relative-to $env.HOME)
                   }
-                )(ansi reset)"
-              }
 
-              let command_duration = ($env.CMD_DURATION_MS | into int) * 1ms
-              let command_duration = if $command_duration <= 2sec {
-                ""
-              } else {
-                $"┫(ansi light_magenta_bold)($command_duration)(ansi light_yellow_bold)┣━"
-              }
+                  let pwd = relatify (pwd)
+                  let jj_workspace_root = try { relatify (jj workspace root err> $null_device) | str trim --right --char "/" }
 
-              let exit_code = if $code == 0 {
-                ""
-              } else {
-                $"┫(ansi light_red_bold)($code)(ansi light_yellow_bold)┣━"
-              }
+                  if ($jj_workspace_root | is-empty) or not ($pwd starts-with $jj_workspace_root) { return $"(ansi cyan)($pwd)" }
 
-              let middle = if $command_duration == "" and $exit_code == "" {
-                "━"
-              } else {
-                ""
-              }
+                  let subpath = $pwd | str substring ($jj_workspace_root | str length).. | str trim --left --char "/"
 
-              $"(ansi light_yellow_bold)($left_char)($exit_code)($middle)($command_duration)(ansi reset) ($body)(char newline)"
+                  $"(ansi cyan)($jj_workspace_root)(ansi cyan_bold)(ansi attr_underline)/($subpath)"
+                })
+              ]
+              | compact
+              | str join " "
+              | $" ($in)(ansi reset)"
+
+              $"($segments)($body)(char newline)"
             }
 
             $env.PROMPT_INDICATOR = $"(ansi light_yellow_bold)┃(ansi reset) "
