@@ -137,6 +137,18 @@
 
         keys.normal.D = "extend_to_line_end";
         keys.select.D = "extend_to_line_end";
+
+        keys.insert.A-r = "reverse_selection_contents";
+        keys.normal.A-r = "reverse_selection_contents";
+        keys.select.A-r = "reverse_selection_contents";
+
+        keys.normal.A-w = "move_next_sub_word_start";
+        keys.normal.A-b = "move_prev_sub_word_start";
+        keys.normal.A-e = "move_next_sub_word_end";
+
+        keys.select.A-w = "extend_next_sub_word_start";
+        keys.select.A-b = "extend_prev_sub_word_start";
+        keys.select.A-e = "extend_next_sub_word_end";
       };
 
       xdg.config.files."helix/languages.toml".generator =
