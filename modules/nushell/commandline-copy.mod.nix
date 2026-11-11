@@ -39,7 +39,7 @@
               name: copy_color_commandline
               modifier: control_alt
               keycode: char_c
-              mode: [ emacs vi_insert vi_normal ]
+              mode: [ helix_insert helix_normal helix_select ]
               event: {
                 send: executehostcommand
                 cmd: 'nu-keybind commandline-copy'

@@ -215,11 +215,10 @@
 
         show_banner = false;
 
-        edit_mode = "vi";
-
-        cursor_shape.emacs = "line";
-        cursor_shape.vi_insert = "line";
-        cursor_shape.vi_normal = "block";
+        edit_mode = "helix";
+        cursor_shape.helix_insert = "line";
+        cursor_shape.helix_normal = "block";
+        cursor_shape.helix_select = "underscore";
 
         completions.algorithm = "substring";
 
