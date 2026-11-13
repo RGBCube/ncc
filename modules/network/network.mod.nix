@@ -109,7 +109,7 @@
     { config, lib, ... }:
     let
       inherit (lib.lists) map singleton;
-      inherit (lib.modules) mkAfter mkDefault;
+      inherit (lib.modules) mkAfter;
       inherit (lib.strings) concatStringsSep optionalString replaceStrings;
     in
     {
@@ -152,9 +152,19 @@
         # Troll packets on port 80 too.
         httpSupport = true;
 
-        params = mkDefault [
-          "--dpi-desync=fake,disorder2"
-          "--dpi-desync-ttl=1"
+        params = [
+          "--filter-tcp=80"
+          "--dpi-desync=fake,multisplit"
+          "--dpi-desync-split-pos=method+2"
+          "--dpi-desync-fooling=md5sig"
+          "--dpi-desync-autottl=2"
+
+          "--new"
+
+          "--filter-tcp=443"
+          "--dpi-desync=fake,multidisorder"
+          "--dpi-desync-split-pos=1,midsld"
+          "--dpi-desync-fooling=badseq,md5sig"
           "--dpi-desync-autottl=2"
         ];
       };
@@ -163,23 +173,26 @@
         table inet zapret {
           define desync_mark = 0x40000000
 
+          chain prerouting {
+            type filter hook prerouting priority mangle;
+            policy accept;
+
+            ct direction reply \
+            meta mark & $desync_mark == 0 \
+            tcp sport { 443${optionalString config.services.zapret.httpSupport ", 80"} } \
+            tcp flags & (syn | ack) == (syn | ack) \
+            queue num ${toString config.services.zapret.qnum} bypass;
+          }
+
           chain postrouting {
             type filter hook postrouting priority mangle;
             policy accept;
 
             # Skip packets already handled by zapret (mark 0x40000000).
             fib daddr type != local \
-            # Not marked by zapret.
             meta mark & $desync_mark == 0 \
-            tcp dport 443 \
+            tcp dport { 443${optionalString config.services.zapret.httpSupport ", 80"} } \
             queue num ${toString config.services.zapret.qnum} bypass;
-
-          ${optionalString config.services.zapret.httpSupport ''
-            fib daddr type != local \
-            meta mark & $desync_mark == 0 \
-            tcp dport 80 \
-            queue num ${toString config.services.zapret.qnum} bypass;
-          ''}
 
           ${optionalString config.services.zapret.udpSupport ''
             fib daddr type != local \
