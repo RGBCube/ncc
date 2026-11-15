@@ -22,20 +22,9 @@ in
       ns."1".A = head self.machines.istanbul.ip.addresses4;
     };
 
-  flake.machines.istanbul = {
-    ip.addresses4 = singleton "149.0.17.169";
-    ip.addresses6 = [ ];
-
-    ssh = {
-      enable = true;
-      hostName = head self.machines.istanbul.ip.addresses4;
-      key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCykEkiotbnje7b7Gg7f+fg58zOxRjNKuJO0z1eVrmF istanbul";
-    };
-  };
-
   imports =
     singleton
-    <| lib.systems.nixosSystem "istanbul" (
+    <| lib.systems.nixosSystem [ "software" "hate" "host" "istanbul" ] (
       { config, lib, ... }:
       let
         inherit (lib.lists) singleton;
@@ -45,6 +34,16 @@ in
           self.nixosModules.server
           self.nixosModules.authoritative
         ];
+
+        machine.ip = {
+          addresses4 = singleton "149.0.17.169";
+          addresses6 = [ ]; # :(
+        };
+
+        machine.ssh = {
+          enable = true;
+          key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCykEkiotbnje7b7Gg7f+fg58zOxRjNKuJO0z1eVrmF istanbul";
+        };
 
         system.services.authoritative.zones = singleton self.dns.software.hate;
 

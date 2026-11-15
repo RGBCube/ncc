@@ -89,7 +89,7 @@ in
       SOA = {
         mname = config.ns."0".FQDN;
         rname = config.FQDN ++ singleton "hostmaster";
-        serial = 2026061000; # Bump on EVERY edit (YYYYMMDDnn).
+        serial = 2026111500; # Bump on EVERY edit (YYYYMMDDnn).
         refresh = "2h"; # Consulted only by secondaries.
         retry = "15m"; # Consulted only by secondaries.
         expire = "2w"; # Secondary stops serving after this long unreachable.
@@ -243,6 +243,7 @@ in
 
               stores.type = "forward";
               # stores.options.validate = true; # TODO: Fix the hickory impl of DNSSEC validation.
+              stores.options.use_hosts_file = "Always"; # XXX: Not sure if good. Kinda lecacy.
               stores.name_servers =
                 [
                   # { # FIXME: Slow.

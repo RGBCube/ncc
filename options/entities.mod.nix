@@ -1,7 +1,14 @@
-{ inputs, lib, ... }:
+{
+  config,
+  inputs,
+  lib,
+  options,
+  ...
+}:
 let
-  inherit (lib.attrsets) unionOfDisjoint removeAttrs;
+  inherit (lib.attrsets) unionOfDisjoint removeAttrs mapAttrs;
   inherit (lib.lists) singleton;
+  inherit (lib.modules) mkMerge;
   inherit (lib.options) mkEnableOption mkOption;
   inherit (lib.trivial) flip;
   inherit (lib.types)
@@ -122,4 +129,21 @@ in
     default = { };
     description = "Machines?";
   };
+
+  config.commonModules.default = config.commonModules.entities;
+  config.commonModules.entities = {
+    options.machine = mkOption {
+      type = (options.flake.type.getSubOptions <| singleton "flake").machines.type.nestedTypes.elemType;
+      default = { };
+      description = "Metadata for this machine.";
+    };
+  };
+
+  config.flake.machines =
+    [
+      config.flake.darwinConfigurations
+      config.flake.nixosConfigurations
+    ]
+    |> map (mapAttrs (_: system: system.config.machine))
+    |> mkMerge;
 }

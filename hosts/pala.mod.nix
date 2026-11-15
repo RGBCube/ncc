@@ -7,19 +7,19 @@ let
   inherit (lib.lists) singleton;
 in
 {
-  flake.machines.pala = {
-    ssh.key = self.people.self.ssh.key;
-  };
-
   imports =
     singleton
-    <| lib.systems.darwinSystem "pala" {
+    <| lib.systems.darwinSystem [ "software" "hate" "host" "pala" ] {
       imports = [
         self.darwinModules.ai
         self.darwinModules.communication
         self.darwinModules.media
         self.darwinModules.version-control
       ];
+
+      machine.ssh = {
+        key = self.people.self.ssh.key;
+      };
 
       networking.knownNetworkServices = [
         "Wi-Fi"

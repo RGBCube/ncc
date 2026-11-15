@@ -4,36 +4,32 @@
   ...
 }:
 let
-  inherit (lib.lists) head singleton;
+  inherit (lib.lists) singleton;
 in
 {
-  flake.machines.vienna = {
-    ip.addresses4 =
-      self.nixosConfigurations.vienna.config.networking.interfaces.enp4s0.ipv4.addresses
-      |> map ({ address, ... }: address);
-    ip.addresses6 =
-      self.nixosConfigurations.vienna.config.networking.interfaces.enp4s0.ipv6.addresses
-      |> map ({ address, ... }: address);
-
-    ssh = {
-      enable = true;
-      hostName = head self.machines.vienna.ip.addresses4;
-      key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIO89LpzcmPit5ZanIpRhevqoUWpeB9Ja/sLxyKivfjJ vienna";
-    };
-  };
-
   imports =
     singleton
-    <| lib.systems.nixosSystem "vienna" (
+    <| lib.systems.nixosSystem [ "software" "hate" "host" "vienna" ] (
       { config, lib, ... }:
       let
         inherit (lib.lists) singleton;
+        inherit (lib.attrsets) getAttr;
       in
       {
         imports = [
           self.nixosModules.server
           self.nixosModules.authoritative
         ];
+
+        machine.ip = {
+          addresses4 = config.networking.interfaces.enp4s0.ipv4.addresses |> map (getAttr "address");
+          addresses6 = config.networking.interfaces.enp4s0.ipv6.addresses |> map (getAttr "address");
+        };
+
+        machine.ssh = {
+          enable = true;
+          key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIO89LpzcmPit5ZanIpRhevqoUWpeB9Ja/sLxyKivfjJ vienna";
+        };
 
         networking = {
           macPolicy = "hostname";
