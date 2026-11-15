@@ -45,15 +45,16 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1794375198,
-        "narHash": "sha256-UDeOgfyob8FdSwwipc+jUJhczFwCbqwwNsuxPdKGvV8=",
+        "lastModified": 1795016128,
+        "narHash": "sha256-eKNw997XkdrmXVw5Ob8CZ82QuaQkOZKFpTV0dUhVs0U=",
         "owner": "lambda-symbolics",
         "repo": "autolith",
-        "rev": "15ddde8293d5c846c1acba2bb71262ccd5c34050",
+        "rev": "b24fc1438a1b3d75818344eb3bc5d36d701f3f92",
         "type": "github"
       },
       "original": {
         "owner": "lambda-symbolics",
+        "ref": "lho/unfuck-tui",
         "repo": "autolith",
         "type": "github"
       }
@@ -230,11 +231,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792674624,
-        "narHash": "sha256-1hqI63X3aUiPBZqodC1u78lcxiKz1TL2/cL7rdpyA1Q=",
+        "lastModified": 1794597681,
+        "narHash": "sha256-dteS+YYEOrbYupP9U8EvYxBNTTlf4Lup0ji51ubGv+I=",
         "owner": "amaanq",
         "repo": "helium-flake",
-        "rev": "2aa77b2f0cb27c486e27f37f9fcd1c6f826076ac",
+        "rev": "698f12b0a5b93aa2c6b582779bdb683f0d8692a3",
         "type": "github"
       },
       "original": {

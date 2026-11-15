@@ -102,7 +102,7 @@
   };
 
   inputs.autolith = {
-    url = "github:lambda-symbolics/autolith";
+    url = "github:lambda-symbolics/autolith/lho/unfuck-tui";
     inputs.flake-parts.follows = "flake-parts";
   };
 
