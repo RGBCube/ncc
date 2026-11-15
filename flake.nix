@@ -82,11 +82,6 @@
     flake = false;
   };
 
-  inputs.crash = {
-    url = "github:RGBCube/crash";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-
   inputs.themes = {
     url = "github:RGBCube/ThemeNix";
   };

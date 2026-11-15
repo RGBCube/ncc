@@ -90,27 +90,6 @@
         "type": "github"
       }
     },
-    "crash": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "systems": "systems"
-      },
-      "locked": {
-        "lastModified": 1749314438,
-        "narHash": "sha256-AY93kpqXEWUETx5/doPj4jsf7hCmmyzbJMoudXzoTfA=",
-        "owner": "RGBCube",
-        "repo": "crash",
-        "rev": "db0cf4a08907a97095849143e8b659f777838b1b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "RGBCube",
-        "repo": "crash",
-        "type": "github"
-      }
-    },
     "crate2nix": {
       "inputs": {
         "cachix": [],
@@ -456,7 +435,6 @@
         "advisory-db": "advisory-db",
         "agenix": "agenix",
         "autolith": "autolith",
-        "crash": "crash",
         "crate2nix": "crate2nix",
         "disko": "disko",
         "fenix": "fenix",
@@ -510,21 +488,6 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "type": "github"
-      }
-    },
-    "systems": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
         "type": "github"
       }
     },

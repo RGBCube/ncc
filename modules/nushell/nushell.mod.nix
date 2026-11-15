@@ -45,14 +45,7 @@
         '';
       };
 
-      users.defaultUserShell = inputs.crash.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      environment.sessionVariables.SHELLS =
-        [
-          pkgs.nushell
-          pkgs.bash
-        ]
-        |> map getExe
-        |> concatStringsSep ":";
+      users.defaultUserShell = pkgs.nushell;
 
       environment.shellAliases = genAttrs [ "ls" "ll" "l" ] (const null);
 
