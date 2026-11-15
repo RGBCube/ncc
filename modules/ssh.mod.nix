@@ -159,23 +159,9 @@
       ...
     }:
     let
-      inherit (lib.attrsets)
-        attrNames
-        filterAttrs
-        getAttr
-        ;
       inherit (lib.lists) singleton;
-      inherit (lib.trivial) const;
-
-      isDarwin = config.nixpkgs.hostPlatform.isDarwin;
     in
     {
-      users.groups.ssh-agent.members =
-        if isDarwin then
-          singleton config.system.primaryUser
-        else
-          config.users.users |> filterAttrs (const <| getAttr "isNormalUser") |> attrNames;
-
       system.services.ssh-agent = {
         imports = singleton self.serviceModules.ssh-agent;
 
@@ -203,9 +189,24 @@
     };
 
   flake.nixosModules.ssh-agent =
-    { config, ... }:
+    { config, lib, ... }:
+    let
+      inherit (lib.attrsets) attrNames filterAttrs getAttr;
+      inherit (lib.trivial) const;
+    in
     {
       environment.sessionVariables.SSH_AUTH_SOCK = config.nix.envVars.SSH_AUTH_SOCK;
+
+      users.users.ssh-agent = {
+        uid = 550;
+        isSystemUser = true;
+        group = "ssh-agent";
+      };
+
+      users.groups.ssh-agent = {
+        gid = 550;
+        members = config.users.users |> filterAttrs (const <| getAttr "isNormalUser") |> attrNames;
+      };
     };
 
   flake.darwinModules.default = self.darwinModules.ssh-agent;
@@ -216,7 +217,10 @@
     in
     {
       users.knownGroups = singleton "ssh-agent";
-      users.groups.ssh-agent.gid = 550;
+      users.groups.ssh-agent = {
+        gid = 550;
+        members = singleton config.system.primaryUser;
+      };
 
       launchd.user.envVariables.SSH_AUTH_SOCK = config.nix.envVars.SSH_AUTH_SOCK;
     };
