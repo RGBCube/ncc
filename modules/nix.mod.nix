@@ -23,7 +23,6 @@
     {
       environment.systemPackages = [
         pkgs.dix
-        pkgs.nh
         pkgs.nix-output-monitor
       ];
 
