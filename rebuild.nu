@@ -1,19 +1,5 @@
 #!/usr/bin/env nu
 
-def --wrapped sync [...arguments] {
- (rsync
-    --archive
-    --compress
-
-    --delete --recursive --force
-    --delete-excluded
-    --delete-missing-args
-
-    --human-readable
-    --delay-updates
-    ...$arguments)
-}
-
 # Rebuild a NixOS / Darwin config.
 def main --wrapped [
   host: string = "" # The host to build.
@@ -34,19 +20,30 @@ def main --wrapped [
   }
 
   if $remote {
-    ssh -tt ("root@" + $host) "
-      rm --recursive --force ncc
-    "
+    let files = jj --ignore-working-copy file list | complete
+    if $files.exit_code != 0 {
+      error make {msg: $files.stderr}
+    }
 
-    git ls-files
-    | sync --files-from - ./ $"root@($host):ncc"
+    ssh -tt ("root@" + $host) "rm --recursive --force ncc"
+    if $env.LAST_EXIT_CODE != 0 {
+      error make {msg: "Failed to clear the remote configuration directory"}
+    }
+
+    $files.stdout | (rclone copy ./ :sftp:ncc
+      --files-from-raw -
+      --sftp-ssh $"ssh -o BatchMode=yes root@($host)"
+      --progress)
+    if $env.LAST_EXIT_CODE != 0 {
+      error make {msg: "Failed to copy the configuration"}
+    }
 
     ssh -tt ("root@" + $host) $"
       cd ncc
-      ./rebuild.nu ($host) ($arguments | str join ' ')
+      nu ./rebuild.nu ($host) ($arguments | str join ' ')
     "
 
-    return
+    exit $env.LAST_EXIT_CODE
   }
 
   let args_split = $arguments | prepend "" | split list "--"

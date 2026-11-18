@@ -14,6 +14,7 @@ in
   "hosts/best/signing-key.age".publicKeys = [ best ] ++ admins;
 
   "hosts/best/grafana/password.age".publicKeys = [ best ] ++ admins;
+  "hosts/best/grafana/secret-key.age".publicKeys = [ best ] ++ admins;
 
   "hosts/best/matrix/key.age".publicKeys = [ best ] ++ admins;
   "hosts/best/matrix/secret.age".publicKeys = [ best ] ++ admins;

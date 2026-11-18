@@ -28,6 +28,7 @@ in {
           exporterName != "minio" &&
           exporterName != "unifi-poller" &&
           exporterName != "tor" &&
+          exporterName != "rspamd" &&
           exporterConfig.enable or false)
         |> mapAttrsToList (exporterName: exporterConfig: {
           job_name = "${exporterName}-${hostName}";

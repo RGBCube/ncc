@@ -1,12 +1,11 @@
 { self, config, lib, pkgs, ... }: let
-  inherit (lib) enabled getExe head mkIf;
+  inherit (lib) enabled getExe head mkIf optional;
 in {
   environment.systemPackages = [
     pkgs.difftastic
     pkgs.jjui
     pkgs.mergiraf
-    pkgs.radicle-node
-  ];
+  ] ++ optional config.isDesktop pkgs.radicle-node;
 
   home-manager.sharedModules = [{
     programs.jujutsu = enabled {

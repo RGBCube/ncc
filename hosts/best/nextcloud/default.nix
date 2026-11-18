@@ -4,7 +4,7 @@
 
   fqdn = "cloud.${domain}";
 
-  package = pkgs.nextcloud32;
+  package = pkgs.nextcloud35;
 in {
   imports = [
     (self + /modules/nginx.nix)
@@ -57,9 +57,6 @@ in {
     https    = true;
 
     configureRedis = true;
-
-    config.adminuser     = "admin";
-    config.adminpassFile = config.secrets.nextcloudPassword.path;
 
     config.dbhost = "/run/postgresql";
     config.dbtype = "pgsql";

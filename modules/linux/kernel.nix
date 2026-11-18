@@ -1,8 +1,16 @@
-{ config, pkgs, ... }: {
+{ config, lib, pkgs, ... }: {
   boot.kernelPackages = if config.isServer then
     pkgs.linuxPackages_latest
   else
     pkgs.linuxKernel.packages.linux_zen;
+
+  system.systemBuilderCommands = let
+    kernelImage = config.boot.kernelPackages.rebuildImage {
+      inherit (config.system) modulesTree;
+    };
+  in lib.mkAfter ''
+    ln -sf -- ${kernelImage}/${config.system.boot.loader.kernelFile} "$out/kernel"
+  '';
 
   # Credits:
   # - https://github.com/NotAShelf/nyx/blob/main/modules/core/common/system/security/kernel.nix
@@ -20,8 +28,7 @@
     # Disable bpf() JIT (to eliminate spray attacks).
     "net.core.bpf_jit_enable" = false;
 
-    # Disable ftrace debugging.
-    "kernel.ftrace_enabled" = false;
+    "-kernel.ftrace_enabled" = false;
 
     # Avoid kernel memory address exposures via dmesg (this value can also be set by CONFIG_SECURITY_DMESG_RESTRICT).
     "kernel.dmesg_restrict" = 1;
@@ -39,7 +46,7 @@
     "kernel.perf_event_paranoid" = 3;
 
     # Require CAP_BPF to use bpf.
-    "kernel.unprvileged_bpf_disabled" = 1;
+    "kernel.unprivileged_bpf_disabled" = 1;
   };
 
   # https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html

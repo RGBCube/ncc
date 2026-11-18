@@ -46,6 +46,15 @@ in {
   config.security.acme.users = [ "nginx" ];
 
   config.services.nginx = enabled {
+    package = pkgs.nginxStable.overrideAttrs (final: _: {
+      version = "1.30.7";
+      nginxVersion = final.version;
+      src = pkgs.fetchurl {
+        url = "https://nginx.org/download/nginx-${final.version}.tar.gz";
+        hash = "sha256-JWW1yDcFDpWPcPsPc8SOK8pFQq00n9NW9G+wxyYQvG4=";
+      };
+    });
+
     statusPage = true;
 
     recommendedBrotliSettings = true;

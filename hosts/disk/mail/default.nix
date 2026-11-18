@@ -28,8 +28,8 @@ in {
     # We use systemd-resolved instead of Knot Resolver.
     localDnsResolver = false;
 
-    hierarchySeparator = "/";
-    useFsLayout        = true;
+    hierarchySeparator      = "/";
+    storage.directoryLayout = "fs";
 
     dkimKeyDirectory = "/var/lib/dkim";
     mailDirectory    = "/var/lib/mail";

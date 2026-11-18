@@ -15,6 +15,11 @@ in {
     owner = "grafana";
   };
 
+  secrets.grafanaSecretKey = {
+    file  = ./secret-key.age;
+    owner = "grafana";
+  };
+
   services.postgresql.ensure = [ "grafana" ];
 
   services.restic.backups = genAttrs config.services.restic.hosts <| const {
@@ -47,6 +52,7 @@ in {
       admin_email    = "metrics@${domain}";
       admin_password = "$__file{${config.secrets.grafanaPassword.path}}";
       admin_user     = "admin";
+      secret_key     = "$__file{${config.secrets.grafanaSecretKey.path}}";
 
       cookie_secure    = true;
       disable_gravatar = true;
