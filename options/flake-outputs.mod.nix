@@ -11,6 +11,7 @@ let
   inherit (lib.options) mkOption;
   inherit (lib.fixedPoints) fix;
   inherit (lib.modules) mkMerge;
+  inherit (lib.trivial) const mapNullable;
   inherit (lib.types) deferredModule lazyAttrsOf;
 
   wrap =
@@ -23,7 +24,7 @@ let
       _file = "${toString moduleLocation}#${kind}.${name}";
       key = module._file;
 
-      ${if class == null then null else "_class"} = class;
+      ${class |> mapNullable (const "_class")} = class;
 
       imports = singleton value;
     });
