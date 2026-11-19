@@ -12,7 +12,7 @@
       inherit (lib.modules) mkIf;
       inherit (lib.lists) singleton;
       inherit (lib.trivial) const flip;
-      inherit (lib.attrsets) genAttrs mapAttrsToList;
+      inherit (lib.attrsets) genAttrs getAttr mapAttrsToList;
       inherit (lib.generators) toINI;
     in
     {
@@ -23,22 +23,25 @@
           "x-scheme-handler/magnet"
         ];
 
-      packages = singleton (
-        if osConfig.nixpkgs.hostPlatform.isDarwin then
-          pkgs.qbittorrent.overrideAttrs {
+      packages =
+        singleton
+        <| getAttr osConfig.nixpkgs.hostPlatform.parsed.kernel.name {
+          darwin = pkgs.qbittorrent.overrideAttrs {
             src = pkgs.fetchFromGitHub {
               owner = "qbittorrent";
               repo = "qBittorrent";
               rev = "6164ed1";
               hash = "sha256-U8L2q62XVRlaNj3ZozPHXfrIDuvn25fsnfqLY05FO60=";
             };
-          }
-        else
-          pkgs.qbittorrent
-      );
+          };
+          linux = pkgs.qbittorrent;
+        };
 
       xdg.config.files."qBittorrent/qBittorrent.${
-        if osConfig.nixpkgs.hostPlatform.isDarwin then "ini" else "conf"
+        getAttr osConfig.nixpkgs.hostPlatform.parsed.kernel.name {
+          darwin = "ini";
+          linux = "conf";
+        }
       }" =
         {
           generator = toINI { };
@@ -104,10 +107,14 @@
         }
         |> mapAttrsToList (
           name: text:
-          if osConfig.nixpkgs.hostPlatform.isDarwin then
-            { files."Library/Application Support/qBittorrent/nova3/engines/${name}.py".text = text; }
-          else
-            { xdg.data.files."qBittorrent/nova3/engines/${name}.py".text = text; }
+          getAttr osConfig.nixpkgs.hostPlatform.parsed.kernel.name {
+            darwin = {
+              files."Library/Application Support/qBittorrent/nova3/engines/${name}.py".text = text;
+            };
+            linux = {
+              xdg.data.files."qBittorrent/nova3/engines/${name}.py".text = text;
+            };
+          }
         );
     };
 }

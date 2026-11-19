@@ -160,6 +160,7 @@
     }:
     let
       inherit (lib.lists) singleton;
+      inherit (lib.attrsets) getAttr;
     in
     {
       system.services.ssh-agent = {
@@ -181,11 +182,10 @@
         };
       };
 
-      nix.envVars.SSH_AUTH_SOCK =
-        if config.nixpkgs.hostPlatform.isDarwin then
-          "/var/run/ssh-agent/socket"
-        else
-          "/run/ssh-agent/socket";
+      nix.envVars.SSH_AUTH_SOCK = getAttr config.nixpkgs.hostPlatform.parsed.kernel.name {
+        darwin = "/var/run/ssh-agent/socket";
+        linux = "/run/ssh-agent/socket";
+      };
     };
 
   flake.nixosModules.ssh-agent =

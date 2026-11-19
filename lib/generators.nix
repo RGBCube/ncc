@@ -6,7 +6,7 @@ let
     removeAttrs
     toJSON
     ;
-  inherit (self.attrsets) mapAttrsToList;
+  inherit (self.attrsets) getAttr mapAttrsToList;
   inherit (self.strings)
     concatLines
     concatStringsSep
@@ -68,13 +68,10 @@ in
         )
         |> concatLists;
 
-      serialize.keywordPrefix =
-        if version == 1 then
-          ""
-        else if version == 2 then
-          "#"
-        else
-          throw "generators.toKDL: unsupported KDL version '${toString version}'";
+      serialize.keywordPrefix = getAttr (toString version) {
+        "1" = "";
+        "2" = "#";
+      };
 
       serialize.value =
         value:

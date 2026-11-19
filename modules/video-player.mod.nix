@@ -21,7 +21,7 @@
       inherit (lib.lists) singleton;
       inherit (lib.modules) mkIf;
       inherit (lib.trivial) const flip;
-      inherit (lib.attrsets) genAttrs;
+      inherit (lib.attrsets) genAttrs getAttr;
     in
     {
       xdg.mime-apps.default-applications =
@@ -48,13 +48,11 @@
           "video/x-ms-wmv"
         ];
 
-      packages = singleton (
-        if osConfig.nixpkgs.hostPlatform.isLinux then
-          pkgs.haruna
-        else if osConfig.nixpkgs.hostPlatform.isDarwin then
-          pkgs.iina
-        else
-          throw "Unsupported OS"
-      );
+      packages =
+        singleton
+        <| getAttr osConfig.nixpkgs.hostPlatform.parsed.kernel.name {
+          darwin = pkgs.iina;
+          linux = pkgs.haruna;
+        };
     };
 }

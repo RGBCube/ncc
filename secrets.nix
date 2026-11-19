@@ -2,10 +2,12 @@ let
   inherit (builtins)
     attrNames
     attrValues
+    concatLists
     concatMap
     elem
     filter
     foldl'
+    getAttr
     listToAttrs
     mapAttrs
     match
@@ -16,7 +18,7 @@ let
   singleton = value: [ value ];
   optional = condition: consequence: if condition then [ consequence ] else [ ];
   uniq = list: list |> foldl' (acc: item: if elem item acc then acc else acc ++ singleton item) [ ];
-
+  mapAttrsToList = function: attrs: mapAttrs function attrs |> attrValues;
   filterAttrs =
     predicate: set:
     set
@@ -30,23 +32,19 @@ let
 
   listFilesRecursive =
     base: directory:
-    if readFileType directory != "directory" then
-      singleton base
-    else
-      let
-        entries = readDir directory;
-        names = attrNames entries;
-      in
-      names
-      |> concatMap (
-        name:
-        if entries.${name} == "directory" then
-          listFilesRecursive "${base}/${name}" /${directory}/${name}
-        else if entries.${name} == "regular" then
-          singleton "${base}/${name}"
-        else
-          [ ]
-      );
+    getAttr (readFileType directory) {
+      regular = singleton base;
+      directory =
+        readDir directory
+        |> mapAttrsToList (
+          name: type:
+          getAttr type {
+            directory = listFilesRecursive "${base}/${name}" /${directory}/${name};
+            regular = singleton "${base}/${name}";
+          }
+        )
+        |> concatLists;
+    };
 
   isAge = name: match ".*\\.age$" name != null;
 

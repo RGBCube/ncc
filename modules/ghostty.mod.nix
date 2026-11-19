@@ -9,7 +9,7 @@
       ...
     }:
     let
-      inherit (lib.attrsets) mapAttrsToList optionalAttrs;
+      inherit (lib.attrsets) getAttr mapAttrsToList optionalAttrs;
       inherit (lib.generators) mkKeyValueDefault toKeyValue;
       inherit (lib.modules) mkIf;
       inherit (lib.lists) singleton;
@@ -21,9 +21,12 @@
         value = singleton "com.mitchellh.ghostty.desktop";
       };
 
-      packages = singleton (
-        if osConfig.nixpkgs.hostPlatform.isDarwin then pkgs.ghostty-bin else pkgs.ghostty
-      );
+      packages =
+        singleton
+        <| getAttr osConfig.nixpkgs.hostPlatform.parsed.kernel.name {
+          darwin = pkgs.ghostty-bin;
+          linux = pkgs.ghostty;
+        };
 
       xdg.config.files."ghostty/config".generator = toKeyValue {
         mkKeyValue = mkKeyValueDefault { } " = ";
